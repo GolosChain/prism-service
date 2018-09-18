@@ -1,0 +1,34 @@
+version: '3.6'
+services:
+  mongo:
+    container_name: mongo
+    image: mongo
+    restart: always
+    volumes:
+      - mongodb_vol:/data/db
+    ports:
+      - 127.0.0.1:27017:27017
+    networks:
+      - services-tier
+
+  node:
+    container_name: node
+    restart: always
+    depends_on:
+      - mongo
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - services-tier
+    environment:
+      - GLS_DAY_START
+      - GLS_MONGO_CONNECT
+      - GLS_METRICS_HOST
+      - GLS_METRICS_PORT
+
+volumes:
+  mongodb_vol:
+
+networks:
+  services-tier:
