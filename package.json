@@ -24,6 +24,6 @@
     },
     "homepage": "https://github.com/GolosChain/prism-service#readme",
     "dependencies": {
-        "gls-core-service": "git+https://github.com/GolosChain/core-service.git"
+        "gls-core-service": "git+https://github.com/GolosChain/core-service.git#4d9420a2fb7a32bccb6010a2b20341db8b18282f"
     }
 }

@@ -1,9 +1,8 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
-const stats = core.statsClient;
+const stats = core.services.statsClient;
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
-const BlockSubscribeRestore = core.services.BlockSubscribeRestore;
 const env = require('../env');
 
 class Extractor extends BasicService {
@@ -11,53 +10,57 @@ class Extractor extends BasicService {
         super();
 
         this._blockQueue = [];
-        this._subscribe = new BlockSubscribe();
+        this._subscribe = new BlockSubscribe(); // TODO Add start params
         this.addNested(this._subscribe);
+
+        this._subscribe.on('block', this._handleBlock.bind(this));
+        this._subscribe.on('fork', this._handleFork.bind(this));
     }
 
     async start() {
-        await this.restore();
-        await this._subscribe.start((block, blockNum) => {
-            this._blockQueue.push([block, blockNum]);
-        });
+        await this._subscribe.start();
+        await this._runExtractorLoop();
+    }
 
-        this._runIterator().catch((error) => {
-            stats.increment('extractor_iteration_error');
-            Logger.error(`Extractor iteration error - ${error}`);
-            process.exit(1);
-        });
+    async _handleBlock(block, blockNum) {
+        this._blockQueue.push({ block, blockNum });
+    }
+
+    async _handleFork() {
+        // TODO -
     }
 
     async stop() {
         await this.stopNested();
     }
 
-    async restore() {
-        // TODO -
-    }
-
-    async _runIterator() {
+    async _runExtractorLoop() {
         while (true) {
-            await this._tick();
-            await new Promise((resolve) => {
-                setImmediate(resolve);
-            });
+            try {
+                await this._extractFromQueue();
+                await new Promise(resolve => {
+                    setImmediate(resolve);
+                });
+            } catch (error) {
+                Logger.error(`Extractor error - ${error}`);
+                process.exit(1);
+            }
         }
     }
 
-    async _tick() {
+    async _extractFromQueue() {
         let blockData;
 
-        while (blockData = this._blockQueue.shift()) {
-            const [block, blockNum] = blockData;
+        while ((blockData = this._blockQueue.shift())) {
+            const { block, blockNum } = blockData;
 
-            await this._handleBlock(block, blockNum);
+            await this._disperse(block, blockNum);
         }
     }
 
-    async _handleBlock(block, blockNum) {
+    async _disperse(block, blockNum) {
         // TODO -
     }
 }
 
-module.exports = Cleaner;
+module.exports = Extractor;
