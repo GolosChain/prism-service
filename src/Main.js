@@ -1,7 +1,7 @@
 const core = require('gls-core-service');
-const stats = core.statsClient;
+const stats = core.utils.statsClient;
 const BasicMain = core.services.BasicMain;
-const MongoDB = core.service.MongoDB;
+const MongoDB = core.services.MongoDB;
 const env = require('./env');
 
 class Main extends BasicMain {
