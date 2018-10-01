@@ -3,13 +3,13 @@ const Logger = core.utils.Logger;
 const stats = core.services.statsClient;
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
-const Prism = require('../controllers/Prism');
+const Controller = require('../controllers/prism/Main');
 
-class Extractor extends BasicService {
+class Prism extends BasicService {
     constructor() {
         super();
 
-        this._prism = new Prism();
+        this._controller = new Controller();
         this._blockQueue = [];
         this._subscribe = new BlockSubscribe(); // TODO Add start params
         this.addNested(this._subscribe);
@@ -24,7 +24,7 @@ class Extractor extends BasicService {
     }
 
     async _handleBlock(block, blockNum) {
-        this._blockQueue.push({ block, blockNum });
+        this._blockQueue.push([block, blockNum]);
     }
 
     async _handleFork() {
@@ -53,11 +53,13 @@ class Extractor extends BasicService {
         let blockData;
 
         while ((blockData = this._blockQueue.shift())) {
-            const { block } = blockData;
+            const timer = new Date();
+            const [block] = blockData;
 
-            await this._prism.disperse(block);
+            await this._controller.disperse(block);
+            stats.timing('block_disperse', new Date() - timer);
         }
     }
 }
 
-module.exports = Extractor;
+module.exports = Prism;
