@@ -7,8 +7,8 @@ module.exports = MongoDB.makeModel(
         // TODO -
     },
     {
-        index: {
+        index: [
             // TODO -
-        }
+        ],
     }
 );
