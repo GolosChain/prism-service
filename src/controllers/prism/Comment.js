@@ -1,8 +1,19 @@
-const Abstract = require('./Abstract');
+const AbstractComment = require('./AbstractComment');
+const Model = require('../../models/Comment');
 
-class Comment extends Abstract {
+class Comment extends AbstractComment {
     async handle(data) {
-        // TODO -
+        await super.handle(data, Model);
+    }
+
+    _isInvalid(data) {
+        return !data.parent_author;
+    }
+
+    _applyBasicData(model, data) {
+        super._applyBasicData(model, data);
+
+        model.parentAuthor = data.parent_author;
     }
 }
 

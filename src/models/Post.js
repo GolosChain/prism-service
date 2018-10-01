@@ -22,21 +22,30 @@ module.exports = MongoDB.makeModel(
         rawJsonMetadata: {
             type: String,
         },
-        appType: {
-            type: String,
-        },
-        format: {
-            type: String,
-        },
-        tags: {
-            type: [String],
-        },
-        images: {
-            type: [String],
-        },
-        links: {
-            type: [String],
-        },
+        metadata: {
+            app: {
+                type: String,
+            },
+            format: {
+                type: String,
+            },
+            tags: {
+                type: [String],
+                default: [],
+            },
+            images: {
+                type: [String],
+                default: [],
+            },
+            links: {
+                type: [String],
+                default: [],
+            },
+            users: {
+                type: [String],
+                default: [],
+            },
+        }
     },
     {
         index: [
