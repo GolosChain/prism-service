@@ -4,11 +4,15 @@ const BlockUtil = core.utils.Block;
 
 const Comment = require('./Comment');
 const Post = require('./Post');
+const Vote = require('./Vote');
+const User = require('./User');
 
 class Main {
     constructor() {
         this._comment = new Comment();
         this._post = new Post();
+        this._vote = new Vote();
+        this._user = new User();
     }
 
     async disperse(block) {
@@ -24,7 +28,7 @@ class Main {
     async _disperseReal(type, data) {
         switch (type) {
             case 'vote':
-                // Do noting for now
+                await this._vote.handle(data);
                 break;
             case 'comment':
                 await this._post.handle(data);
@@ -148,7 +152,7 @@ class Main {
                 // Do noting for now
                 break;
             case 'account_metadata':
-                // Do noting for now
+                await this._user.handle(data);
                 break;
             case 'proposal_create':
                 // Do noting for now

@@ -12,13 +12,9 @@ class User extends Abstract {
             return;
         }
 
-        let model = await Model.findOne({ name: data.account });
+        const model = this._getOrCreateModel(Model, { name: data.account });
 
-        if (!model) {
-            model = new Model({ name: data.account });
-
-            await model.save();
-        }
+        model.name = data.account;
 
         this._applyProfile(model, metadata);
 
