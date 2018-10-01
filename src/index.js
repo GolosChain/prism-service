@@ -1,1 +1,1 @@
-require('gls-core-service').defaultStarter(require('./Main'));
+require('gls-core-service').utils.defaultStarter(require('./Main'));
