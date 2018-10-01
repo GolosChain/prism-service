@@ -2,24 +2,33 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BlockUtil = core.utils.Block;
 
-class Prism {
-    disperse(block) {
+const Comment = require('./Comment');
+const Post = require('./Post');
+
+class Main {
+    constructor() {
+        this._comment = new Comment();
+        this._post = new Post();
+    }
+
+    async disperse(block) {
         for (let [type, data] of BlockUtil.eachRealOperation(block)) {
-            this._disperseReal(type, data);
+            await this._disperseReal(type, data);
         }
 
         for (let [type, data] of BlockUtil.eachVirtualOperation(block)) {
-            this._disperseVirtual(type, data);
+            await this._disperseVirtual(type, data);
         }
     }
 
-    _disperseReal(type, data) {
+    async _disperseReal(type, data) {
         switch (type) {
             case 'vote':
                 // Do noting for now
                 break;
             case 'comment':
-                // Do noting for now
+                await this._post.handle(data);
+                await this._comment.handle(data);
                 break;
             case 'transfer':
                 // Do noting for now
@@ -158,7 +167,7 @@ class Prism {
         }
     }
 
-    _disperseVirtual(type, data) {
+    async _disperseVirtual(type, data) {
         switch (type) {
             case 'fill_convert_request':
                 // Do noting for now
@@ -211,4 +220,4 @@ class Prism {
     }
 }
 
-module.exports = Prism;
+module.exports = Main;
