@@ -4,7 +4,18 @@ const MongoDB = core.services.MongoDB;
 module.exports = MongoDB.makeModel(
     'Vote',
     {
-        // TODO -
+        formUser: {
+            type: String,
+        },
+        toUser: {
+            type: String,
+        },
+        permlink: {
+            type: String,
+        },
+        weight: {
+            type: Number,
+        },
     },
     {
         index: [

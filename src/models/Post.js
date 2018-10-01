@@ -45,7 +45,11 @@ module.exports = MongoDB.makeModel(
     },
     {
         index: [
-            // TODO -
+            {
+                fields: {
+                    permlink: 1
+                }
+            }
         ],
     }
 );
