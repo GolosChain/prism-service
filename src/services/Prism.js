@@ -1,6 +1,6 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
-const stats = core.services.statsClient;
+const stats = core.utils.statsClient;
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
 const Controller = require('../controllers/prism/Main');
@@ -43,7 +43,7 @@ class Prism extends BasicService {
                     setImmediate(resolve);
                 });
             } catch (error) {
-                Logger.error(`Extractor error - ${error}`);
+                Logger.error(`Prism error - ${error}`);
                 process.exit(1);
             }
         }
