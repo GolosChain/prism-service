@@ -12,7 +12,7 @@ class User extends Abstract {
             return;
         }
 
-        const model = this._getOrCreateModel(Model, { name: data.account });
+        const model = await this._getOrCreateModel(Model, { name: data.account });
 
         model.name = data.account;
 

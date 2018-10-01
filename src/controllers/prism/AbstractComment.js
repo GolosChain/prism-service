@@ -6,7 +6,7 @@ class Comment extends Abstract {
             return;
         }
 
-        const model = this._getOrCreateModel(modelClass, { permlink: data.permlink });
+        const model = await this._getOrCreateModel(modelClass, { permlink: data.permlink });
 
         this._applyBasicData(model, data);
         this._applyMetaData(model, data);
@@ -43,7 +43,7 @@ class Comment extends Abstract {
         model.metadata.links = metadata.links;
         model.metadata.users = metadata.users;
 
-        if (model.metadata.images[0] === '') {
+        if (model.metadata.images && model.metadata.images[0] === '') {
             model.metadata.images = [];
         }
     }

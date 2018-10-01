@@ -31,19 +31,15 @@ module.exports = MongoDB.makeModel(
             },
             tags: {
                 type: [String],
-                default: [],
             },
             images: {
                 type: [String],
-                default: [],
             },
             links: {
                 type: [String],
-                default: [],
             },
             users: {
                 type: [String],
-                default: [],
             },
         }
     },
