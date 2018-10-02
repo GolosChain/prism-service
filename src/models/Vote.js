@@ -4,7 +4,7 @@ const MongoDB = core.services.MongoDB;
 module.exports = MongoDB.makeModel(
     'Vote',
     {
-        formUser: {
+        fromUser: {
             type: String,
         },
         toUser: {

@@ -12,24 +12,24 @@ class Vote extends Abstract {
         const postModel = await PostModel.findOne({ permlink });
 
         if (postModel) {
-            await this._updatePostByLike(model, postModel);
+            await this._updatePostByVote(model, postModel);
             return;
         }
 
         const commentModel = await CommentModel.findOne({ permlink });
 
         if (commentModel) {
-            await this._updateCommentByLike(model, commentModel);
+            await this._updateCommentByVote(model, commentModel);
             return;
         }
     }
 
-    _updatePostByLike(model, postModel) {
-        // TODO -
+    _updatePostByVote(model, postModel) {
+        // TODO In MVP version
     }
 
-    _updateCommentByLike(model, commentModel) {
-        // TODO -
+    _updateCommentByVote(model, commentModel) {
+        // TODO Next version
     }
 }
 
