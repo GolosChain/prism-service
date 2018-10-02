@@ -3,18 +3,20 @@ const Abstract = require('./Abstract');
 const Post = require('../../models/Post');
 
 class Feed extends Abstract {
-    async handle({ type, tags = [], fromId = null, limit = 20 }) {
+    async handle({ user, type, tags = [], fromId = null, limit = 20 }) {
         [limit, tags] = this._normalizeRequestParams(limit, tags);
 
         switch (type) {
             case 'natural':
-                return await this._getNaturalFeed(fromId, limit, tags);
+                return await this._getNaturalFeed({ fromId, limit, tags });
             case 'popular':
-                return await this._getPopularFeed(fromId, limit, tags);
+                return await this._getPopularFeed({ fromId, limit, tags });
             case 'actual':
-                return await this._getActualFeed(fromId, limit, tags);
+                return await this._getActualFeed({ fromId, limit, tags });
             case 'promo':
-                return await this._getPromoFeed(fromId, limit, tags);
+                return await this._getPromoFeed({ fromId, limit, tags });
+            case 'personal':
+                return await this._getPersonalFeed({ fromId, limit, tags, user });
             default:
                 throw { code: 12001, message: 'Invalid feed type' };
         }
@@ -34,7 +36,7 @@ class Feed extends Abstract {
         return [limit, tags];
     }
 
-    async _getNaturalFeed(fromId, limit, tags) {
+    async _getNaturalFeed({ fromId, limit, tags }) {
         const query = {};
 
         if (fromId) {
@@ -57,15 +59,19 @@ class Feed extends Abstract {
         };
     }
 
-    _getPopularFeed(fromId, limit, tags) {
+    _getPopularFeed({ fromId, limit, tags }) {
         // TODO -
     }
 
-    _getActualFeed(fromId, limit, tags) {
+    _getActualFeed({ fromId, limit, tags }) {
         // TODO -
     }
 
-    _getPromoFeed(fromId, limit, tags) {
+    _getPromoFeed({ fromId, limit, tags }) {
+        // TODO -
+    }
+
+    _getPersonalFeed({ fromId, limit, user, tags }) {
         // TODO -
     }
 }
