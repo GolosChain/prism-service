@@ -36,6 +36,10 @@ class Comment extends Abstract {
             return;
         }
 
+        if (!metadata || Array.isArray(metadata)) {
+            return;
+        }
+
         model.metadata.app = metadata.app;
         model.metadata.format = metadata.format || metadata.editor;
         model.metadata.tags = metadata.tags;
