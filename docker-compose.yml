@@ -26,6 +26,7 @@ services:
       - GLS_MONGO_CONNECT
       - GLS_METRICS_HOST
       - GLS_METRICS_PORT
+      - GLS_MAX_FEED_LIMIT
 
 volumes:
   mongodb_vol:
