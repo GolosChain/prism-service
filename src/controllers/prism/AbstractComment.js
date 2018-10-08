@@ -31,12 +31,12 @@ class Comment extends Abstract {
 
         try {
             metadata = JSON.parse(data.json_metadata);
+
+            if (!metadata || Array.isArray(metadata)) {
+                metadata = {};
+            }
         } catch (error) {
             // do nothing, invalid metadata or another client
-            return;
-        }
-
-        if (!metadata || Array.isArray(metadata)) {
             return;
         }
 

@@ -7,9 +7,13 @@ class User extends Abstract {
 
         try {
             metadata = JSON.parse(data.json_metadata);
+
+            if (!metadata || Array.isArray(metadata)) {
+                metadata = {};
+            }
         } catch (error) {
-            // do nothing, just invalid data from another client
-            return;
+            // invalid metadata or another client
+            metadata = {};
         }
 
         const model = await this._getOrCreateModel(Model, { name: data.account });
