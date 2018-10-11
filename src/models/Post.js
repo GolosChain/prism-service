@@ -22,6 +22,9 @@ module.exports = MongoDB.makeModel(
         rawJsonMetadata: {
             type: String,
         },
+        commentsCount: {
+            type: Number
+        },
         metadata: {
             app: {
                 type: String,

@@ -13,6 +13,7 @@ class Comment extends Abstract {
         this._applyMetaData(model, data);
 
         await model.save();
+        await this._incrementPostComments(model);
     }
 
     _applyBasicData(model, data) {
@@ -48,6 +49,10 @@ class Comment extends Abstract {
         if (model.metadata.images && model.metadata.images[0] === '') {
             model.metadata.images = [];
         }
+    }
+
+    async _incrementPostComments(model) {
+        await Model.updateOne({ _id: model._id }, { $inc: { commentsCount: 1 } });
     }
 }
 
