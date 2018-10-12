@@ -49,6 +49,9 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     permlink: 1,
                 },
+                options: {
+                    unique: true,
+                },
             },
         ],
     }

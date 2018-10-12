@@ -6,7 +6,6 @@ module.exports = MongoDB.makeModel(
     {
         name: {
             type: String,
-            unique: true,
             required: true,
         },
         metaName: {
@@ -33,7 +32,14 @@ module.exports = MongoDB.makeModel(
     },
     {
         index: [
-            // TODO -
+            {
+                fields: {
+                    name: 1,
+                },
+                options: {
+                    unique: true,
+                },
+            },
         ],
     }
 );
