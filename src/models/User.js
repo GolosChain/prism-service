@@ -29,6 +29,9 @@ module.exports = MongoDB.makeModel(
         pinnedPosts: {
             type: [String],
         },
+        following: {
+            type: [String],
+        },
     },
     {
         index: [

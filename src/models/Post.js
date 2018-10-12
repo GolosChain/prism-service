@@ -57,6 +57,11 @@ module.exports = MongoDB.makeModel(
                     unique: true,
                 },
             },
+            {
+                fields: {
+                    author: 1,
+                },
+            },
         ],
     }
 );

@@ -80,7 +80,7 @@ class Main {
                 await this._content.handleDelete(data);
                 break;
             case 'custom_json':
-                // Do noting for now
+                await this._user.handleCustom(data);
                 break;
             case 'comment_options':
                 // Do noting for now
@@ -149,7 +149,7 @@ class Main {
                 // Do noting for now
                 break;
             case 'account_metadata':
-                await this._user.handle(data);
+                await this._user.handleAccount(data);
                 break;
             case 'proposal_create':
                 // Do noting for now
