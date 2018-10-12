@@ -23,7 +23,8 @@ module.exports = MongoDB.makeModel(
             type: String,
         },
         commentsCount: {
-            type: Number
+            type: Number,
+            default: 0,
         },
         metadata: {
             app: {
@@ -44,15 +45,15 @@ module.exports = MongoDB.makeModel(
             users: {
                 type: [String],
             },
-        }
+        },
     },
     {
         index: [
             {
                 fields: {
-                    permlink: 1
-                }
-            }
+                    permlink: 1,
+                },
+            },
         ],
     }
 );
