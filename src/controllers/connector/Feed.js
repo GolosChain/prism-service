@@ -1,6 +1,7 @@
 const env = require('../../data/env');
 const Abstract = require('./Abstract');
 const Post = require('../../models/Post');
+const User = require('../../models/User');
 
 class Feed extends Abstract {
     async handle({ user, type, tags = [], fromId = null, limit = 20 }) {
@@ -39,6 +40,53 @@ class Feed extends Abstract {
     async _getNaturalFeed({ fromId, limit, tags }) {
         const query = {};
 
+        this._injectQueryParams(query, { fromId, tags });
+
+        const data = await this._getPostsWithNaturalSort(query, limit);
+
+        return {
+            total: data.length,
+            data: data || [],
+        };
+    }
+
+    async _getPopularFeed({ fromId, limit, tags }) {
+        // TODO -
+    }
+
+    async _getActualFeed({ fromId, limit, tags }) {
+        // TODO -
+    }
+
+    async _getPromoFeed({ fromId, limit, tags }) {
+        // TODO -
+    }
+
+    async _getPersonalFeed({ fromId, limit, user, tags }) {
+        const query = {};
+
+        this._injectQueryParams(query, { fromId, tags });
+
+        const userModel = await User.findOne({ name: user }, { following: true });
+
+        if (!userModel || !userModel.following || !userModel.following.length) {
+            return {
+                total: 0,
+                data: [],
+            };
+        }
+
+        query.author = { $in: userModel.following };
+
+        const data = await this._getPostsWithNaturalSort(query, limit);
+
+        return {
+            total: data.length,
+            data: data || [],
+        };
+    }
+
+    _injectQueryParams(query, { fromId, tags }) {
         if (fromId) {
             query._id = { $lt: fromId };
         }
@@ -46,33 +94,10 @@ class Feed extends Abstract {
         if (tags.length) {
             query['metadata.tags'] = { $in: tags };
         }
-
-        let data = await Post.find(query, { __v: false }, { limit, lean: true, sort: { _id: -1 } });
-
-        if (!data) {
-            data = [];
-        }
-
-        return {
-            total: data.length,
-            data,
-        };
     }
 
-    _getPopularFeed({ fromId, limit, tags }) {
-        // TODO -
-    }
-
-    _getActualFeed({ fromId, limit, tags }) {
-        // TODO -
-    }
-
-    _getPromoFeed({ fromId, limit, tags }) {
-        // TODO -
-    }
-
-    _getPersonalFeed({ fromId, limit, user, tags }) {
-        // TODO -
+    async _getPostsWithNaturalSort(query, limit) {
+        return await Post.find(query, { __v: false }, { limit, lean: true, sort: { _id: -1 } });
     }
 }
 
