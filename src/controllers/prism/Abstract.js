@@ -4,13 +4,17 @@ class Abstract {
     }
 
     async _getOrCreateModel(modelClass, queryForCheck) {
-        let model = await modelClass.findOne(queryForCheck);
+        let model = await this._getModel(modelClass, queryForCheck);
 
         if (!model) {
             model = new modelClass();
         }
 
         return model;
+    }
+
+    async _getModel(modelClass, query) {
+        return await modelClass.findOne(query);
     }
 }
 
