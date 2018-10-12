@@ -15,7 +15,7 @@ class Content extends Abstract {
         await model.save();
 
         if (!isPost) {
-            await this._incrementPostComments(model.permlink);
+            await this._incrementPostComments(model.parentPermlink);
         }
     }
 
@@ -29,7 +29,7 @@ class Content extends Abstract {
         }
 
         if (!isPost) {
-            await this._decrementPostComments(model.permlink);
+            await this._decrementPostComments(model.parentPermlink);
         }
 
         await model.remove();
