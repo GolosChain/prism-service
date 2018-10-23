@@ -2,15 +2,13 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BlockUtil = core.utils.Block;
 
-const Comment = require('./Comment');
-const Post = require('./Post');
+const Content = require('./Content');
 const Vote = require('./Vote');
 const User = require('./User');
 
 class Main {
     constructor() {
-        this._comment = new Comment();
-        this._post = new Post();
+        this._content = new Content();
         this._vote = new Vote();
         this._user = new User();
     }
@@ -31,8 +29,7 @@ class Main {
                 await this._vote.handle(data);
                 break;
             case 'comment':
-                await this._post.handle(data);
-                await this._comment.handle(data);
+                await this._content.handleMakeOrModify(data);
                 break;
             case 'transfer':
                 // Do noting for now
@@ -80,10 +77,10 @@ class Main {
                 // Do noting for now
                 break;
             case 'delete_comment':
-                // Do noting for now
+                await this._content.handleDelete(data);
                 break;
             case 'custom_json':
-                // Do noting for now
+                await this._user.handleCustom(data);
                 break;
             case 'comment_options':
                 // Do noting for now
@@ -152,7 +149,7 @@ class Main {
                 // Do noting for now
                 break;
             case 'account_metadata':
-                await this._user.handle(data);
+                await this._user.handleAccount(data);
                 break;
             case 'proposal_create':
                 // Do noting for now

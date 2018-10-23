@@ -41,15 +41,18 @@ module.exports = MongoDB.makeModel(
             users: {
                 type: [String],
             },
-        }
+        },
     },
     {
         index: [
             {
                 fields: {
-                    permlink: 1
-                }
-            }
+                    permlink: 1,
+                },
+                options: {
+                    unique: true,
+                },
+            },
         ],
     }
 );

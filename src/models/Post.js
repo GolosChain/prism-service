@@ -22,6 +22,10 @@ module.exports = MongoDB.makeModel(
         rawJsonMetadata: {
             type: String,
         },
+        commentsCount: {
+            type: Number,
+            default: 0,
+        },
         metadata: {
             app: {
                 type: String,
@@ -41,15 +45,23 @@ module.exports = MongoDB.makeModel(
             users: {
                 type: [String],
             },
-        }
+        },
     },
     {
         index: [
             {
                 fields: {
-                    permlink: 1
-                }
-            }
+                    permlink: 1,
+                },
+                options: {
+                    unique: true,
+                },
+            },
+            {
+                fields: {
+                    author: 1,
+                },
+            },
         ],
     }
 );

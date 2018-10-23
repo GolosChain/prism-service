@@ -1,11 +1,11 @@
 const Abstract = require('./Abstract');
-const Model = require('../../models/Vote');
+const VoteModel = require('../../models/Vote');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 
 class Vote extends Abstract {
     async handle({ voter: fromUser, author: toUser, permlink, weight }) {
-        const model = new Model({ fromUser, toUser, permlink, weight });
+        const model = new VoteModel({ fromUser, toUser, permlink, weight });
 
         await model.save();
 

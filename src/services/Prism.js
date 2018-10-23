@@ -20,7 +20,10 @@ class Prism extends BasicService {
 
     async start() {
         await this._subscribe.start();
-        await this._runExtractorLoop();
+        this._runExtractorLoop().catch((error) => {
+            Logger.error(`Prism error - ${error}`);
+            process.exit(1);
+        });
     }
 
     async _handleBlock(block, blockNum) {
@@ -37,15 +40,10 @@ class Prism extends BasicService {
 
     async _runExtractorLoop() {
         while (true) {
-            try {
-                await this._extractFromQueue();
-                await new Promise(resolve => {
-                    setImmediate(resolve);
-                });
-            } catch (error) {
-                Logger.error(`Prism error - ${error}`);
-                process.exit(1);
-            }
+            await this._extractFromQueue();
+            await new Promise(resolve => {
+                setImmediate(resolve);
+            });
         }
     }
 

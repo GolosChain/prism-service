@@ -6,7 +6,6 @@ module.exports = MongoDB.makeModel(
     {
         name: {
             type: String,
-            unique: true,
             required: true,
         },
         metaName: {
@@ -30,10 +29,20 @@ module.exports = MongoDB.makeModel(
         pinnedPosts: {
             type: [String],
         },
+        following: {
+            type: [String],
+        },
     },
     {
         index: [
-            // TODO -
+            {
+                fields: {
+                    name: 1,
+                },
+                options: {
+                    unique: true,
+                },
+            },
         ],
     }
 );
