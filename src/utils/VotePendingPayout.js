@@ -2,6 +2,8 @@ const REVERSE_AUCTION_WINDOW_SECONDS = 60 * 30;
 const VOTE_REGENERATION_SECONDS = 5 * 60 * 60 * 24;
 const GOLOS_100_PERCENT = 10000;
 
+// TODO TotalVoteRealWeight
+
 class VotePendingPayout {
     constructor({ voteModel, contentModel, userModel }, chainProps) {
         this._voteModel = voteModel;
@@ -20,9 +22,7 @@ class VotePendingPayout {
         const itr = comment_vote_idx.find(
             std__make_tuple(this._contentModel.id, this._userModel.id)
         );
-        const elapsed_seconds = (
-            _db.head_block_time() - this._userModel.lastVoteTime
-        ).to_seconds();
+        const elapsed_seconds = (_db.head_block_time() - this._userModel.lastVoteTime).to_seconds();
         const regenerated_power = (GOLOS_100_PERCENT * elapsed_seconds) / VOTE_REGENERATION_SECONDS;
         const current_power = Math.min(
             this._userModel.votingPower + regenerated_power,
@@ -88,18 +88,16 @@ class VotePendingPayout {
             }
 
             if (max_vote_weight) {
-                _db.modify(this._contentModel, comment_object => {
-                    comment_object.total_vote_weight += max_vote_weight;
-                });
+                this._contentModel.totalVoteWeight += max_vote_weight;
             }
         } else {
             const rshares = this._voteModel.weight < 0 ? -abs_rshares : abs_rshares;
 
             this._userModel.votingPower = current_power - used_power;
             this._userModel.lastVoteTime = _db.head_block_time();
-            this._contentModel.net_rshares -= itr.rshares;
-            this._contentModel.net_rshares += rshares;
-            this._contentModel.total_vote_weight -= itr.weight;
+            this._contentModel.netRshares -= itr.rshares;
+            this._contentModel.netRshares += rshares;
+            this._contentModel.totalVoteWeight -= itr.weight;
 
             this._voteModel.rshares = rshares;
             this._voteModel.vote_percent = this._voteModel.weight;

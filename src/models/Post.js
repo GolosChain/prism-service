@@ -89,10 +89,10 @@ module.exports = MongoDB.makeModel(
                 type: Number,
             },
         },
-        totalWeight: {
+        totalVoteWeight: {
             type: Number,
         },
-        totalRealWeight: {
+        totalVoteRealWeight: {
             type: Number,
         },
         rawJsonMetadata: {
