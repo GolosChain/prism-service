@@ -60,9 +60,6 @@ module.exports = MongoDB.makeModel(
         childrenRshares2: {
             type: Number,
         },
-        totalPendingPayout: {
-            type: Number,
-        },
         createdInBlockchain: {
             type: Date,
         },

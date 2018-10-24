@@ -5,7 +5,7 @@ const core = require('gls-core-service');
 const BlockChainValues = core.utils.BlockChainValues;
 
 // Warning: Ported and refactored from blockchain node (C++)
-class PendingPayout {
+class ContentPendingPayout {
     constructor(target, props, gbgRate) {
         this._target = target;
         this._props = props;
@@ -47,7 +47,6 @@ class PendingPayout {
         }
 
         this._appendAuthorRewards({ ...this._calcAuthorRewardsContext() });
-        this._calcTotalPayout();
     }
 
     _calcAuthorRewardsContext() {
@@ -117,12 +116,6 @@ class PendingPayout {
         this._target.pending.payout += this._target.pending.authorPayout;
     }
 
-    _calcTotalPayout() {
-        let tpp = (this._target.childrenRshares2 * this._pot) / this._totalR2;
-
-        this._target.totalPendingPayout = this._toGbg(tpp);
-    }
-
     _getCurationRewardsPercent() {
         return (GOLOS_100_PERCENT / 100) * 25;
     }
@@ -157,4 +150,4 @@ class PendingPayout {
     }
 }
 
-module.exports = PendingPayout;
+module.exports = ContentPendingPayout;
