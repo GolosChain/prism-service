@@ -21,11 +21,11 @@ class VotePendingPayout {
             std__make_tuple(this._contentModel.id, this._userModel.id)
         );
         const elapsed_seconds = (
-            _db.head_block_time() - this._userModel.last_vote_time
+            _db.head_block_time() - this._userModel.lastVoteTime
         ).to_seconds();
         const regenerated_power = (GOLOS_100_PERCENT * elapsed_seconds) / VOTE_REGENERATION_SECONDS;
         const current_power = Math.min(
-            this._userModel.voting_power + regenerated_power,
+            this._userModel.votingPower + regenerated_power,
             GOLOS_100_PERCENT
         );
 
@@ -43,8 +43,8 @@ class VotePendingPayout {
         if (itr === comment_vote_idx.end()) {
             const rshares = this._voteModel.weight < 0 ? -abs_rshares : abs_rshares;
 
-            this._userModel.voting_power = current_power - used_power;
-            this._userModel.last_vote_time = _db.head_block_time();
+            this._userModel.votingPower = current_power - used_power;
+            this._userModel.lastVoteTime = _db.head_block_time();
 
             const old_vote_rshares = this._contentModel.vote_rshares;
 
@@ -54,40 +54,38 @@ class VotePendingPayout {
 
             let max_vote_weight = 0;
 
-            _db.create(comment_vote_object => {
-                comment_vote_object.comment = this._contentModel.id;
-                comment_vote_object.rshares = rshares;
-                comment_vote_object.vote_percent = this._voteModel.weight;
-                comment_vote_object.last_update = _db.head_block_time();
+            this._voteModel.comment = this._contentModel.id;
+            this._voteModel.rshares = rshares;
+            this._voteModel.vote_percent = this._voteModel.weight;
+            this._voteModel.last_update = _db.head_block_time();
 
-                if (
-                    rshares > 0 &&
-                    this._contentModel.last_payout === fc__time_point_sec() &&
-                    this._contentModel.allow_curation_rewards
-                ) {
-                    const old_weight =
-                        /*uint64_t*/ (std__numeric_limits__max() *
-                            fc__uint128_t(old_vote_rshares.value)) /
-                        (2 * _db.get_content_constant_s() + old_vote_rshares.value);
-                    const new_weight =
-                        /*uint64_t*/ (std__numeric_limits__max() *
-                            fc__uint128_t(this._contentModel.vote_rshares)) /
-                        (2 * _db.get_content_constant_s() + this._contentModel.vote_rshares);
-                    comment_vote_object.weight = new_weight - old_weight;
+            if (
+                rshares > 0 &&
+                this._contentModel.last_payout === fc__time_point_sec() &&
+                this._contentModel.allow_curation_rewards
+            ) {
+                const old_weight =
+                    /*uint64_t*/ (std__numeric_limits__max() *
+                        fc__uint128_t(old_vote_rshares.value)) /
+                    (2 * _db.get_content_constant_s() + old_vote_rshares.value);
+                const new_weight =
+                    /*uint64_t*/ (std__numeric_limits__max() *
+                        fc__uint128_t(this._contentModel.vote_rshares)) /
+                    (2 * _db.get_content_constant_s() + this._contentModel.vote_rshares);
+                this._voteModel.weight = new_weight - old_weight;
 
-                    max_vote_weight = comment_vote_object.weight;
+                max_vote_weight = this._voteModel.weight;
 
-                    const filteredAuctionWindow = Math.min(
-                        (comment_vote_object.last_update - this._contentModel.created).to_seconds(),
-                        REVERSE_AUCTION_WINDOW_SECONDS
-                    );
+                const filteredAuctionWindow = Math.min(
+                    (this._voteModel.last_update - this._contentModel.created).to_seconds(),
+                    REVERSE_AUCTION_WINDOW_SECONDS
+                );
 
-                    comment_vote_object.weight =
-                        (max_vote_weight * filteredAuctionWindow) / REVERSE_AUCTION_WINDOW_SECONDS;
-                } else {
-                    comment_vote_object.weight = 0;
-                }
-            });
+                this._voteModel.weight =
+                    (max_vote_weight * filteredAuctionWindow) / REVERSE_AUCTION_WINDOW_SECONDS;
+            } else {
+                this._voteModel.weight = 0;
+            }
 
             if (max_vote_weight) {
                 _db.modify(this._contentModel, comment_object => {
@@ -97,19 +95,21 @@ class VotePendingPayout {
         } else {
             const rshares = this._voteModel.weight < 0 ? -abs_rshares : abs_rshares;
 
-            this._userModel.voting_power = current_power - used_power;
-            this._userModel.last_vote_time = _db.head_block_time();
+            this._userModel.votingPower = current_power - used_power;
+            this._userModel.lastVoteTime = _db.head_block_time();
             this._contentModel.net_rshares -= itr.rshares;
             this._contentModel.net_rshares += rshares;
             this._contentModel.total_vote_weight -= itr.weight;
 
-            _db.modify(itr, comment_vote_object => {
-                comment_vote_object.rshares = rshares;
-                comment_vote_object.vote_percent = this._voteModel.weight;
-                comment_vote_object.last_update = _db.head_block_time();
-                comment_vote_object.weight = 0;
-            });
+            this._voteModel.rshares = rshares;
+            this._voteModel.vote_percent = this._voteModel.weight;
+            this._voteModel.last_update = _db.head_block_time();
+            this._voteModel.weight = 0;
         }
+
+        this._voteModel.save();
+        this._contentModel.save();
+        this._userModel.save();
     }
 }
 

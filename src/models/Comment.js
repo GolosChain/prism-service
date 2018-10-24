@@ -57,9 +57,6 @@ module.exports = MongoDB.makeModel(
         netRshares: {
             type: Number,
         },
-        childrenRshares2: {
-            type: Number,
-        },
         createdInBlockchain: {
             type: Date,
         },
