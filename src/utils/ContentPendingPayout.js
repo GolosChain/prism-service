@@ -15,7 +15,7 @@ class ContentPendingPayout {
         this._authorTokens = null;
     }
 
-    applyToTarget() {
+    calcAndApply() {
         if (this._chainProps.total_reward_shares2 > 0) {
             this._calcPending();
         }
