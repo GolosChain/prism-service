@@ -34,7 +34,7 @@ module.exports = MongoDB.makeModel(
         },
         votingPower: {
             type: Number,
-            default: 0, // TODO -
+            default: 10000,
         },
         lastVoteDate: {
             type: Date,

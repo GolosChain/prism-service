@@ -89,6 +89,9 @@ module.exports = MongoDB.makeModel(
                 type: Number,
             },
         },
+        voteRshares: {
+            type: Number,
+        },
         totalVoteWeight: {
             type: Number,
         },

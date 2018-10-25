@@ -2,14 +2,13 @@ const REVERSE_AUCTION_WINDOW_SECONDS = 60 * 30;
 const VOTE_REGENERATION_SECONDS = 5 * 60 * 60 * 24;
 const GOLOS_100_PERCENT = 10000;
 
-// TODO TotalVoteRealWeight
-
 class VotePendingPayout {
-    constructor({ voteModel, contentModel, userModel }, chainProps) {
+    constructor({ voteModel, contentModel, userModel }, chainProps, blockTime) {
         this._voteModel = voteModel;
         this._contentModel = voteModel;
         this._userModel = userModel;
         this._voteRegenerationPerDay = chainProps.vote_regeneration_per_day;
+        this._blockTime = blockTime;
     }
 
     do_apply() {
@@ -22,92 +21,102 @@ class VotePendingPayout {
         const itr = comment_vote_idx.find(
             std__make_tuple(this._contentModel.id, this._userModel.id)
         );
-        const elapsed_seconds = (_db.head_block_time() - this._userModel.lastVoteTime).to_seconds();
-        const regenerated_power = (GOLOS_100_PERCENT * elapsed_seconds) / VOTE_REGENERATION_SECONDS;
-        const current_power = Math.min(
-            this._userModel.votingPower + regenerated_power,
+        const elapsedSeconds = this._secondsDiff(this._blockTime - this._userModel.lastVoteTime);
+        const regeneratedPower = (GOLOS_100_PERCENT * elapsedSeconds) / VOTE_REGENERATION_SECONDS;
+        const currentPower = Math.min(
+            this._userModel.votingPower + regeneratedPower,
             GOLOS_100_PERCENT
         );
 
-        const abs_weight = Math.abs(this._voteModel.weight);
-        let used_power = (current_power * abs_weight) / GOLOS_100_PERCENT;
+        const absWeight = Math.abs(this._voteModel.weight);
+        let usedPower = (currentPower * absWeight) / GOLOS_100_PERCENT;
 
-        const max_vote_denom =
+        const voteDenom =
             (this._voteRegenerationPerDay * VOTE_REGENERATION_SECONDS) / (60 * 60 * 24);
 
-        used_power = (used_power + max_vote_denom - 1) / max_vote_denom;
+        usedPower = (usedPower + voteDenom - 1) / voteDenom;
 
-        const abs_rshares =
-            (this._userModel.effective_vesting_shares().amount * used_power) / GOLOS_100_PERCENT;
+        const absRshares =
+            (this._userModel.effective_vesting_shares().amount * usedPower) / GOLOS_100_PERCENT;
 
         if (itr === comment_vote_idx.end()) {
-            const rshares = this._voteModel.weight < 0 ? -abs_rshares : abs_rshares;
+            const rshares = this._voteModel.weight < 0 ? -absRshares : absRshares;
 
-            this._userModel.votingPower = current_power - used_power;
-            this._userModel.lastVoteTime = _db.head_block_time();
+            this._userModel.votingPower = currentPower - usedPower;
+            this._userModel.lastVoteTime = this._blockTime;
 
-            const old_vote_rshares = this._contentModel.vote_rshares;
+            const oldVoteRshares = this._contentModel.voteRshares;
 
-            _db.modify(this._contentModel, comment_object => {
-                comment_object.net_rshares += rshares;
-            });
+            this._contentModel.netRshares += rshares;
 
-            let max_vote_weight = 0;
+            let voteWeight = 0;
+            let realVoteWeight = 0;
 
             this._voteModel.comment = this._contentModel.id;
             this._voteModel.rshares = rshares;
-            this._voteModel.vote_percent = this._voteModel.weight;
-            this._voteModel.last_update = _db.head_block_time();
+            this._voteModel.percent = this._voteModel.weight;
+            this._voteModel.lastUpdateInBlockchain = this._blockTime;
 
-            if (
+            if (                                                              // TODO
                 rshares > 0 &&
                 this._contentModel.last_payout === fc__time_point_sec() &&
                 this._contentModel.allow_curation_rewards
             ) {
-                const old_weight =
+                const oldWeight =
                     /*uint64_t*/ (std__numeric_limits__max() *
-                        fc__uint128_t(old_vote_rshares.value)) /
-                    (2 * _db.get_content_constant_s() + old_vote_rshares.value);
-                const new_weight =
+                        fc__uint128_t(oldVoteRshares.value)) /
+                    (2 * _db.get_content_constant_s() + oldVoteRshares.value);
+                const newWeight =
                     /*uint64_t*/ (std__numeric_limits__max() *
-                        fc__uint128_t(this._contentModel.vote_rshares)) /
-                    (2 * _db.get_content_constant_s() + this._contentModel.vote_rshares);
-                this._voteModel.weight = new_weight - old_weight;
+                        fc__uint128_t(this._contentModel.voteRshares)) /
+                    (2 * _db.get_content_constant_s() + this._contentModel.voteRshares);
 
-                max_vote_weight = this._voteModel.weight;
+                this._voteModel.weight = newWeight - oldWeight;
+
+                voteWeight = this._voteModel.weight;
 
                 const filteredAuctionWindow = Math.min(
-                    (this._voteModel.last_update - this._contentModel.created).to_seconds(),
+                    this._secondsDiff(
+                        this._voteModel.lastUpdateInBlockchain -
+                            this._contentModel.createdInBlockchain
+                    ),
                     REVERSE_AUCTION_WINDOW_SECONDS
                 );
 
                 this._voteModel.weight =
-                    (max_vote_weight * filteredAuctionWindow) / REVERSE_AUCTION_WINDOW_SECONDS;
+                    (voteWeight * filteredAuctionWindow) / REVERSE_AUCTION_WINDOW_SECONDS;
+
+                realVoteWeight = this._voteModel.weight;
             } else {
                 this._voteModel.weight = 0;
             }
 
-            if (max_vote_weight) {
-                this._contentModel.totalVoteWeight += max_vote_weight;
+            if (voteWeight) {
+                this._contentModel.totalVoteWeight += voteWeight;
+                this._contentModel.totalVoteRealWeight += realVoteWeight;
             }
         } else {
-            const rshares = this._voteModel.weight < 0 ? -abs_rshares : abs_rshares;
+            const rshares = this._voteModel.weight < 0 ? -absRshares : absRshares;
 
-            this._userModel.votingPower = current_power - used_power;
-            this._userModel.lastVoteTime = _db.head_block_time();
+            this._userModel.votingPower = currentPower - usedPower;
+            this._userModel.lastVoteTime = this._blockTime;
             this._contentModel.netRshares -= itr.rshares;
             this._contentModel.netRshares += rshares;
             this._contentModel.totalVoteWeight -= itr.weight;
 
             this._voteModel.rshares = rshares;
-            this._voteModel.vote_percent = this._voteModel.weight;
-            this._voteModel.last_update = _db.head_block_time();
+            this._voteModel.percent = this._voteModel.weight;
+            this._voteModel.lastUpdateInBlockchain = this._blockTime;
             this._voteModel.weight = 0;
         }
 
         this._voteModel.save();
         this._contentModel.save();
         this._userModel.save();
+    }
+
+    _secondsDiff(date1, date2) {
+        return (+date1 - +date2) / 1000;
     }
 }
 
