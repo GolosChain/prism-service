@@ -1,6 +1,7 @@
 const REVERSE_AUCTION_WINDOW_SECONDS = 60 * 30;
 const VOTE_REGENERATION_SECONDS = 5 * 60 * 60 * 24;
 const GOLOS_100_PERCENT = 10000;
+const CONTENT_CONSTANT = 2000000000000n;
 
 class VotePendingPayout {
     constructor({ voteModel, recentVoteModel, contentModel, userModel }, chainProps, blockTime) {
@@ -61,13 +62,11 @@ class VotePendingPayout {
         let voteWeight = 0;
 
         if (rshares > 0 && this._contentModel.allowCurationRewards) {
-            // TODO -
-            const oldWeight =
-                (std__numeric_limits__max() * fc__uint128_t(oldVoteRshares.value)) /
-                (2 * _db.get_content_constant_s() + oldVoteRshares.value);
-            const newWeight =
-                (std__numeric_limits__max() * fc__uint128_t(this._contentModel.voteRshares)) /
-                (2 * _db.get_content_constant_s() + this._contentModel.voteRshares);
+            const contentVoteRshares = this._contentModel.voteRshares;
+            const bigIntOldFilter = 2n ** 64n * oldVoteRshares;
+            const oldWeight = bigIntOldFilter / (2 * CONTENT_CONSTANT + oldVoteRshares);
+            const bitIntNewFilter = 2n ** 64n * contentVoteRshares;
+            const newWeight = bitIntNewFilter / (2 * CONTENT_CONSTANT + contentVoteRshares);
             const elapsed = this._calcElapsedFromPostCreation();
             const filtered = Math.min(elapsed, REVERSE_AUCTION_WINDOW_SECONDS);
 
