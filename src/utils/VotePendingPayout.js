@@ -17,9 +17,7 @@ class VotePendingPayout {
         const currentPower = this._calcCurrentPower();
         const usedPower = this._calcUsedPower(currentPower);
 
-        // TODO -
-        this._absRshares =
-            (this._userModel.effective_vesting_shares().amount * usedPower) / GOLOS_100_PERCENT;
+        this._absRshares = (this._calcEffectiveVestingShares() * usedPower) / GOLOS_100_PERCENT;
 
         if (this._recentVoteModel) {
             this._handleUpdateVote(currentPower, usedPower);
@@ -62,12 +60,7 @@ class VotePendingPayout {
         const oldVoteRshares = this._contentModel.voteRshares;
         let voteWeight = 0;
 
-        // TODO -
-        if (
-            rshares > 0 &&
-            this._contentModel.last_payout === fc__time_point_sec() &&
-            this._contentModel.allowCurationRewards
-        ) {
+        if (rshares > 0 && this._contentModel.allowCurationRewards) {
             // TODO -
             const oldWeight =
                 (std__numeric_limits__max() * fc__uint128_t(oldVoteRshares.value)) /
@@ -118,6 +111,12 @@ class VotePendingPayout {
             (this._voteRegenerationPerDay * VOTE_REGENERATION_SECONDS) / (60 * 60 * 24);
 
         return (basedUsedPower + voteDenom - 1) / voteDenom;
+    }
+
+    _calcEffectiveVestingShares() {
+        const model = this._userModel;
+
+        return model.vesting - model.delegatedToAnother + model.delegatedFromAnother;
     }
 
     _secondsDiff(date1, date2) {
