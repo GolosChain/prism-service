@@ -16,6 +16,12 @@ module.exports = MongoDB.makeModel(
         weight: {
             type: Number,
         },
+        percent: {
+            type: Number,
+        },
+        lastUpdateInBlockchain: {
+            type: Date,
+        },
     },
     {
         index: [

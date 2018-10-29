@@ -32,6 +32,24 @@ module.exports = MongoDB.makeModel(
         following: {
             type: [String],
         },
+        votingPower: {
+            type: Number,
+            default: 10000,
+        },
+        lastVoteDate: {
+            type: Date,
+        },
+        vesting: {
+            original: {
+                type: Number,
+            },
+            delegatedFromAnother: {
+                type: Number,
+            },
+            delegatedToAnother: {
+                type: Number,
+            },
+        },
     },
     {
         index: [
