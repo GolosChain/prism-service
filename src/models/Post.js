@@ -72,6 +72,7 @@ module.exports = MongoDB.makeModel(
             },
             payout: {
                 type: Number,
+                default: 0,
             },
             benefactorPayout: {
                 type: Number,
