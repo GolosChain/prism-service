@@ -3,7 +3,7 @@ const core = require('gls-core-service');
 const BlockChainValues = core.utils.BlockChainValues;
 const BigNum = core.utils.BigNum;
 
-const GOLOS_100_PERCENT = 10000;
+const GOLOS_100_PERCENT = new BigNum(10000);
 
 // Warning: Ported and refactored from blockchain node (C++)
 class ContentPendingPayout {
@@ -63,29 +63,29 @@ class ContentPendingPayout {
     _calcGbgForAuthorReward() {
         return this._authorTokens
             .times(this._contentModel.gbgPercent)
-            .div(new BigNum(GOLOS_100_PERCENT).times(2));
+            .div(GOLOS_100_PERCENT.times(2));
     }
 
     _calcBenefactorWeights() {
         let benefactorWeights = new BigNum(0);
 
         for (let benefactor of this._contentModel.beneficiaries) {
-            benefactorWeights = benefactorWeights.plus(new BigNum(benefactor.weight));
+            benefactorWeights = benefactorWeights.plus(benefactor.weight);
         }
 
         return benefactorWeights;
     }
 
     _calcPayout() {
-        const max = new BigNum(this._contentModel.maxAcceptedPayout);
-        let payout = new BigNum(this._contentModel.netRshares);
+        const max = this._contentModel.maxAcceptedPayout;
+        let payout = this._contentModel.netRshares;
 
         if (payout.lt(0)) {
             payout = new BigNum(0);
         }
 
         payout = payout
-            .times(new BigNum(this._contentModel.rewardWeight))
+            .times(this._contentModel.rewardWeight)
             .div(GOLOS_100_PERCENT)
             .times(this._pot)
             .div(this._totalR2);
@@ -149,7 +149,7 @@ class ContentPendingPayout {
     }
 
     _getCurationRewardsPercent() {
-        return new BigNum(GOLOS_100_PERCENT).div(100).times(25);
+        return GOLOS_100_PERCENT.div(100).times(25);
     }
 
     _getVestingSharePrice() {
@@ -175,10 +175,10 @@ class ContentPendingPayout {
     }
 
     _getCuratorUnclaimedRewards(curationTokens) {
-        const totalVoteWeight = new BigNum(this._contentModel.totalVoteWeight);
-        const totalVoteRealWeight = new BigNum(this._contentModel.totalVoteRealWeight);
+        const totalVoteWeight = this._contentModel.totalVoteWeight;
+        const totalVoteRealWeight = this._contentModel.totalVoteRealWeight;
 
-        return new BigNum(curationTokens)
+        return curationTokens
             .times(totalVoteWeight.minus(totalVoteRealWeight))
             .div(totalVoteWeight);
     }
