@@ -11,13 +11,13 @@ class ContentPendingPayout {
         this._contentModel = contentModel;
         this._chainProps = chainProps;
         this._gbgRate = gbgRate;
-        this._pot = parseFloat(chainProps.total_reward_fund_steem);
-        this._totalR2 = parseFloat(chainProps.total_reward_shares2);
+        this._pot = chainProps.totalRewardFundGolos;
+        this._totalR2 = chainProps.totalRewardShares2;
         this._authorTokens = null;
     }
 
     calcAndApply() {
-        if (this._chainProps.total_reward_shares2 > 0) {
+        if (this._chainProps.totalRewardShares2.gt(0)) {
             this._calcPending();
         }
 
@@ -54,7 +54,7 @@ class ContentPendingPayout {
     _calcAuthorRewardsContext() {
         const gbg = this._calcGbgForAuthorReward();
         const vestingGolos = this._authorTokens.minus(gbg);
-        const toGbg = new BigNum(this._chainProps.sbd_print_rate).times(gbg).div(GOLOS_100_PERCENT);
+        const toGbg = this._chainProps.gbgPrintRate.times(gbg).div(GOLOS_100_PERCENT);
         const toGolos = gbg.minus(toGbg);
 
         return { toGolos, toGbg, vestingGolos };
@@ -153,8 +153,8 @@ class ContentPendingPayout {
     }
 
     _getVestingSharePrice() {
-        const fund = new BigNum(this._chainProps.total_vesting_fund_steem);
-        const shares = new BigNum(this._chainProps.total_vesting_shares);
+        const fund = this._chainProps.totalVestingFundGolos;
+        const shares = this._chainProps.totalVestingShares;
 
         if (fund.eq(0) || shares.eq(0)) {
             return new BigNum(1);
