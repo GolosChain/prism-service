@@ -4,6 +4,7 @@ const stats = core.utils.statsClient;
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
 const Controller = require('../controllers/prism/Main');
+const RawBlockRestore = require('../services/RawBlockRestore'); // TODO -
 
 class Prism extends BasicService {
     constructor() {
@@ -20,7 +21,7 @@ class Prism extends BasicService {
 
     async start() {
         await this._subscribe.start();
-        this._runExtractorLoop().catch((error) => {
+        this._runExtractorLoop().catch(error => {
             Logger.error(`Prism error - ${error}`);
             process.exit(1);
         });
@@ -52,9 +53,8 @@ class Prism extends BasicService {
 
         while ((blockData = this._blockQueue.shift())) {
             const timer = new Date();
-            const [block] = blockData;
 
-            await this._controller.disperse(block);
+            await this._controller.disperse(blockData);
             stats.timing('block_disperse', new Date() - timer);
         }
     }

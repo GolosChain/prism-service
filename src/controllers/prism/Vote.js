@@ -7,6 +7,8 @@ class Vote extends Abstract {
     async handle({ voter: fromUser, author: toUser, permlink, weight }) {
         const model = new VoteModel({ fromUser, toUser, permlink, weight });
 
+        await this._updateRevertTrace({ command: 'create', blockBody: model.toObject() });
+        
         await model.save();
 
         const postModel = await PostModel.findOne({ permlink });
@@ -22,6 +24,8 @@ class Vote extends Abstract {
             await this._updateCommentByVote(model, commentModel);
             return;
         }
+
+        // TODO Next version
     }
 
     _updatePostByVote(model, postModel) {

@@ -1,10 +1,10 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BlockUtil = core.utils.Block;
-
 const Content = require('./Content');
 const Vote = require('./Vote');
 const User = require('./User');
+const RevertTrace = require('../../models/RevertTrace');
 
 class Main {
     constructor() {
@@ -13,7 +13,11 @@ class Main {
         this._user = new User();
     }
 
-    async disperse(block) {
+    async disperse([block, blockNum]) {
+        const tracer = new RevertTrace({ blockNum });
+
+        await tracer.save();
+
         for (let [type, data] of BlockUtil.eachRealOperation(block)) {
             await this._disperseReal(type, data);
         }

@@ -26,11 +26,6 @@ module.exports = MongoDB.makeModel(
     {
         schema: {
             strict: false,
-            capped: {
-                size: 8 * 1024 ** 3, // 8GB reserve
-                max: env.GLS_DELEGATION_ROUND_LENGTH * 3,
-                autoIndexId: true,
-            },
         },
     }
 );
