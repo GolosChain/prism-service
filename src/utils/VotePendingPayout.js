@@ -3,6 +3,7 @@ const VOTE_REGENERATION_SECONDS = 5 * 60 * 60 * 24;
 const GOLOS_100_PERCENT = 10000;
 const CONTENT_CONSTANT = 2000000000000n;
 
+// Warning: Ported and refactored from blockchain node (C++)
 class VotePendingPayout {
     constructor({ voteModel, recentVoteModel, contentModel, userModel }, chainProps, blockTime) {
         this._voteModel = voteModel;

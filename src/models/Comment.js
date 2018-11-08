@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const MongoDB = core.services.MongoDB;
+const BigNumType = MongoDB.type.MongoBigNum;
 
 module.exports = MongoDB.makeModel(
     'Comment',
@@ -24,7 +25,7 @@ module.exports = MongoDB.makeModel(
             default: false,
         },
         finalPayout: {
-            type: Number,
+            type: BigNumType,
         },
         beneficiaries: {
             type: [
@@ -43,60 +44,60 @@ module.exports = MongoDB.makeModel(
             default: true,
         },
         gbgPercent: {
-            type: Number,
+            type: BigNumType,
         },
         payoutDate: {
             type: Date,
         },
         rewardWeight: {
-            type: Number,
+            type: BigNumType,
         },
         maxAcceptedPayout: {
-            type: Number,
+            type: BigNumType,
         },
         netRshares: {
-            type: Number,
+            type: BigNumType,
         },
         createdInBlockchain: {
             type: Date,
         },
         pending: {
             authorPayoutGests: {
-                type: Number,
+                type: BigNumType,
             },
             curatorPayout: {
-                type: Number,
+                type: BigNumType,
             },
             curatorPayoutGests: {
-                type: Number,
+                type: BigNumType,
             },
             payout: {
-                type: Number,
+                type: BigNumType,
             },
             benefactorPayout: {
-                type: Number,
+                type: BigNumType,
             },
             benefactorPayoutGests: {
-                type: Number,
+                type: BigNumType,
             },
             authorPayoutGolos: {
-                type: Number,
+                type: BigNumType,
             },
             authorPayoutGbg: {
-                type: Number,
+                type: BigNumType,
             },
             authorPayout: {
-                type: Number,
+                type: BigNumType,
             },
         },
         voteRshares: {
-            type: Number,
+            type: BigNumType,
         },
         totalWeight: {
-            type: Number,
+            type: BigNumType,
         },
         totalRealWeight: {
-            type: Number,
+            type: BigNumType,
         },
         rawJsonMetadata: {
             type: String,
