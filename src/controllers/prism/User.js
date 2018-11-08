@@ -132,7 +132,8 @@ class User extends Abstract {
         if (user) {
             await this._updateRevertTrace({
                 command: 'swap',
-                blockBody: user.toObject(),
+                modelBody: user.toObject(),
+                modelClassName: Model.modelName
             });
         }
 
