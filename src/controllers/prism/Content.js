@@ -7,7 +7,7 @@ const Post = require('../../models/Post');
 class Content extends Abstract {
     async handleMakeOrModify(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
-        const model = await this._getOrCreateModel(Model, { permlink: data.permlink });
+        const model = await this._getOrCreateModelWithTrace(Model, { permlink: data.permlink });
 
         this._applyBasicData(model, data, isPost);
         this._applyMetaData(model, data);
@@ -21,7 +21,7 @@ class Content extends Abstract {
 
     async handleDelete(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
-        const model = await this._getModel(Model, { permlink: data.permlink });
+        const model = await this._getOrCreateModelWithTrace(Model, { permlink: data.permlink });
 
         if (!model) {
             Logger.log(`Model not found, skip - ${data.permlink}`);
@@ -65,10 +65,10 @@ class Content extends Abstract {
 
         model.metadata.app = metadata.app;
         model.metadata.format = metadata.format || metadata.editor;
-        model.metadata.tags = metadata.tags;
-        model.metadata.images = metadata.image;
-        model.metadata.links = metadata.links;
-        model.metadata.users = metadata.users;
+        model.metadata.tags = Array.from(metadata.tags || []);
+        model.metadata.images = Array.from(metadata.image || []);
+        model.metadata.links = Array.from(metadata.links || []);
+        model.metadata.users = Array.from(metadata.users || []);
 
         if (model.metadata.images && model.metadata.images[0] === '') {
             model.metadata.images = [];
@@ -98,7 +98,16 @@ class Content extends Abstract {
     }
 
     async _changePostCommentsCount(permlink, increment) {
-        await Post.updateOne({ permlink }, { $inc: { commentsCount: increment } });
+        const post = await Post.findOne({ permlink });
+
+        if (post) {
+            await this._updateRevertTrace({
+                command: 'swap',
+                blockBody: post.toObject(),
+            });
+
+            await Post.updateOne({ _id: post._id }, { $inc: { commentsCount: increment } });
+        }
     }
 }
 

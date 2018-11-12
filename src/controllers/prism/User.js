@@ -16,7 +16,7 @@ class User extends Abstract {
             metadata = {};
         }
 
-        const model = await this._getOrCreateModel(Model, { name: data.account });
+        const model = await this._getOrCreateModelWithTrace(Model, { name: data.account });
 
         model.name = data.account;
 
@@ -111,11 +111,32 @@ class User extends Abstract {
     }
 
     async _applyFollower(target, following) {
-        await Model.updateOne({ name: target }, { $addToSet: { following } });
+        const targetUser = await this._getUserByNameWithTrace(target);
+
+        if (targetUser) {
+            await Model.updateOne({ _id: targetUser._id }, { $addToSet: { following } });
+        }
     }
 
     async _dropFollower(target, following) {
-        await Model.updateOne({ name: target }, { $pull: { following } });
+        const targetUser = await this._getUserByNameWithTrace(target);
+
+        if (targetUser) {
+            await Model.updateOne({ _id: targetUser._id }, { $pull: { following } });
+        }
+    }
+
+    async _getUserByNameWithTrace(name) {
+        const user = await Model.findOne({ name });
+
+        if (user) {
+            await this._updateRevertTrace({
+                command: 'swap',
+                blockBody: user.toObject(),
+            });
+        }
+
+        return user;
     }
 }
 
