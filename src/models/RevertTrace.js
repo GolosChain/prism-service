@@ -16,8 +16,11 @@ module.exports = MongoDB.makeModel(
                         type: String,
                         enum: ['swap', 'create'],
                     },
-                    blockBody: {
+                    modelBody: {
                         type: Object,
+                    },
+                    modelClassName: {
+                        type: String,
                     },
                 },
             ],

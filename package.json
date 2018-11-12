@@ -27,6 +27,7 @@
         "gls-core-service": "^2.12.1",
         "golos": "^0.3.32",
         "golos-js": "^0.7.5",
-        "moment": "^2.22.2"
+        "moment": "^2.22.2",
+        "then-sleep": "^1.0.1"
     }
 }

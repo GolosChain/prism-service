@@ -5,12 +5,13 @@ const MongoDB = core.services.MongoDB;
 const env = require('./data/env');
 const Prism = require('./services/Prism');
 const Connector = require('./services/Connector');
+const Cleaner = require('./services/Cleaner');
 
 class Main extends BasicMain {
     constructor() {
         super(stats, env);
 
-        this.addNested(new MongoDB(), new Prism(), new Connector());
+        this.addNested(new MongoDB(), new Prism(), new Connector(), new Cleaner());
     }
 }
 

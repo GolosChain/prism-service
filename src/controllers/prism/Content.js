@@ -103,7 +103,8 @@ class Content extends Abstract {
         if (post) {
             await this._updateRevertTrace({
                 command: 'swap',
-                blockBody: post.toObject(),
+                modelBody: post.toObject(),
+                modelClassName: Post.modelName,
             });
 
             await Post.updateOne({ _id: post._id }, { $inc: { commentsCount: increment } });

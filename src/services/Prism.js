@@ -1,3 +1,4 @@
+const sleep = require('then-sleep');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const stats = core.utils.statsClient;
@@ -5,10 +6,13 @@ const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
 const Controller = require('../controllers/prism/Main');
 const RawBlockRestore = require('../services/RawBlockRestore'); // TODO -
+const ForkRestore = require('../utils/ForkRestore');
 
 class Prism extends BasicService {
     constructor() {
         super();
+
+        this._inForkState = false;
 
         this._controller = new Controller();
         this._blockQueue = [];
@@ -28,11 +32,23 @@ class Prism extends BasicService {
     }
 
     async _handleBlock(block, blockNum) {
-        this._blockQueue.push([block, blockNum]);
+        if (!this._inForkState) {
+            this._blockQueue.push([block, blockNum]);
+        }
     }
 
     async _handleFork() {
-        // TODO -
+        const restorer = new ForkRestore();
+
+        this._inForkState = true;
+
+        await sleep(0);
+
+        Logger.info('Fork detected! Revert...');
+        await restorer.revert();
+
+        Logger.info('Revert done, exit for restart.');
+        process.exit(0);
     }
 
     async stop() {

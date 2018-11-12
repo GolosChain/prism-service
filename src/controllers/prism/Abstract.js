@@ -11,14 +11,16 @@ class Abstract {
         if (model) {
             await this._updateRevertTrace({
                 command: 'swap',
-                blockBody: model.toObject(),
+                modelBody: model.toObject(),
+                modelClassName: modelClass.modelName,
             });
         } else {
             model = new modelClass();
 
             await this._updateRevertTrace({
                 command: 'create',
-                blockBody: model.toObject(),
+                modelBody: model.toObject(),
+                modelClassName: modelClass.modelName,
             });
         }
 
