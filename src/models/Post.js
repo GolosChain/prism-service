@@ -20,49 +20,78 @@ module.exports = MongoDB.makeModel(
         body: {
             type: String,
         },
-        isPayoutDone: {
-            type: Boolean,
-            default: false,
-        },
-        finalPayout: {
-            type: BigNumType,
-        },
-        beneficiaries: {
-            type: [
-                {
-                    name: {
-                        type: String,
-                    },
-                    weight: {
-                        type: Number,
-                    },
-                },
-            ],
-        },
-        allowCurationRewards: {
-            type: Boolean,
-            default: true,
-        },
-        gbgPercent: {
-            type: BigNumType,
-        },
-        payoutDate: {
+        createdInBlockchain: {
             type: Date,
         },
         rewardWeight: {
             type: BigNumType,
         },
-        maxAcceptedPayout: {
-            type: BigNumType,
-        },
         netRshares: {
             type: BigNumType,
         },
-        createdInBlockchain: {
-            type: Date,
+        commentOptions: {
+            maxAcceptedPayout: {
+                type: BigNumType,
+            },
+            gbgPercent: {
+                type: BigNumType,
+            },
+            allowCurationRewards: {
+                type: Boolean,
+                default: true,
+            },
+            beneficiaries: {
+                type: [
+                    {
+                        name: {
+                            type: String,
+                        },
+                        weight: {
+                            type: Number,
+                        },
+                    },
+                ],
+            },
         },
         payout: {
+            date: {
+                type: Date,
+            },
+            isDone: {
+                type: Boolean,
+                default: false,
+            },
             pending: {
+                authorValue: {
+                    type: BigNumType,
+                },
+                authorGolos: {
+                    type: BigNumType,
+                },
+                authorGbg: {
+                    type: BigNumType,
+                },
+                authorGests: {
+                    type: BigNumType,
+                },
+                curatorValue: {
+                    type: BigNumType,
+                },
+                curatorGests: {
+                    type: BigNumType,
+                },
+                benefactorValue: {
+                    type: BigNumType,
+                },
+                benefactorGests: {
+                    type: BigNumType,
+                },
+                totalValue: {
+                    type: BigNumType,
+                    default: 0,
+                },
+            },
+            final: {
                 authorValue: {
                     type: BigNumType,
                 },
@@ -102,14 +131,14 @@ module.exports = MongoDB.makeModel(
         totalVoteRealWeight: {
             type: BigNumType,
         },
-        rawJsonMetadata: {
-            type: String,
-        },
         commentsCount: {
             type: Number,
             default: 0,
         },
         metadata: {
+            rawJson: {
+                type: String,
+            },
             app: {
                 type: String,
             },
@@ -128,6 +157,12 @@ module.exports = MongoDB.makeModel(
             users: {
                 type: [String],
             },
+        },
+        likes: {
+            type: Object,
+        },
+        dislikes: {
+            type: Object,
         },
     },
     {

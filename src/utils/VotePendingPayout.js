@@ -73,7 +73,7 @@ class VotePendingPayout {
         const oldVoteRshares = this._contentModel.voteRshares;
         let voteWeight = 0;
 
-        if (rshares > 0 && this._contentModel.allowCurationRewards) {
+        if (rshares > 0 && this._contentModel.commentOptions.allowCurationRewards) {
             const contentVoteRshares = this._contentModel.voteRshares;
             const bigIntOldFilter = BIG_INT_VOTE_FILTER.times(oldVoteRshares);
             const oldWeight = bigIntOldFilter.div(CONTENT_CONSTANT.times(2).plus(oldVoteRshares));

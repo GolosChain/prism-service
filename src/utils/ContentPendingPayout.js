@@ -21,7 +21,7 @@ class ContentPendingPayout {
             this._calcPending();
         }
 
-        this._contentModel.payoutDate = this._calcPayoutDate();
+        this._contentModel.payout.date = this._calcPayoutDate();
 
         // TODO Uncomment when model done
         // this._contentModel.save();
@@ -33,7 +33,7 @@ class ContentPendingPayout {
 
         this._authorTokens = payout.minus(crsClaim);
 
-        if (this._contentModel.allowCurationRewards) {
+        if (this._contentModel.commentOptions.allowCurationRewards) {
             this._appendCurationRewards(crsClaim);
         }
 
@@ -62,14 +62,14 @@ class ContentPendingPayout {
 
     _calcGbgForAuthorReward() {
         return this._authorTokens
-            .times(this._contentModel.gbgPercent)
+            .times(this._contentModel.commentOptions.gbgPercent)
             .div(GOLOS_100_PERCENT.times(2));
     }
 
     _calcBenefactorWeights() {
         let benefactorWeights = new BigNum(0);
 
-        for (let benefactor of this._contentModel.beneficiaries) {
+        for (let benefactor of this._contentModel.commentOptions.beneficiaries) {
             benefactorWeights = benefactorWeights.plus(benefactor.weight);
         }
 
@@ -77,7 +77,7 @@ class ContentPendingPayout {
     }
 
     _calcPayout() {
-        const max = this._contentModel.maxAcceptedPayout;
+        const max = this._contentModel.commentOptions.maxAcceptedPayout;
         let payout = this._contentModel.netRshares;
 
         if (payout.lt(0)) {
