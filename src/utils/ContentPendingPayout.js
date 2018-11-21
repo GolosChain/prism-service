@@ -112,11 +112,11 @@ class ContentPendingPayout {
             this._chainProps
         );
 
-        this._contentModel.pending.curatorPayout = this._toGbg(crsClaim);
-        this._contentModel.pending.curatorPayoutGests = gests;
-        this._contentModel.pending.payout = (
-            this._contentModel.pending.payout || new BigNum(0)
-        ).plus(this._contentModel.pending.curatorPayout);
+        this._contentModel.payout.pending.curatorValue = this._toGbg(crsClaim);
+        this._contentModel.payout.pending.curatorGests = gests;
+        this._contentModel.payout.pending.totalValue = (
+            this._contentModel.payout.pending.totalValue || new BigNum(0)
+        ).plus(this._contentModel.payout.pending.curatorValue);
     }
 
     _appendBenefactorRewards(totalBeneficiary) {
@@ -125,27 +125,27 @@ class ContentPendingPayout {
             this._chainProps
         );
 
-        this._contentModel.pending.benefactorPayout = this._toGbg(totalBeneficiary);
-        this._contentModel.pending.benefactorPayoutGests = gests;
-        this._contentModel.pending.payout = (
-            this._contentModel.pending.payout || new BigNum(0)
-        ).plus(this._contentModel.pending.benefactorPayout);
+        this._contentModel.payout.pending.benefactorValue = this._toGbg(totalBeneficiary);
+        this._contentModel.payout.pending.benefactorGests = gests;
+        this._contentModel.payout.pending.totalValue = (
+            this._contentModel.payout.pending.totalValue || new BigNum(0)
+        ).plus(this._contentModel.payout.pending.benefactorValue);
     }
 
     _appendAuthorRewards({ toGolos, toGbg, vestingGolos }) {
-        this._contentModel.pending.authorPayoutGolos = toGolos;
-        this._contentModel.pending.authorPayoutGbg = this._toGbg(toGbg);
-        this._contentModel.pending.authorPayout = this._contentModel.pending.authorPayoutGbg.plus(
+        this._contentModel.payout.pending.authorGolos = toGolos;
+        this._contentModel.payout.pending.authorGbg = this._toGbg(toGbg);
+        this._contentModel.payout.pending.authorValue = this._contentModel.payout.pending.authorGbg.plus(
             this._toGbg(toGolos.plus(vestingGolos))
         );
 
-        this._contentModel.pending.authorPayoutGests = BlockChainValues.golosToVests(
+        this._contentModel.payout.pending.authorGests = BlockChainValues.golosToVests(
             vestingGolos.times(this._getVestingSharePrice()),
             this._chainProps
         );
-        this._contentModel.pending.payout = (
-            this._contentModel.pending.payout || new BigNum(0)
-        ).plus(this._contentModel.pending.authorPayout);
+        this._contentModel.payout.pending.totalValue = (
+            this._contentModel.payout.pending.totalValue || new BigNum(0)
+        ).plus(this._contentModel.payout.pending.authorValue);
     }
 
     _getCurationRewardsPercent() {

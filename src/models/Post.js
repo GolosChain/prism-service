@@ -61,34 +61,36 @@ module.exports = MongoDB.makeModel(
         createdInBlockchain: {
             type: Date,
         },
-        pending: {
-            authorPayoutGests: {
-                type: BigNumType,
-            },
-            curatorPayout: {
-                type: BigNumType,
-            },
-            curatorPayoutGests: {
-                type: BigNumType,
-            },
-            payout: {
-                type: BigNumType,
-                default: 0,
-            },
-            benefactorPayout: {
-                type: BigNumType,
-            },
-            benefactorPayoutGests: {
-                type: BigNumType,
-            },
-            authorPayoutGolos: {
-                type: BigNumType,
-            },
-            authorPayoutGbg: {
-                type: BigNumType,
-            },
-            authorPayout: {
-                type: BigNumType,
+        payout: {
+            pending: {
+                authorValue: {
+                    type: BigNumType,
+                },
+                authorGolos: {
+                    type: BigNumType,
+                },
+                authorGbg: {
+                    type: BigNumType,
+                },
+                authorGests: {
+                    type: BigNumType,
+                },
+                curatorValue: {
+                    type: BigNumType,
+                },
+                curatorGests: {
+                    type: BigNumType,
+                },
+                benefactorValue: {
+                    type: BigNumType,
+                },
+                benefactorGests: {
+                    type: BigNumType,
+                },
+                totalValue: {
+                    type: BigNumType,
+                    default: 0,
+                },
             },
         },
         voteRshares: {
