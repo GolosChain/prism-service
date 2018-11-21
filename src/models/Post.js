@@ -18,7 +18,12 @@ module.exports = MongoDB.makeModel(
             type: String,
         },
         body: {
-            type: String,
+            full: {
+                type: String,
+            },
+            cut: {
+                type: String,
+            },
         },
         createdInBlockchain: {
             type: Date,
@@ -122,18 +127,28 @@ module.exports = MongoDB.makeModel(
                 },
             },
         },
-        voteRshares: {
-            type: BigNumType,
+        vote: {
+            likes: {
+                type: Object,
+            },
+            dislikes: {
+                type: Object,
+            },
+            rshares: {
+                type: BigNumType,
+            },
+            totalWeight: {
+                type: BigNumType,
+            },
+            totalRealWeight: {
+                type: BigNumType,
+            },
         },
-        totalVoteWeight: {
-            type: BigNumType,
-        },
-        totalVoteRealWeight: {
-            type: BigNumType,
-        },
-        commentsCount: {
-            type: Number,
-            default: 0,
+        comments: {
+            count: {
+                type: Number,
+                default: 0,
+            },
         },
         metadata: {
             rawJson: {
@@ -157,12 +172,6 @@ module.exports = MongoDB.makeModel(
             users: {
                 type: [String],
             },
-        },
-        likes: {
-            type: Object,
-        },
-        dislikes: {
-            type: Object,
         },
     },
     {

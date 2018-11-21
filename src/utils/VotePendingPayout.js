@@ -46,7 +46,7 @@ class VotePendingPayout {
             this._recentVoteModel.rshares
         );
         this._contentModel.netRshares = this._contentModel.netRshares.plus(rshares);
-        this._contentModel.totalVoteWeight = this._contentModel.totalVoteWeight.minus(
+        this._contentModel.vote.totalWeight = this._contentModel.vote.totalWeight.minus(
             this._recentVoteModel.weight
         );
 
@@ -70,11 +70,11 @@ class VotePendingPayout {
     }
 
     _calcTotalWeight() {
-        const oldVoteRshares = this._contentModel.voteRshares;
+        const oldVoteRshares = this._contentModel.vote.rshares;
         let voteWeight = 0;
 
         if (rshares > 0 && this._contentModel.commentOptions.allowCurationRewards) {
-            const contentVoteRshares = this._contentModel.voteRshares;
+            const contentVoteRshares = this._contentModel.vote.rshares;
             const bigIntOldFilter = BIG_INT_VOTE_FILTER.times(oldVoteRshares);
             const oldWeight = bigIntOldFilter.div(CONTENT_CONSTANT.times(2).plus(oldVoteRshares));
             const bitIntNewFilter = BIG_INT_VOTE_FILTER.times(contentVoteRshares);
@@ -91,7 +91,7 @@ class VotePendingPayout {
             this._voteModel.weight = 0;
         }
 
-        this._contentModel.totalVoteWeight = this._contentModel.totalVoteWeigh.plus(voteWeight);
+        this._contentModel.vote.totalWeight = this._contentModel.vote.totalWeight.plus(voteWeight);
         this._contentModel.totalVoteRealWeight = this._contentModel.totalVoteRealWeight.plus(
             this._voteModel.weight
         );

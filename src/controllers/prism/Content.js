@@ -39,8 +39,9 @@ class Content extends Abstract {
         model.parentPermlink = data.parent_permlink;
         model.author = data.author;
         model.permlink = data.permlink;
-        model.body = data.body;
-        model.rawJsonMetadata = data.json_metadata;
+        model.body.full = data.body;
+        model.body.cut = data.body; // TODO 600 symbols?
+        model.metadata.rawJson = data.json_metadata;
 
         if (isPost) {
             model.title = data.title;
@@ -107,7 +108,7 @@ class Content extends Abstract {
                 modelClassName: Post.modelName,
             });
 
-            await Post.updateOne({ _id: post._id }, { $inc: { commentsCount: increment } });
+            await Post.updateOne({ _id: post._id }, { $inc: { 'comments.count': increment } });
         }
     }
 }

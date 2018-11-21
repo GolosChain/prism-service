@@ -175,8 +175,8 @@ class ContentPendingPayout {
     }
 
     _getCuratorUnclaimedRewards(curationTokens) {
-        const totalVoteWeight = this._contentModel.totalVoteWeight;
-        const totalVoteRealWeight = this._contentModel.totalVoteRealWeight;
+        const totalVoteWeight = this._contentModel.vote.totalWeight;
+        const totalVoteRealWeight = this._contentModel.vote.totalRealWeight;
 
         return curationTokens
             .times(totalVoteWeight.minus(totalVoteRealWeight))
