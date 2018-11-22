@@ -42,10 +42,10 @@ class VotePendingPayout {
 
         this._userModel.votingPower = currentPower.minus(usedPower);
         this._userModel.lastVoteTime = this._blockTime;
-        this._contentModel.netRshares = this._contentModel.netRshares.minus(
+        this._contentModel.payout.netRshares = this._contentModel.payout.netRshares.minus(
             this._recentVoteModel.rshares
         );
-        this._contentModel.netRshares = this._contentModel.netRshares.plus(rshares);
+        this._contentModel.payout.netRshares = this._contentModel.payout.netRshares.plus(rshares);
         this._contentModel.vote.totalWeight = this._contentModel.vote.totalWeight.minus(
             this._recentVoteModel.weight
         );
@@ -61,7 +61,7 @@ class VotePendingPayout {
 
         this._userModel.votingPower = currentPower.minus(usedPower);
         this._userModel.lastVoteTime = this._blockTime;
-        this._contentModel.netRshares = this._contentModel.netRshares.plus(rshares);
+        this._contentModel.payout.netRshares = this._contentModel.payout.netRshares.plus(rshares);
         this._voteModel.rshares = rshares;
         this._voteModel.percent = this._voteModel.weight;
         this._voteModel.lastUpdateInBlockchain = this._blockTime;

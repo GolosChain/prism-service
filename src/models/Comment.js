@@ -18,91 +18,142 @@ module.exports = MongoDB.makeModel(
             type: String,
         },
         body: {
-            type: String,
-        },
-        isPayoutDone: {
-            type: Boolean,
-            default: false,
-        },
-        finalPayout: {
-            type: BigNumType,
-        },
-        beneficiaries: {
-            type: [
-                {
-                    name: {
-                        type: String,
-                    },
-                    weight: {
-                        type: Number,
-                    },
-                },
-            ],
-        },
-        allowCurationRewards: {
-            type: Boolean,
-            default: true,
-        },
-        gbgPercent: {
-            type: BigNumType,
-        },
-        payoutDate: {
-            type: Date,
-        },
-        rewardWeight: {
-            type: BigNumType,
-        },
-        maxAcceptedPayout: {
-            type: BigNumType,
-        },
-        netRshares: {
-            type: BigNumType,
+            full: {
+                type: String,
+            },
+            cut: {
+                type: String,
+            },
         },
         createdInBlockchain: {
             type: Date,
         },
-        pending: {
-            authorPayoutGests: {
+        commentOptions: {
+            maxAcceptedPayout: {
                 type: BigNumType,
             },
-            curatorPayout: {
+            gbgPercent: {
                 type: BigNumType,
             },
-            curatorPayoutGests: {
+            allowCurationRewards: {
+                type: Boolean,
+                default: true,
+            },
+            beneficiaries: {
+                type: [
+                    {
+                        name: {
+                            type: String,
+                        },
+                        weight: {
+                            type: Number,
+                        },
+                    },
+                ],
+            },
+        },
+        payout: {
+            date: {
+                type: Date,
+            },
+            isDone: {
+                type: Boolean,
+                default: false,
+            },
+            rewardWeight: {
                 type: BigNumType,
             },
-            payout: {
+            netRshares: {
                 type: BigNumType,
             },
-            benefactorPayout: {
+            pending: {
+                authorValue: {
+                    type: BigNumType,
+                },
+                authorGolos: {
+                    type: BigNumType,
+                },
+                authorGbg: {
+                    type: BigNumType,
+                },
+                authorGests: {
+                    type: BigNumType,
+                },
+                curatorValue: {
+                    type: BigNumType,
+                },
+                curatorGests: {
+                    type: BigNumType,
+                },
+                benefactorValue: {
+                    type: BigNumType,
+                },
+                benefactorGests: {
+                    type: BigNumType,
+                },
+                totalValue: {
+                    type: BigNumType,
+                    default: 0,
+                },
+            },
+            final: {
+                authorValue: {
+                    type: BigNumType,
+                },
+                authorGolos: {
+                    type: BigNumType,
+                },
+                authorGbg: {
+                    type: BigNumType,
+                },
+                authorGests: {
+                    type: BigNumType,
+                },
+                curatorValue: {
+                    type: BigNumType,
+                },
+                curatorGests: {
+                    type: BigNumType,
+                },
+                benefactorValue: {
+                    type: BigNumType,
+                },
+                benefactorGests: {
+                    type: BigNumType,
+                },
+                totalValue: {
+                    type: BigNumType,
+                    default: 0,
+                },
+            },
+        },
+        vote: {
+            likes: {
+                type: Object,
+            },
+            dislikes: {
+                type: Object,
+            },
+            rshares: {
                 type: BigNumType,
             },
-            benefactorPayoutGests: {
+            totalWeight: {
                 type: BigNumType,
             },
-            authorPayoutGolos: {
-                type: BigNumType,
-            },
-            authorPayoutGbg: {
-                type: BigNumType,
-            },
-            authorPayout: {
+            totalRealWeight: {
                 type: BigNumType,
             },
         },
-        voteRshares: {
-            type: BigNumType,
-        },
-        totalWeight: {
-            type: BigNumType,
-        },
-        totalRealWeight: {
-            type: BigNumType,
-        },
-        rawJsonMetadata: {
-            type: String,
+        comments: {
+            count: {
+                type: Number,
+                default: 0,
+            },
         },
         metadata: {
+            rawJson: {
+                type: String,
+            },
             app: {
                 type: String,
             },

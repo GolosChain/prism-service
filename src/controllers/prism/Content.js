@@ -4,6 +4,8 @@ const Abstract = require('./Abstract');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
 
+const POST_BODY_CUT_LENGTH = 600;
+
 class Content extends Abstract {
     async handleMakeOrModify(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
@@ -39,9 +41,11 @@ class Content extends Abstract {
         model.parentPermlink = data.parent_permlink;
         model.author = data.author;
         model.permlink = data.permlink;
-        model.body.full = data.body;
-        model.body.cut = data.body; // TODO 600 symbols?
         model.metadata.rawJson = data.json_metadata;
+        model.body = {
+            full: data.body,
+            cut: data.body.slice(0, POST_BODY_CUT_LENGTH),
+        };
 
         if (isPost) {
             model.title = data.title;

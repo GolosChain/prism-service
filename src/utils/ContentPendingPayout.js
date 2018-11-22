@@ -78,14 +78,14 @@ class ContentPendingPayout {
 
     _calcPayout() {
         const max = this._contentModel.commentOptions.maxAcceptedPayout;
-        let payout = this._contentModel.netRshares;
+        let payout = this._contentModel.payout.netRshares;
 
         if (payout.lt(0)) {
             payout = new BigNum(0);
         }
 
         payout = payout
-            .times(this._contentModel.rewardWeight)
+            .times(this._contentModel.payout.rewardWeight)
             .div(GOLOS_100_PERCENT)
             .times(this._pot)
             .div(this._totalR2);

@@ -28,12 +28,6 @@ module.exports = MongoDB.makeModel(
         createdInBlockchain: {
             type: Date,
         },
-        rewardWeight: {
-            type: BigNumType,
-        },
-        netRshares: {
-            type: BigNumType,
-        },
         commentOptions: {
             maxAcceptedPayout: {
                 type: BigNumType,
@@ -65,6 +59,12 @@ module.exports = MongoDB.makeModel(
             isDone: {
                 type: Boolean,
                 default: false,
+            },
+            rewardWeight: {
+                type: BigNumType,
+            },
+            netRshares: {
+                type: BigNumType,
             },
             pending: {
                 authorValue: {
