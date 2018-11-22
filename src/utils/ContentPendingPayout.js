@@ -33,7 +33,7 @@ class ContentPendingPayout {
 
         this._authorTokens = payout.minus(crsClaim);
 
-        if (this._contentModel.commentOptions.allowCurationRewards) {
+        if (this._contentModel.options.allowCurationRewards) {
             this._appendCurationRewards(crsClaim);
         }
 
@@ -62,14 +62,14 @@ class ContentPendingPayout {
 
     _calcGbgForAuthorReward() {
         return this._authorTokens
-            .times(this._contentModel.commentOptions.gbgPercent)
+            .times(this._contentModel.options.gbgPercent)
             .div(GOLOS_100_PERCENT.times(2));
     }
 
     _calcBenefactorWeights() {
         let benefactorWeights = new BigNum(0);
 
-        for (let benefactor of this._contentModel.commentOptions.beneficiaries) {
+        for (let benefactor of this._contentModel.options.beneficiaries) {
             benefactorWeights = benefactorWeights.plus(benefactor.weight);
         }
 
@@ -77,7 +77,7 @@ class ContentPendingPayout {
     }
 
     _calcPayout() {
-        const max = this._contentModel.commentOptions.maxAcceptedPayout;
+        const max = this._contentModel.options.maxAcceptedPayout;
         let payout = this._contentModel.payout.netRshares;
 
         if (payout.lt(0)) {
