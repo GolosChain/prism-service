@@ -5,7 +5,7 @@ class Abstract {
         throw 'Handler not implemented';
     }
 
-    async _getOrCreateModelWithTrace(modelClass, queryForCheck) {
+    async _getOrCreateModelWithTrace(modelClass, queryForCheck, initData) {
         let model = await this._getModelWithoutTrace(modelClass, queryForCheck);
 
         if (model) {
@@ -15,7 +15,9 @@ class Abstract {
                 modelClassName: modelClass.modelName,
             });
         } else {
-            model = new modelClass();
+            model = new modelClass(initData);
+
+            await model.save();
 
             await this._updateRevertTrace({
                 command: 'create',

@@ -16,7 +16,8 @@ class User extends Abstract {
             metadata = {};
         }
 
-        const model = await this._getOrCreateModelWithTrace(Model, { name: data.account });
+        const nameObject = { name: data.account };
+        const model = await this._getOrCreateModelWithTrace(Model, nameObject, nameObject);
 
         model.name = data.account;
 
@@ -133,7 +134,7 @@ class User extends Abstract {
             await this._updateRevertTrace({
                 command: 'swap',
                 modelBody: user.toObject(),
-                modelClassName: Model.modelName
+                modelClassName: Model.modelName,
             });
         }
 

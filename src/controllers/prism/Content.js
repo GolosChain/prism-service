@@ -9,7 +9,8 @@ const POST_BODY_CUT_LENGTH = 600;
 class Content extends Abstract {
     async handleMakeOrModify(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
-        const model = await this._getOrCreateModelWithTrace(Model, { permlink: data.permlink });
+        const permlinkObject = { permlink: data.permlink };
+        const model = await this._getOrCreateModelWithTrace(Model, permlinkObject, permlinkObject);
 
         this._applyBasicData(model, data, isPost);
         this._applyMetaData(model, data);
@@ -23,7 +24,8 @@ class Content extends Abstract {
 
     async handleDelete(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
-        const model = await this._getOrCreateModelWithTrace(Model, { permlink: data.permlink });
+        const permlinkObject = { permlink: data.permlink };
+        const model = await this._getOrCreateModelWithTrace(Model, permlinkObject, permlinkObject);
 
         if (!model) {
             Logger.log(`Model not found, skip - ${data.permlink}`);
