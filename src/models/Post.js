@@ -28,7 +28,7 @@ module.exports = MongoDB.makeModel(
         createdInBlockchain: {
             type: Date,
         },
-        commentOptions: {
+        options: {
             maxAcceptedPayout: {
                 type: BigNumType,
             },
