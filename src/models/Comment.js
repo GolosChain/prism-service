@@ -1,4 +1,5 @@
 const core = require('gls-core-service');
+const BigNum = core.types.BigNum;
 const MongoDB = core.services.MongoDB;
 const BigNumType = MongoDB.type.MongoBigNum;
 
@@ -18,12 +19,7 @@ module.exports = MongoDB.makeModel(
             type: String,
         },
         body: {
-            full: {
-                type: String,
-            },
-            cut: {
-                type: String,
-            },
+            type: String,
         },
         createdInBlockchain: {
             type: Date,
@@ -31,9 +27,11 @@ module.exports = MongoDB.makeModel(
         options: {
             maxAcceptedPayout: {
                 type: BigNumType,
+                default: new BigNum('1000000.000'),
             },
             gbgPercent: {
                 type: BigNumType,
+                default: new BigNum('5000'),
             },
             allowCurationRewards: {
                 type: Boolean,
@@ -93,7 +91,7 @@ module.exports = MongoDB.makeModel(
                 },
                 totalValue: {
                     type: BigNumType,
-                    default: 0,
+                    default: new BigNum('0'),
                 },
             },
             final: {
@@ -123,7 +121,7 @@ module.exports = MongoDB.makeModel(
                 },
                 totalValue: {
                     type: BigNumType,
-                    default: 0,
+                    default: new BigNum('0'),
                 },
             },
         },

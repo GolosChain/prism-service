@@ -39,15 +39,86 @@ class Content extends Abstract {
         await model.remove();
     }
 
+    async handleOptions(data) {
+        const query = { permlink: data.permlink };
+        const [post, comment] = await Promise.all([Post.findOne(query), Comment.findOne(query)]);
+        let modelClass;
+        let model;
+
+        if (post) {
+            modelClass = Post;
+            model = post;
+        } else if (comment) {
+            modelClass = Comment;
+            model = comment;
+        } else {
+            return;
+        }
+
+        await this._updateRevertTrace({
+            command: 'swap',
+            modelBody: model.toObject(),
+            modelClassName: modelClass.modelName,
+        });
+
+        model.maxAcceptedPayout = data.max_accepted_payout;
+        model.gbgPercent = data.percent_steem_dollars;
+        model.allowCurationRewards = data.allow_curation_rewards;
+
+        this._handleOptionsExtensions(data, model);
+
+        await model.save();
+    }
+
+    _handleOptionsExtensions(data, model) {
+        data.extensions = data.extensions || [];
+
+        for (let extensionPair of data.extensions) {
+            const extensions = extensionPair[1] || {};
+
+            for (let type of Object.keys(extensions)) {
+                this._applyOptionsExtensionByType(type, extensions[type], model);
+            }
+        }
+    }
+
+    _applyOptionsExtensionByType(type, extension, model) {
+        switch (type) {
+            case 'beneficiaries':
+                this._applyBeneficiaries(model, extension);
+                break;
+        }
+    }
+
+    _applyBeneficiaries(model, beneficiaries) {
+        for (let beneficiary of beneficiaries) {
+            if (
+                typeof beneficiary.account === 'string' &&
+                beneficiary.account.length > 0 &&
+                typeof beneficiary.weight === 'number' &&
+                beneficiary.weight >= 0 &&
+                beneficiary.weight <= 10000
+            ) {
+                // Dev alert - do not change to `model.beneficiaries = beneficiary`, not secure
+                model.beneficiaries = { account: beneficiary.account, weight: beneficiary.weight };
+            }
+        }
+    }
+
     _applyBasicData(model, data, isPost) {
         model.parentPermlink = data.parent_permlink;
         model.author = data.author;
         model.permlink = data.permlink;
         model.metadata.rawJson = data.json_metadata;
-        model.body = {
-            full: data.body,
-            cut: data.body.slice(0, POST_BODY_CUT_LENGTH),
-        };
+
+        if (isPost) {
+            model.body = {
+                full: data.body,
+                cut: data.body.slice(0, POST_BODY_CUT_LENGTH),
+            };
+        } else {
+            model.body = data.body;
+        }
 
         if (isPost) {
             model.title = data.title;
@@ -66,8 +137,7 @@ class Content extends Abstract {
                 metadata = {};
             }
         } catch (error) {
-            // do nothing, invalid metadata or another client
-            return;
+            metadata = {};
         }
 
         model.metadata.app = metadata.app;

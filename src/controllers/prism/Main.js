@@ -87,7 +87,7 @@ class Main {
                 await this._user.handleCustom(data);
                 break;
             case 'comment_options':
-                // Do noting for now
+                await this._content.handleOptions(data);
                 break;
             case 'set_withdraw_vesting_route':
                 // Do noting for now
