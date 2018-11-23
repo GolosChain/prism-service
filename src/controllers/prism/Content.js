@@ -112,18 +112,14 @@ class Content extends Abstract {
         model.metadata.rawJson = data.json_metadata;
 
         if (isPost) {
+            model.title = data.title;
             model.body = {
                 full: data.body,
                 cut: data.body.slice(0, POST_BODY_CUT_LENGTH),
             };
         } else {
-            model.body = data.body;
-        }
-
-        if (isPost) {
-            model.title = data.title;
-        } else {
             model.parentAuthor = data.parent_author;
+            model.body = data.body;
         }
     }
 
