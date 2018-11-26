@@ -20,7 +20,7 @@ class VotePendingPayout {
         this._absRshares = null;
     }
 
-    calcAndApply() {
+    async calcAndApply() {
         const currentPower = this._calcCurrentPower();
         const usedPower = this._calcUsedPower(currentPower);
 
@@ -34,7 +34,7 @@ class VotePendingPayout {
             this._handleNewVote(currentPower, usedPower);
         }
 
-        this._saveChanges();
+        await this._saveChanges();
     }
 
     _handleUpdateVote(currentPower, usedPower) {
@@ -42,11 +42,11 @@ class VotePendingPayout {
 
         this._userModel.votingPower = currentPower.minus(usedPower);
         this._userModel.lastVoteTime = this._blockTime;
-        this._contentModel.netRshares = this._contentModel.netRshares.minus(
+        this._contentModel.payout.netRshares = this._contentModel.payout.netRshares.minus(
             this._recentVoteModel.rshares
         );
-        this._contentModel.netRshares = this._contentModel.netRshares.plus(rshares);
-        this._contentModel.totalVoteWeight = this._contentModel.totalVoteWeight.minus(
+        this._contentModel.payout.netRshares = this._contentModel.payout.netRshares.plus(rshares);
+        this._contentModel.vote.totalWeight = this._contentModel.vote.totalWeight.minus(
             this._recentVoteModel.weight
         );
 
@@ -61,7 +61,7 @@ class VotePendingPayout {
 
         this._userModel.votingPower = currentPower.minus(usedPower);
         this._userModel.lastVoteTime = this._blockTime;
-        this._contentModel.netRshares = this._contentModel.netRshares.plus(rshares);
+        this._contentModel.payout.netRshares = this._contentModel.payout.netRshares.plus(rshares);
         this._voteModel.rshares = rshares;
         this._voteModel.percent = this._voteModel.weight;
         this._voteModel.lastUpdateInBlockchain = this._blockTime;
@@ -70,11 +70,11 @@ class VotePendingPayout {
     }
 
     _calcTotalWeight() {
-        const oldVoteRshares = this._contentModel.voteRshares;
+        const oldVoteRshares = this._contentModel.vote.rshares;
         let voteWeight = 0;
 
-        if (rshares > 0 && this._contentModel.allowCurationRewards) {
-            const contentVoteRshares = this._contentModel.voteRshares;
+        if (rshares > 0 && this._contentModel.options.allowCurationRewards) {
+            const contentVoteRshares = this._contentModel.vote.rshares;
             const bigIntOldFilter = BIG_INT_VOTE_FILTER.times(oldVoteRshares);
             const oldWeight = bigIntOldFilter.div(CONTENT_CONSTANT.times(2).plus(oldVoteRshares));
             const bitIntNewFilter = BIG_INT_VOTE_FILTER.times(contentVoteRshares);
@@ -91,7 +91,7 @@ class VotePendingPayout {
             this._voteModel.weight = 0;
         }
 
-        this._contentModel.totalVoteWeight = this._contentModel.totalVoteWeigh.plus(voteWeight);
+        this._contentModel.vote.totalWeight = this._contentModel.vote.totalWeight.plus(voteWeight);
         this._contentModel.totalVoteRealWeight = this._contentModel.totalVoteRealWeight.plus(
             this._voteModel.weight
         );
@@ -147,10 +147,10 @@ class VotePendingPayout {
         return new BigNum((+date1 - +date2) / 1000);
     }
 
-    _saveChanges() {
-        this._voteModel.save();
-        this._contentModel.save();
-        this._userModel.save();
+    async _saveChanges() {
+        await this._voteModel.save();
+        await this._contentModel.save();
+        await this._userModel.save();
     }
 }
 

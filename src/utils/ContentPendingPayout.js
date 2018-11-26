@@ -7,24 +7,24 @@ const GOLOS_100_PERCENT = new BigNum(10000);
 
 // Warning: Ported and refactored from blockchain node (C++)
 class ContentPendingPayout {
-    constructor(contentModel, chainProps, gbgRate) {
+    constructor(contentModel, isPost, { chainProps, gbgRate }) {
         this._contentModel = contentModel;
         this._chainProps = chainProps;
         this._gbgRate = gbgRate;
         this._pot = chainProps.totalRewardFundGolos;
         this._totalR2 = chainProps.totalRewardShares2;
         this._authorTokens = null;
+        this._isPost = isPost;
     }
 
-    calcAndApply() {
+    async calcAndApply() {
         if (this._chainProps.totalRewardShares2.gt(0)) {
             this._calcPending();
         }
 
-        this._contentModel.payoutDate = this._calcPayoutDate();
+        this._contentModel.payout.date = this._calcPayoutDate();
 
-        // TODO Uncomment when model done
-        // this._contentModel.save();
+        await this._contentModel.save();
     }
 
     _calcPending() {
@@ -33,7 +33,7 @@ class ContentPendingPayout {
 
         this._authorTokens = payout.minus(crsClaim);
 
-        if (this._contentModel.allowCurationRewards) {
+        if (this._contentModel.options.allowCurationRewards) {
             this._appendCurationRewards(crsClaim);
         }
 
@@ -62,14 +62,14 @@ class ContentPendingPayout {
 
     _calcGbgForAuthorReward() {
         return this._authorTokens
-            .times(this._contentModel.gbgPercent)
+            .times(this._contentModel.options.gbgPercent)
             .div(GOLOS_100_PERCENT.times(2));
     }
 
     _calcBenefactorWeights() {
         let benefactorWeights = new BigNum(0);
 
-        for (let benefactor of this._contentModel.beneficiaries) {
+        for (let benefactor of this._contentModel.options.beneficiaries) {
             benefactorWeights = benefactorWeights.plus(benefactor.weight);
         }
 
@@ -77,15 +77,22 @@ class ContentPendingPayout {
     }
 
     _calcPayout() {
-        const max = this._contentModel.maxAcceptedPayout;
-        let payout = this._contentModel.netRshares;
+        const max = this._contentModel.options.maxAcceptedPayout;
+        let payout = this._contentModel.payout.netRshares;
+        let rewardWeight;
 
         if (payout.lt(0)) {
             payout = new BigNum(0);
         }
 
+        if (this._isPost) {
+            rewardWeight = this._contentModel.payout.rewardWeight;
+        } else {
+            rewardWeight = GOLOS_100_PERCENT;
+        }
+
         payout = payout
-            .times(this._contentModel.rewardWeight)
+            .times(rewardWeight)
             .div(GOLOS_100_PERCENT)
             .times(this._pot)
             .div(this._totalR2);
@@ -112,11 +119,11 @@ class ContentPendingPayout {
             this._chainProps
         );
 
-        this._contentModel.pending.curatorPayout = this._toGbg(crsClaim);
-        this._contentModel.pending.curatorPayoutGests = gests;
-        this._contentModel.pending.payout = (
-            this._contentModel.pending.payout || new BigNum(0)
-        ).plus(this._contentModel.pending.curatorPayout);
+        this._contentModel.payout.pending.curatorValue = this._toGbg(crsClaim);
+        this._contentModel.payout.pending.curatorGests = gests;
+        this._contentModel.payout.pending.totalValue = (
+            this._contentModel.payout.pending.totalValue || new BigNum(0)
+        ).plus(this._contentModel.payout.pending.curatorValue);
     }
 
     _appendBenefactorRewards(totalBeneficiary) {
@@ -125,27 +132,27 @@ class ContentPendingPayout {
             this._chainProps
         );
 
-        this._contentModel.pending.benefactorPayout = this._toGbg(totalBeneficiary);
-        this._contentModel.pending.benefactorPayoutGests = gests;
-        this._contentModel.pending.payout = (
-            this._contentModel.pending.payout || new BigNum(0)
-        ).plus(this._contentModel.pending.benefactorPayout);
+        this._contentModel.payout.pending.benefactorValue = this._toGbg(totalBeneficiary);
+        this._contentModel.payout.pending.benefactorGests = gests;
+        this._contentModel.payout.pending.totalValue = (
+            this._contentModel.payout.pending.totalValue || new BigNum(0)
+        ).plus(this._contentModel.payout.pending.benefactorValue);
     }
 
     _appendAuthorRewards({ toGolos, toGbg, vestingGolos }) {
-        this._contentModel.pending.authorPayoutGolos = toGolos;
-        this._contentModel.pending.authorPayoutGbg = this._toGbg(toGbg);
-        this._contentModel.pending.authorPayout = this._contentModel.pending.authorPayoutGbg.plus(
+        this._contentModel.payout.pending.authorGolos = toGolos;
+        this._contentModel.payout.pending.authorGbg = this._toGbg(toGbg);
+        this._contentModel.payout.pending.authorValue = this._contentModel.payout.pending.authorGbg.plus(
             this._toGbg(toGolos.plus(vestingGolos))
         );
 
-        this._contentModel.pending.authorPayoutGests = BlockChainValues.golosToVests(
+        this._contentModel.payout.pending.authorGests = BlockChainValues.golosToVests(
             vestingGolos.times(this._getVestingSharePrice()),
             this._chainProps
         );
-        this._contentModel.pending.payout = (
-            this._contentModel.pending.payout || new BigNum(0)
-        ).plus(this._contentModel.pending.authorPayout);
+        this._contentModel.payout.pending.totalValue = (
+            this._contentModel.payout.pending.totalValue || new BigNum(0)
+        ).plus(this._contentModel.payout.pending.authorValue);
     }
 
     _getCurationRewardsPercent() {
@@ -175,8 +182,8 @@ class ContentPendingPayout {
     }
 
     _getCuratorUnclaimedRewards(curationTokens) {
-        const totalVoteWeight = this._contentModel.totalVoteWeight;
-        const totalVoteRealWeight = this._contentModel.totalVoteRealWeight;
+        const totalVoteWeight = this._contentModel.vote.totalWeight;
+        const totalVoteRealWeight = this._contentModel.vote.totalRealWeight;
 
         return curationTokens
             .times(totalVoteWeight.minus(totalVoteRealWeight))
