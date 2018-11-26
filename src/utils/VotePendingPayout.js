@@ -20,7 +20,7 @@ class VotePendingPayout {
         this._absRshares = null;
     }
 
-    calcAndApply() {
+    async calcAndApply() {
         const currentPower = this._calcCurrentPower();
         const usedPower = this._calcUsedPower(currentPower);
 
@@ -34,7 +34,7 @@ class VotePendingPayout {
             this._handleNewVote(currentPower, usedPower);
         }
 
-        this._saveChanges();
+        await this._saveChanges();
     }
 
     _handleUpdateVote(currentPower, usedPower) {
@@ -147,10 +147,10 @@ class VotePendingPayout {
         return new BigNum((+date1 - +date2) / 1000);
     }
 
-    _saveChanges() {
-        this._voteModel.save();
-        this._contentModel.save();
-        this._userModel.save();
+    async _saveChanges() {
+        await this._voteModel.save();
+        await this._contentModel.save();
+        await this._userModel.save();
     }
 }
 

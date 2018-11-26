@@ -17,15 +17,14 @@ class ContentPendingPayout {
         this._isPost = isPost;
     }
 
-    calcAndApply() {
+    async calcAndApply() {
         if (this._chainProps.totalRewardShares2.gt(0)) {
             this._calcPending();
         }
 
         this._contentModel.payout.date = this._calcPayoutDate();
 
-        // TODO Uncomment when model done
-        // this._contentModel.save();
+        await this._contentModel.save();
     }
 
     _calcPending() {

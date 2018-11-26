@@ -1,28 +1,27 @@
-// TODO -
+const core = require('gls-core-service');
+const BigNum = core.types.BigNum;
+const BigNumUtils = BigNum.OriginalBigNumber();
 
 const GOLOS_100_PERCENT = new BigNum(10000);
+const GOLOS_POST_AVERAGE_WINDOW = new BigNum(60 * 60 * 24 * 1000);
+const GOLOS_POST_WEIGHT_CONSTANT = GOLOS_100_PERCENT.times(4).pow(2);
 
 // Warning: Ported and refactored from blockchain node (C++)
 class RewardWeight {
-    calcAndApply(model) {
-        let post_bandwidth = band.average_bandwidth;
+    calcAndApply(postModel) {
+        const lastPostBandwidth = postModel.bandwidth.averageBandwidth;
+        const lastUpdate = Number(postModel.bandwidth.lastUpdate);
+        const postDeltaTime = BigNumUtils.min(Date.now() - lastUpdate, GOLOS_POST_AVERAGE_WINDOW);
+        const windowDiff = GOLOS_POST_AVERAGE_WINDOW - postDeltaTime;
+        const oldWeight = lastPostBandwidth.times(windowDiff).div(GOLOS_POST_AVERAGE_WINDOW);
+        const currentPostBandwidth = oldWeight.plus(GOLOS_100_PERCENT);
+        const bandwidthExp = currentPostBandwidth.pow(2);
+        const weightByPercent = GOLOS_POST_WEIGHT_CONSTANT.times(GOLOS_100_PERCENT);
+        const rewardWeight = BigNumUtils.min(weightByPercent.div(bandwidthExp), GOLOS_100_PERCENT);
 
-        let post_delta_time = Math.min(
-            Date.now() -
-            band.last_bandwidth_update, STEEMIT_POST_AVERAGE_WINDOW);
-        let old_weight = (post_bandwidth *
-            (STEEMIT_POST_AVERAGE_WINDOW -
-                post_delta_time)) /
-            STEEMIT_POST_AVERAGE_WINDOW;
-        post_bandwidth = (old_weight + GOLOS_100_PERCENT);
-        let reward_weight = Math.min(
-            (STEEMIT_POST_WEIGHT_CONSTANT *
-                STEEMIT_100_PERCENT) /
-            (post_bandwidth.value *
-                post_bandwidth.value), uint64_t(GOLOS_100_PERCENT));
-
-        model.bandwidth.lastUpdate = new Date();
-        model.payout.rewardWeight = post_bandwidth;
+        postModel.bandwidth.lastUpdate = new Date();
+        postModel.bandwidth.averageBandwidth = currentPostBandwidth;
+        postModel.payout.rewardWeight = rewardWeight;
     }
 }
 
