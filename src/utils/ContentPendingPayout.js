@@ -7,13 +7,14 @@ const GOLOS_100_PERCENT = new BigNum(10000);
 
 // Warning: Ported and refactored from blockchain node (C++)
 class ContentPendingPayout {
-    constructor(contentModel, chainProps, gbgRate) {
+    constructor(contentModel, isPost, { chainProps, gbgRate }) {
         this._contentModel = contentModel;
         this._chainProps = chainProps;
         this._gbgRate = gbgRate;
         this._pot = chainProps.totalRewardFundGolos;
         this._totalR2 = chainProps.totalRewardShares2;
         this._authorTokens = null;
+        this._isPost = isPost;
     }
 
     calcAndApply() {
@@ -79,13 +80,20 @@ class ContentPendingPayout {
     _calcPayout() {
         const max = this._contentModel.options.maxAcceptedPayout;
         let payout = this._contentModel.payout.netRshares;
+        let rewardWeight;
 
         if (payout.lt(0)) {
             payout = new BigNum(0);
         }
 
+        if (this._isPost) {
+            rewardWeight = this._contentModel.payout.rewardWeight;
+        } else {
+            rewardWeight = GOLOS_100_PERCENT;
+        }
+
         payout = payout
-            .times(this._contentModel.payout.rewardWeight)
+            .times(rewardWeight)
             .div(GOLOS_100_PERCENT)
             .times(this._pot)
             .div(this._totalR2);

@@ -5,6 +5,7 @@ const BigNumType = MongoDB.type.MongoBigNum;
 
 const BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT = new BigNum('1000000.000');
 const BLOCKCHAIN_DEFAULT_GBG_PERCENT = new BigNum('5000');
+const GOLOS_100_PERCENT = new BigNum(10000);
 
 module.exports = MongoDB.makeModel(
     'Post',
@@ -31,6 +32,15 @@ module.exports = MongoDB.makeModel(
         },
         createdInBlockchain: {
             type: Date,
+        },
+        bandwidth: {
+            lastUpdate: {
+                type: Date,
+            },
+            averageBandwidth: {
+                type: BigNumType,
+                default: GOLOS_100_PERCENT,
+            },
         },
         options: {
             maxAcceptedPayout: {
@@ -68,6 +78,7 @@ module.exports = MongoDB.makeModel(
             },
             rewardWeight: {
                 type: BigNumType,
+                default: GOLOS_100_PERCENT,
             },
             netRshares: {
                 type: BigNumType,
