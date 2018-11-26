@@ -2,7 +2,9 @@ const core = require('gls-core-service');
 const BigNum = core.types.BigNum;
 const MongoDB = core.services.MongoDB;
 const BigNumType = MongoDB.type.MongoBigNum;
-const constants = require('../data/constants');
+
+const BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT = new BigNum('1000000.000');
+const BLOCKCHAIN_DEFAULT_GBG_PERCENT = new BigNum('5000');
 
 module.exports = MongoDB.makeModel(
     'Comment',
@@ -28,11 +30,11 @@ module.exports = MongoDB.makeModel(
         options: {
             maxAcceptedPayout: {
                 type: BigNumType,
-                default: constants.BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT,
+                default: BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT,
             },
             gbgPercent: {
                 type: BigNumType,
-                default: constants.BLOCKCHAIN_DEFAULT_GBG_PERCENT,
+                default: BLOCKCHAIN_DEFAULT_GBG_PERCENT,
             },
             allowCurationRewards: {
                 type: Boolean,

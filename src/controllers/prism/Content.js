@@ -3,7 +3,8 @@ const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
-const constants = require('../../data/constants');
+
+const POST_BODY_CUT_LENGTH = 600;
 
 class Content extends Abstract {
     async handleMakeOrModify(data) {
@@ -114,7 +115,7 @@ class Content extends Abstract {
             model.title = data.title;
             model.body = {
                 full: data.body,
-                cut: data.body.slice(0, constants.POST_BODY_CUT_LENGTH),
+                cut: data.body.slice(0, POST_BODY_CUT_LENGTH),
             };
         } else {
             model.parentAuthor = data.parent_author;
