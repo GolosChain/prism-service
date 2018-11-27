@@ -74,6 +74,7 @@ class Content extends Abstract {
     async handlePromoteTransfer({ from, to, amount, memo }) {
         let author;
         let permlink;
+        let currency;
 
         if (to !== 'null') {
             return;
@@ -83,6 +84,12 @@ class Content extends Abstract {
             [author, permlink] = memo.slice(1).split('/');
 
             if (!author || !permlink) {
+                return;
+            }
+
+            currency = to.split(' ')[1];
+
+            if (currency !== 'GBG') {
                 return;
             }
         } catch (e) {
