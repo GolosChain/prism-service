@@ -179,6 +179,7 @@ module.exports = MongoDB.makeModel(
         index: [
             {
                 fields: {
+                    author: 1,
                     permlink: 1,
                 },
                 options: {

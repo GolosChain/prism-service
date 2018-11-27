@@ -36,7 +36,7 @@ class Main {
                 await this._content.handleMakeOrModify(data);
                 break;
             case 'transfer':
-                // Do noting for now
+                await this._content.handlePromoteTransfer(data);
                 break;
             case 'transfer_to_vesting':
                 // Do noting for now

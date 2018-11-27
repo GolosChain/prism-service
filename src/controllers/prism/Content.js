@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
+const BigNum = core.types.BigNum;
 const Abstract = require('./Abstract');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
@@ -66,6 +67,36 @@ class Content extends Abstract {
         model.allowCurationRewards = data.allow_curation_rewards;
 
         this._handleOptionsExtensions(data, model);
+
+        await model.save();
+    }
+
+    async handlePromoteTransfer({ from, to, amount, memo }) {
+        let author;
+        let permlink;
+
+        if (to !== 'null') {
+            return;
+        }
+
+        try {
+            [author, permlink] = memo.slice(1).split('/');
+
+            if (!author || !permlink) {
+                return;
+            }
+        } catch (e) {
+            // Not a promote, do nothing
+            return;
+        }
+
+        const model = await Post.findOne({ author, permlink });
+
+        if (!model) {
+            return;
+        }
+
+        model.promote.balance += new BigNum(amount);
 
         await model.save();
     }
