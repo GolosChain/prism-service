@@ -5,39 +5,45 @@ const CommentModel = require('../../models/Comment');
 
 class Vote extends Abstract {
     async handle({ voter: fromUser, author: toUser, permlink, weight }) {
-        const model = new VoteModel({ fromUser, toUser, permlink, weight });
+        let model = VoteModel.findOne({ fromUser, toUser, permlink });
 
-        await this._updateRevertTrace({
-            command: 'create',
-            modelBody: model.toObject(),
-            modelClassName: VoteModel.modelName,
-        });
+        if (model) {
+            await this._updateRevertTrace({
+                command: 'swap',
+                modelBody: model.toObject(),
+                modelClassName: VoteModel.modelName,
+            });
+        } else {
+            model = new VoteModel({ fromUser, toUser, permlink, weight });
 
-        await model.save();
+            await this._updateRevertTrace({
+                command: 'create',
+                modelBody: model.toObject(),
+                modelClassName: VoteModel.modelName,
+            });
 
-        const postModel = await PostModel.findOne({ permlink });
+            await model.save();
+        }
+
+        const postModel = await PostModel.findOne({ author: toUser, permlink });
 
         if (postModel) {
             await this._updatePostByVote(model, postModel);
-            return;
+        } else {
+            const commentModel = await CommentModel.findOne({ author: toUser, permlink });
+
+            if (commentModel) {
+                await this._updateCommentByVote(model, commentModel);
+            }
         }
-
-        const commentModel = await CommentModel.findOne({ permlink });
-
-        if (commentModel) {
-            await this._updateCommentByVote(model, commentModel);
-            return;
-        }
-
-        // TODO Next version
     }
 
     _updatePostByVote(model, postModel) {
-        // TODO In MVP version
+        // TODO -
     }
 
     _updateCommentByVote(model, commentModel) {
-        // TODO Next version
+        // TODO -
     }
 }
 

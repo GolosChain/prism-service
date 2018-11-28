@@ -27,6 +27,7 @@ module.exports = MongoDB.makeModel(
         index: [
             {
                 fields: {
+                    fromUser: 1,
                     toUser: 1,
                     permlink: 1,
                 },
