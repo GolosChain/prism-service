@@ -5,7 +5,7 @@ const CommentModel = require('../../models/Comment');
 
 class Vote extends Abstract {
     async handle({ voter: fromUser, author: toUser, permlink, weight }) {
-        let model = VoteModel.findOne({ fromUser, toUser, permlink });
+        let model = await VoteModel.findOne({ fromUser, toUser, permlink });
 
         if (model) {
             await this._updateRevertTrace({

@@ -10,8 +10,8 @@ const POST_BODY_CUT_LENGTH = 600;
 class Content extends Abstract {
     async handleMakeOrModify(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
-        const permlinkObject = { permlink: data.permlink };
-        const model = await this._getOrCreateModelWithTrace(Model, permlinkObject, permlinkObject);
+        const idObject = { author: data.author, permlink: data.permlink };
+        const model = await this._getOrCreateModelWithTrace(Model, idObject, idObject);
 
         this._applyBasicData(model, data, isPost);
         this._applyMetaData(model, data);
@@ -25,8 +25,8 @@ class Content extends Abstract {
 
     async handleDelete(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
-        const permlinkObject = { permlink: data.permlink };
-        const model = await this._getOrCreateModelWithTrace(Model, permlinkObject, permlinkObject);
+        const idObject = { author: data.author, permlink: data.permlink };
+        const model = await this._getOrCreateModelWithTrace(Model, idObject, idObject);
 
         if (!model) {
             Logger.log(`Model not found, skip - ${data.permlink}`);
@@ -41,7 +41,7 @@ class Content extends Abstract {
     }
 
     async handleOptions(data) {
-        const query = { permlink: data.permlink };
+        const query = { author: data.author, permlink: data.permlink };
         const [post, comment] = await Promise.all([Post.findOne(query), Comment.findOne(query)]);
         let modelClass;
         let model;
