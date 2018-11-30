@@ -1,7 +1,7 @@
 const moment = require('moment');
 const core = require('gls-core-service');
 const BlockChainValues = core.utils.BlockChainValues;
-const BigNum = core.utils.BigNum;
+const BigNum = core.types.BigNum;
 
 const GOLOS_100_PERCENT = new BigNum(10000);
 
@@ -18,7 +18,7 @@ class ContentPendingPayout {
     }
 
     async calcAndApply() {
-        if (this._chainProps.totalRewardShares2.gt(0)) {
+        if (this._totalR2.gt(0)) {
             this._calcPending();
         }
 
@@ -184,6 +184,10 @@ class ContentPendingPayout {
     _getCuratorUnclaimedRewards(curationTokens) {
         const totalVoteWeight = this._contentModel.vote.totalWeight;
         const totalVoteRealWeight = this._contentModel.vote.totalRealWeight;
+
+        if (totalVoteWeight.eq(0)) {
+            return new BigNum(0);
+        }
 
         return curationTokens
             .times(totalVoteWeight.minus(totalVoteRealWeight))

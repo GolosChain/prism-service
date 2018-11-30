@@ -1,5 +1,5 @@
 const core = require('gls-core-service');
-const BigNum = core.utils.BigNum;
+const BigNum = core.types.BigNum;
 const BigNumUtils = BigNum.OriginalBigNumber();
 
 const REVERSE_AUCTION_WINDOW_SECONDS = 60 * 30;
