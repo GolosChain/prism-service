@@ -92,7 +92,7 @@ class VotePendingPayout {
         }
 
         this._contentModel.vote.totalWeight = this._contentModel.vote.totalWeight.plus(voteWeight);
-        this._contentModel.totalVoteRealWeight = this._contentModel.totalVoteRealWeight.plus(
+        this._contentModel.vote.totalRealWeight = this._contentModel.vote.totalRealWeight.plus(
             this._voteModel.weight
         );
     }
@@ -113,7 +113,7 @@ class VotePendingPayout {
 
     _calcCurrentPower() {
         const elapsedSeconds = this._secondsDiff(
-            this._blockTime.minus(this._userModel.lastVoteTime)
+            Number(this._blockTime) - Number(this._userModel.lastVoteTime)
         );
         const regeneratedPower = (GOLOS_100_PERCENT * elapsedSeconds) / VOTE_REGENERATION_SECONDS;
 
