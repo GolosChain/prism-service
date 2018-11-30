@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
+const BigNum = core.types.BigNum;
 const Abstract = require('./Abstract');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
@@ -9,8 +10,8 @@ const POST_BODY_CUT_LENGTH = 600;
 class Content extends Abstract {
     async handleMakeOrModify(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
-        const permlinkObject = { permlink: data.permlink };
-        const model = await this._getOrCreateModelWithTrace(Model, permlinkObject, permlinkObject);
+        const idObject = { author: data.author, permlink: data.permlink };
+        const model = await this._getOrCreateModelWithTrace(Model, idObject, idObject);
 
         this._applyBasicData(model, data, isPost);
         this._applyMetaData(model, data);
@@ -24,8 +25,8 @@ class Content extends Abstract {
 
     async handleDelete(data) {
         const [Model, isPost] = this._selectModelClassAndType(data);
-        const permlinkObject = { permlink: data.permlink };
-        const model = await this._getOrCreateModelWithTrace(Model, permlinkObject, permlinkObject);
+        const idObject = { author: data.author, permlink: data.permlink };
+        const model = await this._getOrCreateModelWithTrace(Model, idObject, idObject);
 
         if (!model) {
             Logger.log(`Model not found, skip - ${data.permlink}`);
@@ -40,7 +41,7 @@ class Content extends Abstract {
     }
 
     async handleOptions(data) {
-        const query = { permlink: data.permlink };
+        const query = { author: data.author, permlink: data.permlink };
         const [post, comment] = await Promise.all([Post.findOne(query), Comment.findOne(query)]);
         let modelClass;
         let model;
@@ -66,6 +67,42 @@ class Content extends Abstract {
         model.allowCurationRewards = data.allow_curation_rewards;
 
         this._handleOptionsExtensions(data, model);
+
+        await model.save();
+    }
+
+    async handlePromoteTransfer({ from, to, amount, memo }) {
+        let author;
+        let permlink;
+
+        if (to !== 'null') {
+            return;
+        }
+
+        try {
+            [author, permlink] = memo.slice(1).split('/');
+
+            if (!author || !permlink) {
+                return;
+            }
+
+            const currency = to.split(' ')[1];
+
+            if (currency !== 'GBG') {
+                return;
+            }
+        } catch (e) {
+            // Not a promote, do nothing
+            return;
+        }
+
+        const model = await Post.findOne({ author, permlink });
+
+        if (!model) {
+            return;
+        }
+
+        model.promote.balance += new BigNum(amount);
 
         await model.save();
     }

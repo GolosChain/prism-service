@@ -33,6 +33,12 @@ module.exports = MongoDB.makeModel(
         createdInBlockchain: {
             type: Date,
         },
+        promote: {
+            balance: {
+                type: BigNumType,
+                default: new BigNum('0'),
+            },
+        },
         bandwidth: {
             lastUpdate: {
                 type: Date,
@@ -195,6 +201,7 @@ module.exports = MongoDB.makeModel(
         index: [
             {
                 fields: {
+                    author: 1,
                     permlink: 1,
                 },
                 options: {
