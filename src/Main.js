@@ -9,8 +9,6 @@ const Cleaner = require('./services/Cleaner');
 const ChainProps = require('./services/ChainProps');
 const FeedPrice = require('./services/FeedPrice');
 
-const User = require('./models/User');
-
 class Main extends BasicMain {
     constructor() {
         super(stats, env);
