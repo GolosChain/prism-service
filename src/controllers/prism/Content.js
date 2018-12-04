@@ -4,6 +4,7 @@ const BigNum = core.types.BigNum;
 const Abstract = require('./Abstract');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
+const PendingCalc = require('../../utils/ContentPendingPayout');
 
 const POST_BODY_CUT_LENGTH = 600;
 
@@ -15,6 +16,7 @@ class Content extends Abstract {
 
         this._applyBasicData(model, data, isPost);
         this._applyMetaData(model, data);
+        await this._applyPendingPayout(model, isPost);
 
         await model.save();
 
@@ -183,6 +185,17 @@ class Content extends Abstract {
         if (model.metadata.images && model.metadata.images[0] === '') {
             model.metadata.images = [];
         }
+    }
+
+    async _applyPendingPayout(model, isPost) {
+        const chainProps = await this._chainPropsService.getCurrentValues();
+        const feedPrice = await this._feedPriceService.getCurrentValues();
+        const calculator = new PendingCalc(model, isPost, {
+            chainProps,
+            gbgRate: feedPrice.gbgRate,
+        });
+
+        calculator.calc();
     }
 
     _selectModelClassAndType(data) {
