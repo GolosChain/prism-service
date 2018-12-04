@@ -6,12 +6,23 @@ const env = require('./data/env');
 const Prism = require('./services/Prism');
 const Connector = require('./services/Connector');
 const Cleaner = require('./services/Cleaner');
+const ChainProps = require('./services/ChainProps');
+const FeedPrice = require('./services/FeedPrice');
+
+const User = require('./models/User');
 
 class Main extends BasicMain {
     constructor() {
         super(stats, env);
 
-        this.addNested(new MongoDB(), new Prism(), new Connector(), new Cleaner());
+        const mongoDB = new MongoDB();
+        const connector = new Connector();
+        const cleaner = new Cleaner();
+        const chainProps = new ChainProps();
+        const feedPrice = new FeedPrice();
+        const prism = new Prism({ chainPropsService: chainProps, feedPriceService: feedPrice });
+
+        this.addNested(mongoDB, cleaner, chainProps, feedPrice, prism, connector);
     }
 }
 

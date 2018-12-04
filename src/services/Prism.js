@@ -9,12 +9,12 @@ const RawBlockRestore = require('../services/RawBlockRestore'); // TODO -
 const ForkRestore = require('../utils/ForkRestore');
 
 class Prism extends BasicService {
-    constructor() {
+    constructor({ chainPropsService, feedPriceService }) {
         super();
 
         this._inForkState = false;
 
-        this._controller = new Controller();
+        this._controller = new Controller({ chainPropsService, feedPriceService });
         this._blockQueue = [];
         this._subscribe = new BlockSubscribe(); // TODO Add start params
         this.addNested(this._subscribe);
@@ -26,7 +26,7 @@ class Prism extends BasicService {
     async start() {
         await this._subscribe.start();
         this._runExtractorLoop().catch(error => {
-            Logger.error(`Prism error - ${error}`);
+            Logger.error(`Prism error - ${error.stack}`);
             process.exit(1);
         });
     }

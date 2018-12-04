@@ -1,7 +1,12 @@
 const RevertTrace = require('../../models/RevertTrace');
 
 class Abstract {
-    async handle(data) {
+    constructor({ chainPropsService, feedPriceService }) {
+        this._chainPropsService = chainPropsService;
+        this._feedPriceService = feedPriceService;
+    }
+
+    async handle(data, blockMeta) {
         throw 'Handler not implemented';
     }
 

@@ -4,7 +4,7 @@ const BigNumUtils = BigNum.OriginalBigNumber();
 
 const REVERSE_AUCTION_WINDOW_SECONDS = 60 * 30;
 const VOTE_REGENERATION_SECONDS = 5 * 60 * 60 * 24;
-const GOLOS_100_PERCENT = 10000;
+const GOLOS_100_PERCENT = new BigNum(10000);
 const CONTENT_CONSTANT = new BigNum('2000000000000');
 const BIG_INT_VOTE_FILTER = new BigNum(2).pow(64);
 
@@ -140,7 +140,7 @@ class VotePendingPayout {
     _calcEffectiveVestingShares() {
         const model = this._userModel;
 
-        return model.vesting.minus(model.delegatedToAnother).plus(model.delegatedFromAnother);
+        return model.vesting.original.minus(model.delegatedToAnother).plus(model.delegatedFromAnother);
     }
 
     _secondsDiff(date1, date2) {

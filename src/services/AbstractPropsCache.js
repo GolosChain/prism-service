@@ -20,7 +20,7 @@ class AbstractPropsCache extends BasicService {
 
     async iteration() {
         try {
-            this._currentValues = await this._extract();
+            await this._extract();
         } catch (error) {
             Logger.error(`Can't update values for ${this.constructor.name} - ${error}`);
             stats.increment('extract_props_error');
