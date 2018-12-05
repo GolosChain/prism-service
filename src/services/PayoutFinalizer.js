@@ -40,18 +40,21 @@ class PayoutFinalizer extends BasicService {
     async _finalizeContents(models) {
         for (const model of models) {
             const content = await golos.api.getContentAsync(model.author, model.permlink, 0);
+            const payout = model.payout;
+            const final = payout.final;
 
-            model.payout.final.authorGolos = new BigNum(content.author_golos_payout_value);
-            model.payout.final.authorGbg = new BigNum(content.author_gbg_payout_value);
-            model.payout.final.authorGests = new BigNum(content.author_gests_payout_value);
-            model.payout.final.curatorValue = new BigNum(content.curator_payout_value);
-            model.payout.final.curatorGests = new BigNum(content.curator_gests_payout_value);
-            model.payout.final.benefactorValue = new BigNum(content.beneficiary_payout_value);
-            model.payout.final.benefactorGests = new BigNum(content.beneficiary_gests_payout_value);
-            model.payout.final.totalValue = new BigNum(content.total_payout_value);
-            model.payout.rewardWeight = new BigNum(content.reward_weight);
-            model.payout.netRshares = new BigNum(content.net_rshares);
-            model.payout.isDone = true;
+            payout.rewardWeight = new BigNum(content.reward_weight);
+            payout.netRshares = new BigNum(content.net_rshares);
+            payout.isDone = true;
+
+            final.authorGolos = new BigNum(content.author_golos_payout_value);
+            final.authorGbg = new BigNum(content.author_gbg_payout_value);
+            final.authorGests = new BigNum(content.author_gests_payout_value);
+            final.curatorValue = new BigNum(content.curator_payout_value);
+            final.curatorGests = new BigNum(content.curator_gests_payout_value);
+            final.benefactorValue = new BigNum(content.beneficiary_payout_value);
+            final.benefactorGests = new BigNum(content.beneficiary_gests_payout_value);
+            final.totalValue = new BigNum(content.total_payout_value);
 
             await model.save();
         }
