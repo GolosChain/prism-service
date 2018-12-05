@@ -1,4 +1,6 @@
 const core = require('gls-core-service');
+const BigNum = core.types.BigNum;
+const BigNumType = core.types.MongoBigNum;
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
@@ -33,21 +35,24 @@ module.exports = MongoDB.makeModel(
             type: [String],
         },
         votingPower: {
-            type: Number,
-            default: 10000,
+            type: BigNumType,
+            default: new BigNum('10000'),
         },
         lastVoteDate: {
             type: Date,
         },
         vesting: {
             original: {
-                type: Number,
+                type: BigNumType,
+                default: new BigNum('0'),
             },
             delegatedFromAnother: {
-                type: Number,
+                type: BigNumType,
+                default: new BigNum('0'),
             },
             delegatedToAnother: {
-                type: Number,
+                type: BigNumType,
+                default: new BigNum('0'),
             },
         },
     },

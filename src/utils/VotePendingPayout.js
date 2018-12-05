@@ -1,10 +1,10 @@
 const core = require('gls-core-service');
-const BigNum = core.utils.BigNum;
+const BigNum = core.types.BigNum;
 const BigNumUtils = BigNum.OriginalBigNumber();
 
 const REVERSE_AUCTION_WINDOW_SECONDS = 60 * 30;
 const VOTE_REGENERATION_SECONDS = 5 * 60 * 60 * 24;
-const GOLOS_100_PERCENT = 10000;
+const GOLOS_100_PERCENT = new BigNum(10000);
 const CONTENT_CONSTANT = new BigNum('2000000000000');
 const BIG_INT_VOTE_FILTER = new BigNum(2).pow(64);
 
@@ -13,7 +13,7 @@ class VotePendingPayout {
     constructor({ voteModel, recentVoteModel, contentModel, userModel }, chainProps, blockTime) {
         this._voteModel = voteModel;
         this._recentVoteModel = recentVoteModel;
-        this._contentModel = voteModel;
+        this._contentModel = contentModel;
         this._userModel = userModel;
         this._voteRegenerationPerDay = chainProps.voteRegenerationPerDay;
         this._blockTime = blockTime;
@@ -70,11 +70,12 @@ class VotePendingPayout {
     }
 
     _calcTotalWeight() {
-        const oldVoteRshares = this._contentModel.vote.rshares;
+        const model = this._contentModel;
+        const oldVoteRshares = model.vote.rshares;
         let voteWeight = 0;
 
-        if (rshares > 0 && this._contentModel.options.allowCurationRewards) {
-            const contentVoteRshares = this._contentModel.vote.rshares;
+        if (model.vote.rshares > 0 && model.options.allowCurationRewards) {
+            const contentVoteRshares = model.vote.rshares;
             const bigIntOldFilter = BIG_INT_VOTE_FILTER.times(oldVoteRshares);
             const oldWeight = bigIntOldFilter.div(CONTENT_CONSTANT.times(2).plus(oldVoteRshares));
             const bitIntNewFilter = BIG_INT_VOTE_FILTER.times(contentVoteRshares);
@@ -91,15 +92,14 @@ class VotePendingPayout {
             this._voteModel.weight = 0;
         }
 
-        this._contentModel.vote.totalWeight = this._contentModel.vote.totalWeight.plus(voteWeight);
-        this._contentModel.totalVoteRealWeight = this._contentModel.totalVoteRealWeight.plus(
-            this._voteModel.weight
-        );
+        model.vote.totalWeight = model.vote.totalWeight.plus(voteWeight);
+        model.vote.totalRealWeight = model.vote.totalRealWeight.plus(this._voteModel.weight);
     }
 
     _calcElapsedFromPostCreation() {
         return this._secondsDiff(
-            this._voteModel.lastUpdateInBlockchain - this._contentModel.createdInBlockchain
+            this._voteModel.lastUpdateInBlockchain,
+            this._contentModel.createdInBlockchain
         );
     }
 
@@ -112,10 +112,10 @@ class VotePendingPayout {
     }
 
     _calcCurrentPower() {
-        const elapsedSeconds = this._secondsDiff(
-            this._blockTime.minus(this._userModel.lastVoteTime)
+        const elapsedSeconds = this._secondsDiff(this._blockTime, this._userModel.lastVoteTime);
+        const regeneratedPower = new BigNum(GOLOS_100_PERCENT * elapsedSeconds).div(
+            VOTE_REGENERATION_SECONDS
         );
-        const regeneratedPower = (GOLOS_100_PERCENT * elapsedSeconds) / VOTE_REGENERATION_SECONDS;
 
         return BigNumUtils.min(
             this._userModel.votingPower.plus(regeneratedPower),
@@ -140,11 +140,11 @@ class VotePendingPayout {
     _calcEffectiveVestingShares() {
         const model = this._userModel;
 
-        return model.vesting.minus(model.delegatedToAnother).plus(model.delegatedFromAnother);
+        return model.vesting.original.minus(model.delegatedToAnother).plus(model.delegatedFromAnother);
     }
 
     _secondsDiff(date1, date2) {
-        return new BigNum((+date1 - +date2) / 1000);
+        return new BigNum((Number(date1) - Number(date2)) / 1000);
     }
 
     async _saveChanges() {

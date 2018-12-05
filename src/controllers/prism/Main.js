@@ -7,14 +7,19 @@ const User = require('./User');
 const RevertTrace = require('../../models/RevertTrace');
 
 class Main {
-    constructor() {
-        this._content = new Content();
-        this._vote = new Vote();
-        this._user = new User();
+    constructor(sevices) {
+        this._content = new Content(sevices);
+        this._vote = new Vote(sevices);
+        this._user = new User(sevices);
     }
 
     async disperse([block, blockNum]) {
         const tracer = new RevertTrace({ blockNum });
+
+        this._blockMeta = {
+            blockNum,
+            blockTime: new Date(block.timestamp),
+        };
 
         await tracer.save();
 
@@ -30,10 +35,10 @@ class Main {
     async _disperseReal(type, data) {
         switch (type) {
             case 'vote':
-                await this._vote.handle(data);
+                await this._vote.handle(data, this._blockMeta);
                 break;
             case 'comment':
-                await this._content.handleMakeOrModify(data);
+                await this._content.handleMakeOrModify(data, this._blockMeta);
                 break;
             case 'transfer':
                 await this._content.handlePromoteTransfer(data);

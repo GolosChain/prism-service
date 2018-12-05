@@ -2,18 +2,24 @@ const Abstract = require('./Abstract');
 const VoteModel = require('../../models/Vote');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
+const UserModel = require('../../models/User');
+const PendingCalc = require('../../utils/VotePendingPayout');
 
 class Vote extends Abstract {
-    async handle({ voter: fromUser, author: toUser, permlink, weight }) {
+    async handle({ voter: fromUser, author: toUser, permlink, weight }, { blockTime }) {
         let model = await VoteModel.findOne({ fromUser, toUser, permlink });
+        let isNewVote;
 
         if (model) {
+            isNewVote = false;
+
             await this._updateRevertTrace({
                 command: 'swap',
                 modelBody: model.toObject(),
                 modelClassName: VoteModel.modelName,
             });
         } else {
+            isNewVote = true;
             model = new VoteModel({ fromUser, toUser, permlink, weight });
 
             await this._updateRevertTrace({
@@ -28,22 +34,53 @@ class Vote extends Abstract {
         const postModel = await PostModel.findOne({ author: toUser, permlink });
 
         if (postModel) {
-            await this._updatePostByVote(model, postModel);
+            await this._updatePostByVote({
+                isNewVote,
+                voteModel: model,
+                contentModel: postModel,
+                blockTime,
+            });
         } else {
             const commentModel = await CommentModel.findOne({ author: toUser, permlink });
 
             if (commentModel) {
-                await this._updateCommentByVote(model, commentModel);
+                await this._updateCommentByVote();
             }
         }
     }
 
-    _updatePostByVote(model, postModel) {
-        // TODO -
+    async _updatePostByVote({ voteModel, isNewVote, contentModel, blockTime }) {
+        const userModel = await UserModel.findOne({
+            name: voteModel.toUser
+        });
+        let recentVoteModel;
+
+        if (!userModel) {
+            return;
+        }
+
+        if (isNewVote) {
+            recentVoteModel = null;
+        } else {
+            recentVoteModel = voteModel.toObject();
+        }
+
+        const calculation = new PendingCalc(
+            {
+                voteModel,
+                recentVoteModel,
+                contentModel,
+                userModel,
+            },
+            await this._chainPropsService.getCurrentValues(),
+            blockTime
+        );
+
+        await calculation.calcAndApply();
     }
 
-    _updateCommentByVote(model, commentModel) {
-        // TODO -
+    async _updateCommentByVote() {
+        // TODO Next version (not in MVP)
     }
 }
 

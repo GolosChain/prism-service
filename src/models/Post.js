@@ -88,31 +88,40 @@ module.exports = MongoDB.makeModel(
             },
             netRshares: {
                 type: BigNumType,
+                default: new BigNum('0'),
             },
             pending: {
                 authorValue: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 authorGolos: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 authorGbg: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 authorGests: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 curatorValue: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 curatorGests: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 benefactorValue: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 benefactorGests: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 totalValue: {
                     type: BigNumType,
@@ -120,29 +129,33 @@ module.exports = MongoDB.makeModel(
                 },
             },
             final: {
-                authorValue: {
-                    type: BigNumType,
-                },
                 authorGolos: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 authorGbg: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 authorGests: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 curatorValue: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 curatorGests: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 benefactorValue: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 benefactorGests: {
                     type: BigNumType,
+                    default: new BigNum('0'),
                 },
                 totalValue: {
                     type: BigNumType,
@@ -159,12 +172,15 @@ module.exports = MongoDB.makeModel(
             },
             rshares: {
                 type: BigNumType,
+                default: new BigNum('0'),
             },
             totalWeight: {
                 type: BigNumType,
+                default: new BigNum('0'),
             },
             totalRealWeight: {
                 type: BigNumType,
+                default: new BigNum('0'),
             },
         },
         comments: {
@@ -211,6 +227,11 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     author: 1,
+                },
+            },
+            {
+                fields: {
+                    createdInBlockchain: 1,
                 },
             },
         ],

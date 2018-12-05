@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const MongoDB = core.services.MongoDB;
+const BigNumType = core.types.MongoBigNum;
 
 module.exports = MongoDB.makeModel(
     'Vote',
@@ -14,10 +15,10 @@ module.exports = MongoDB.makeModel(
             type: String,
         },
         weight: {
-            type: Number,
+            type: BigNumType,
         },
         percent: {
-            type: Number,
+            type: BigNumType,
         },
         lastUpdateInBlockchain: {
             type: Date,
