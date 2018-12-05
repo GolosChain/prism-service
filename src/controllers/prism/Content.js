@@ -9,14 +9,19 @@ const PendingCalc = require('../../utils/ContentPendingPayout');
 const POST_BODY_CUT_LENGTH = 600;
 
 class Content extends Abstract {
-    async handleMakeOrModify(data) {
+    async handleMakeOrModify(data, { blockTime }) {
         const [Model, isPost] = this._selectModelClassAndType(data);
         const idObject = { author: data.author, permlink: data.permlink };
         const model = await this._getOrCreateModelWithTrace(Model, idObject, idObject);
 
         this._applyBasicData(model, data, isPost);
         this._applyMetaData(model, data);
-        await this._applyPendingPayout(model, isPost);
+
+        if (!model.payout.isDone) {
+            await this._applyPendingPayout(model, isPost);
+        }
+
+        model.createdInBlockchain = blockTime;
 
         await model.save();
 

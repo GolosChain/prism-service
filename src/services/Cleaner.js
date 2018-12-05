@@ -31,7 +31,7 @@ class Cleaner extends BasicService {
             }
         } catch (error) {
             Logger.error(`Cleaner error - ${error}`);
-            stats.increment('cleaner_error');
+            stats.increment('logic_service_error');
             process.exit(1);
         }
 

@@ -38,7 +38,7 @@ class Main {
                 await this._vote.handle(data, this._blockMeta);
                 break;
             case 'comment':
-                await this._content.handleMakeOrModify(data);
+                await this._content.handleMakeOrModify(data, this._blockMeta);
                 break;
             case 'transfer':
                 await this._content.handlePromoteTransfer(data);

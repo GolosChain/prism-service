@@ -129,10 +129,6 @@ module.exports = MongoDB.makeModel(
                 },
             },
             final: {
-                authorValue: {
-                    type: BigNumType,
-                    default: new BigNum('0'),
-                },
                 authorGolos: {
                     type: BigNumType,
                     default: new BigNum('0'),
@@ -231,6 +227,11 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     author: 1,
+                },
+            },
+            {
+                fields: {
+                    createdInBlockchain: 1,
                 },
             },
         ],
