@@ -44,10 +44,10 @@ class Main {
                 await this._content.handlePromoteTransfer(data);
                 break;
             case 'transfer_to_vesting':
-                // Do noting for now
+                await this._user.handleTransferToVesting(data);
                 break;
             case 'withdraw_vesting':
-                // Do noting for now
+                await this._user.handleWithdrawVesting(data);
                 break;
             case 'limit_order_create':
                 // Do noting for now
@@ -62,7 +62,7 @@ class Main {
                 // Do noting for now
                 break;
             case 'account_create':
-                // Do noting for now
+                await this._user.handleAccountCreate(data);
                 break;
             case 'account_update':
                 // Do noting for now
@@ -152,10 +152,10 @@ class Main {
                 // Do noting for now
                 break;
             case 'delegate_vesting_shares':
-                // Do noting for now
+                await this._user.handleDelegateVesting(data);
                 break;
             case 'account_create_with_delegation':
-                // Do noting for now
+                await this._user.handleAccountCreateWithDelegation(data);
                 break;
             case 'account_metadata':
                 await this._user.handleAccount(data);
@@ -183,10 +183,10 @@ class Main {
                 // Do noting for now
                 break;
             case 'author_reward':
-                // Do noting for now
+                await this._user.handleAuthorReward(data);
                 break;
             case 'curation_reward':
-                // Do noting for now
+                await this._user.handleCuratorReward(data);
                 break;
             case 'comment_reward':
                 // Do noting for now
@@ -216,13 +216,13 @@ class Main {
                 // Do noting for now
                 break;
             case 'comment_benefactor_reward':
-                // Do noting for now
+                await this._user.handleBenefactorReward(data);
                 break;
             case 'return_vesting_delegation':
                 // Do noting for now
                 break;
             case 'producer_reward':
-                // Do noting for now
+                await this._user.handleProducerReward(data);
                 break;
             default:
                 Logger.error(`Unknown virtual operation type - ${type} - skip.`);

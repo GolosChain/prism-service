@@ -1,3 +1,5 @@
+const core = require('gls-core-service');
+const BigNum = core.types.BigNum;
 const Abstract = require('./Abstract');
 const Model = require('../../models/User');
 
@@ -57,7 +59,7 @@ class User extends Abstract {
         try {
             metadata = JSON.parse(json);
 
-            if (!metadata || !Array.isArray(metadata)) {
+            if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
                 return;
             }
         } catch (error) {
@@ -139,6 +141,86 @@ class User extends Abstract {
         }
 
         return user;
+    }
+
+    async handleAuthorReward({ author: name, vesting_payout: vesting }) {
+        await this._handleVesting(name, vesting);
+    }
+
+    async handleCuratorReward({ curator: name, reward: vesting }) {
+        await this._handleVesting(name, vesting);
+    }
+
+    async handleProducerReward({ producer: name, vesting_shares: vesting }) {
+        await this._handleVesting(name, vesting);
+    }
+
+    async handleBenefactorReward({ author: name, reward: vesting }) {
+        await this._handleVesting(name, vesting);
+    }
+
+    async handleTransferToVesting({ to: name, amount: vesting }) {
+        await this._handleVesting(name, vesting);
+    }
+
+    async handleWithdrawVesting({ account: name, amount: vesting }) {
+        await this._handleVesting(name, new BigNum(vesting).negated());
+    }
+
+    async handleDelegateVesting({ delegator: from, delegatee: to, vesting_shares: vesting }) {
+        const fromModel = await this._getModelWithVesting(from);
+
+        if (!fromModel) {
+            return;
+        }
+
+        const toModel = await this._getModelWithVesting(to);
+
+        if (!toModel) {
+            return;
+        }
+
+        fromModel.vesting.delegatedToAnother.minus(vesting);
+
+        const alreadyDelegated = toModel.delegatedFromAnother.get(from);
+
+        toModel.vesting.delegatedFromAnother.minus(alreadyDelegated).plus(vesting);
+
+        await fromModel.save();
+        await toModel.save();
+    }
+
+    async _handleVesting(name, vesting) {
+        const model = await this._getModelWithVesting(name);
+
+        if (!model) {
+            return;
+        }
+
+        model.vesting.original = model.vesting.original.plus(vesting);
+
+        await model.save();
+    }
+
+    async _getModelWithVesting(name) {
+        return await Model.findOne({ name }, { vesting: true });
+    }
+
+    async handleAccountCreate({ new_account_name: name, fee: vesting }) {
+        const model = new Model({ name });
+
+        model.vesting.original.plus(vesting);
+
+        await model.save();
+    }
+
+    async handleAccountCreateWithDelegation({ new_account_name: name, fee: vesting, delegation }) {
+        const model = new Model({ name });
+
+        model.vesting.original.plus(vesting);
+        model.vesting.delegatedFromAnother.plus(delegation);
+
+        await model.save();
     }
 }
 
