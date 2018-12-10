@@ -59,7 +59,21 @@ class Feed extends Abstract {
     }
 
     async _getPromoFeed({ fromId, limit, tags }) {
-        // TODO -
+        const payoutDate = new Date(Date.now() - env.GLS_PAYOUT_RANGE);
+        const query = { createdInBlockchain: { $gt: payoutDate } };
+
+        this._injectQueryParams(query, { fromId, tags });
+
+        const data = await Post.find(
+            query,
+            { __v: false },
+            { limit, lean: true, sort: { 'promote.balance': -1 } }
+        );
+
+        return {
+            total: data.length,
+            data: data || [],
+        };
     }
 
     async _getPersonalFeed({ fromId, limit, user, tags }) {
