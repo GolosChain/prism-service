@@ -168,6 +168,8 @@ class User extends Abstract {
     }
 
     async handleDelegateVesting({ delegator: from, delegatee: to, vesting_shares: vesting }) {
+        return; // TODO After feeds.
+
         const fromModel = await this._getModelWithVesting(from);
 
         if (!fromModel) {
@@ -182,7 +184,7 @@ class User extends Abstract {
 
         fromModel.vesting.delegatedToAnother.minus(vesting);
 
-        const alreadyDelegated = toModel.delegatedFromAnother.get(from);
+        const alreadyDelegated = toModel.vesting.delegatedFromAnotherMap[from];
 
         toModel.vesting.delegatedFromAnother.minus(alreadyDelegated).plus(vesting);
 

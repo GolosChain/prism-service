@@ -50,8 +50,25 @@ class Vote extends Abstract {
     }
 
     async _updatePostByVote({ voteModel, isNewVote, contentModel, blockTime }) {
+        await this._applyVotes(voteModel, contentModel);
+        await this._applyPostPayouts({ voteModel, isNewVote, contentModel, blockTime });
+    }
+
+    async _applyVotes(voteModel, contentModel) {
+        return; // TODO After feeds.
+
+        if (voteModel.weight.gte(0)) {
+            contentModel.vote.likes.set(voteModel.fromUser, voteModel.weight);
+            contentModel.vote.dislikes.delete(voteModel.fromUser);
+        } else {
+            contentModel.vote.dislikes.set(voteModel.fromUser, voteModel.weight);
+            contentModel.vote.likes.delete(voteModel.fromUser);
+        }
+    }
+
+    async _applyPostPayouts({ voteModel, isNewVote, contentModel, blockTime }) {
         const userModel = await UserModel.findOne({
-            name: voteModel.toUser
+            name: voteModel.toUser,
         });
         let recentVoteModel;
 
