@@ -42,7 +42,11 @@ class Feed extends Abstract {
 
         this._injectQueryParams(query, { fromId, tags });
 
-        const data = await this._getPostsWithNaturalSort(query, limit);
+        const data = await Post.find(
+            query,
+            { __v: false },
+            { limit, lean: true, sort: { _id: -1 } }
+        );
 
         return {
             total: data.length,
@@ -92,7 +96,11 @@ class Feed extends Abstract {
 
         query.author = { $in: userModel.following };
 
-        const data = await this._getPostsWithNaturalSort(query, limit);
+        const data = await Post.find(
+            query,
+            { __v: false },
+            { limit, lean: true, sort: { _id: -1 } }
+        );
 
         return {
             total: data.length,
@@ -108,10 +116,6 @@ class Feed extends Abstract {
         if (tags.length) {
             query['metadata.tags'] = { $in: tags };
         }
-    }
-
-    async _getPostsWithNaturalSort(query, limit) {
-        return await Post.find(query, { __v: false }, { limit, lean: true, sort: { _id: -1 } });
     }
 }
 
