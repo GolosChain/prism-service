@@ -59,7 +59,7 @@ class User extends Abstract {
         try {
             metadata = JSON.parse(json);
 
-            if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+            if (!metadata || !Array.isArray(metadata)) {
                 return;
             }
         } catch (error) {
