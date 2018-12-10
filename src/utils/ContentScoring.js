@@ -9,7 +9,7 @@ const TRENDING_TIME_DEGRADATION = 480000;
 
 // Warning: Ported and refactored from blockchain node (C++)
 class ContentScoring {
-    calcHot(netRshares, createdInBlockChain) {
+    calcActual(netRshares, createdInBlockChain) {
         return this._calcLikeAWilson({
             HOT_RSHARES_BASE,
             HOT_TIME_DEGRADATION,
@@ -18,7 +18,7 @@ class ContentScoring {
         });
     }
 
-    calcTrending(netRshares, createdInBlockChain) {
+    calcPopular(netRshares, createdInBlockChain) {
         return this._calcLikeAWilson({
             TRENDING_RSHARES_BASE,
             TRENDING_TIME_DEGRADATION,

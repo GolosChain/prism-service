@@ -35,12 +35,12 @@ module.exports = MongoDB.makeModel(
         },
         scoring: {
             actual: {
-                type: BigNumType,
-                default: new BigNum(0),
+                type: Number,
+                default: 0,
             },
             popular: {
-                type: BigNumType,
-                default: new BigNum(0),
+                type: Number,
+                default: 0,
             }
         },
         promote: {

@@ -4,8 +4,15 @@ const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 const UserModel = require('../../models/User');
 const PendingCalc = require('../../utils/VotePendingPayout');
+const ContentScoring = require('../../utils/ContentScoring');
 
 class Vote extends Abstract {
+    constructor() {
+        super(...arguments);
+
+        this._contentScoring = new ContentScoring();
+    }
+
     async handle({ voter: fromUser, author: toUser, permlink, weight }, { blockTime }) {
         let model = await VoteModel.findOne({ fromUser, toUser, permlink });
         let isNewVote;
@@ -50,11 +57,12 @@ class Vote extends Abstract {
     }
 
     async _updatePostByVote({ voteModel, isNewVote, contentModel, blockTime }) {
-        await this._applyVotes(voteModel, contentModel);
+        await this._applyPostVotes(voteModel, contentModel);
         await this._applyPostPayouts({ voteModel, isNewVote, contentModel, blockTime });
+        await this._applyPostScoring(contentModel);
     }
 
-    async _applyVotes(voteModel, contentModel) {
+    async _applyPostVotes(voteModel, contentModel) {
         return; // TODO After feeds.
 
         if (voteModel.weight.gte(0)) {
@@ -94,6 +102,19 @@ class Vote extends Abstract {
         );
 
         await calculation.calcAndApply();
+    }
+
+    async _applyPostScoring(model) {
+        model.scoring.actual = this._contentScoring.calcActual(
+            model.netRshares,
+            model.createdInBlockchain
+        );
+        model.scoring.popular = this._contentScoring.calcPopular(
+            model.netRshares,
+            model.createdInBlockchain
+        );
+
+        await model.save();
     }
 
     async _updateCommentByVote() {
