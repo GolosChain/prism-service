@@ -42,24 +42,23 @@ class Feed extends Abstract {
 
         this._injectQueryParams(query, { fromId, tags });
 
-        const data = await Post.find(
-            query,
-            { __v: false },
-            { limit, lean: true, sort: { _id: -1 } }
-        );
-
-        return {
-            total: data.length,
-            data: data || [],
-        };
+        return await this._queryFeedWithAnnotate(query, { _id: -1 }, limit);
     }
 
     async _getPopularFeed({ fromId, limit, tags }) {
-        // TODO -
+        const query = {};
+
+        this._injectQueryParams(query, { fromId, tags });
+
+        return await this._queryFeedWithAnnotate(query, { 'scoring.popular': -1 }, limit);
     }
 
     async _getActualFeed({ fromId, limit, tags }) {
-        // TODO -
+        const query = {};
+
+        this._injectQueryParams(query, { fromId, tags });
+
+        return await this._queryFeedWithAnnotate(query, { 'scoring.actual': -1 }, limit);
     }
 
     async _getPromoFeed({ fromId, limit, tags }) {
@@ -68,16 +67,7 @@ class Feed extends Abstract {
 
         this._injectQueryParams(query, { fromId, tags });
 
-        const data = await Post.find(
-            query,
-            { __v: false },
-            { limit, lean: true, sort: { 'promote.balance': -1 } }
-        );
-
-        return {
-            total: data.length,
-            data: data || [],
-        };
+        return await this._queryFeedWithAnnotate(query, { 'promote.balance': -1 }, limit);
     }
 
     async _getPersonalFeed({ fromId, limit, user, tags }) {
@@ -88,24 +78,12 @@ class Feed extends Abstract {
         const userModel = await User.findOne({ name: user }, { following: true });
 
         if (!userModel || !userModel.following || !userModel.following.length) {
-            return {
-                total: 0,
-                data: [],
-            };
+            return this._annotate([]);
         }
 
         query.author = { $in: userModel.following };
 
-        const data = await Post.find(
-            query,
-            { __v: false },
-            { limit, lean: true, sort: { _id: -1 } }
-        );
-
-        return {
-            total: data.length,
-            data: data || [],
-        };
+        return await this._queryFeedWithAnnotate(query, { _id: -1 }, limit);
     }
 
     _injectQueryParams(query, { fromId, tags }) {
@@ -116,6 +94,21 @@ class Feed extends Abstract {
         if (tags.length) {
             query['metadata.tags'] = { $in: tags };
         }
+    }
+
+    async _queryFeedWithAnnotate(query, sort, limit) {
+        return this._annotate(await this._queryFeed(query, sort, limit));
+    }
+
+    async _queryFeed(query, sort, limit) {
+        return await Post.find(query, { __v: false }, { limit, lean: true, sort });
+    }
+
+    _annotate(responseDate = []) {
+        return {
+            total: responseDate.length,
+            data: responseDate,
+        };
     }
 }
 

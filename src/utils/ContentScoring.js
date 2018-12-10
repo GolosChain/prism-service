@@ -11,8 +11,8 @@ const TRENDING_TIME_DEGRADATION = 480000;
 class ContentScoring {
     calcActual(netRshares, createdInBlockChain) {
         return this._calcLikeAWilson({
-            HOT_RSHARES_BASE,
-            HOT_TIME_DEGRADATION,
+            rsharesBase: HOT_RSHARES_BASE,
+            timeDegradation: HOT_TIME_DEGRADATION,
             netRshares,
             createdInBlockChain,
         });
@@ -20,14 +20,18 @@ class ContentScoring {
 
     calcPopular(netRshares, createdInBlockChain) {
         return this._calcLikeAWilson({
-            TRENDING_RSHARES_BASE,
-            TRENDING_TIME_DEGRADATION,
+            rsharesBase: TRENDING_RSHARES_BASE,
+            timeDegradation: TRENDING_TIME_DEGRADATION,
             netRshares,
             createdInBlockChain,
         });
     }
 
     _calcLikeAWilson({ rsharesBase, timeDegradation, netRshares, createdInBlockChain }) {
+        if (netRshares.isNaN()) {
+            return 0;
+        }
+
         const seconds = +createdInBlockChain / 1000;
         const modRshares = netRshares.div(rsharesBase);
         const order = Math.log10(BigNumUtils.max(modRshares.abs(), 1));

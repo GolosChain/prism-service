@@ -106,11 +106,11 @@ class Vote extends Abstract {
 
     async _applyPostScoring(model) {
         model.scoring.actual = this._contentScoring.calcActual(
-            model.netRshares,
+            model.payout.netRshares,
             model.createdInBlockchain
         );
         model.scoring.popular = this._contentScoring.calcPopular(
-            model.netRshares,
+            model.payout.netRshares,
             model.createdInBlockchain
         );
 
