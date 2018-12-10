@@ -186,7 +186,9 @@ class User extends Abstract {
 
         const alreadyDelegated = toModel.vesting.delegatedFromAnotherMap[from];
 
-        toModel.vesting.delegatedFromAnother.minus(alreadyDelegated).plus(vesting);
+        toModel.vesting.delegatedFromAnother = toModel.vesting.delegatedFromAnother
+            .minus(alreadyDelegated)
+            .plus(vesting);
 
         await fromModel.save();
         await toModel.save();
