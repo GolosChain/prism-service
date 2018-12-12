@@ -7,8 +7,8 @@ const PendingCalc = require('../../utils/VotePendingPayout');
 const ContentScoring = require('../../utils/ContentScoring');
 
 class Vote extends Abstract {
-    constructor() {
-        super(...arguments);
+    constructor(...args) {
+        super(...args);
 
         this._contentScoring = new ContentScoring();
     }
