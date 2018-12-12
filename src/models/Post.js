@@ -175,9 +175,11 @@ module.exports = MongoDB.makeModel(
         },
         vote: {
             likes: {
+                // name(string) -> power(BigNum)
                 type: Object,
             },
             dislikes: {
+                // name(string) -> power(BigNum)
                 type: Object,
             },
             rshares: {

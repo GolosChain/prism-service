@@ -63,15 +63,24 @@ class Vote extends Abstract {
     }
 
     async _applyPostVotes(voteModel, contentModel) {
-        return; // TODO After feeds.
+        const { fromUser, weight } = voteModel;
 
-        if (voteModel.weight.gte(0)) {
-            contentModel.vote.likes.set(voteModel.fromUser, voteModel.weight);
-            contentModel.vote.dislikes.delete(voteModel.fromUser);
+        contentModel.vote.likes = contentModel.vote.likes || {};
+        contentModel.vote.dislikes = contentModel.vote.dislikes || {};
+
+        if (weight.gt(0)) {
+            contentModel.vote.likes[fromUser] = weight;
+            delete contentModel.vote.dislikes[fromUser];
+        } else if (weight.lt(0)) {
+            contentModel.vote.dislikes[fromUser] = weight;
+            delete contentModel.vote.likes[fromUser];
         } else {
-            contentModel.vote.dislikes.set(voteModel.fromUser, voteModel.weight);
-            contentModel.vote.likes.delete(voteModel.fromUser);
+            delete contentModel.vote.likes[fromUser];
+            delete contentModel.vote.dislikes[fromUser];
         }
+
+        contentModel.markModified('vote.likes');
+        contentModel.markModified('vote.dislikes');
     }
 
     async _applyPostPayouts({ voteModel, isNewVote, contentModel, blockTime }) {
