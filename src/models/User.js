@@ -51,8 +51,8 @@ module.exports = MongoDB.makeModel(
                 default: new BigNum(0),
             },
             delegatedFromAnotherMap: {
-                type: Map,
-                of: BigNumType,
+                // name -> value(BigNum)
+                type: Object,
             },
             delegatedToAnother: {
                 type: BigNumType,
