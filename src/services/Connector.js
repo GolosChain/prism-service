@@ -12,7 +12,11 @@ class Connector extends BasicConnector {
     async start() {
         await super.start({
             serverRoutes: {
-                getFeed: this._feed.handle.bind(this._feed),
+                getNaturalFeed: this._feed.handleNatural.bind(this._feed),
+                getPopularFeed: this._feed.handlePopular.bind(this._feed),
+                getActualFeed: this._feed.handleActual.bind(this._feed),
+                getPromoFeed: this._feed.handlePromo.bind(this._feed),
+                getPersonalFeed: this._feed.handlePersonal.bind(this._feed),
             },
         });
     }

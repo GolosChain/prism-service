@@ -3,8 +3,8 @@ const BigNum = core.types.BigNum;
 const MongoDB = core.services.MongoDB;
 const BigNumType = MongoDB.type.MongoBigNum;
 
-const BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT = new BigNum('1000000.000');
-const BLOCKCHAIN_DEFAULT_GBG_PERCENT = new BigNum('5000');
+const BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT = new BigNum(1000000.000);
+const BLOCKCHAIN_DEFAULT_GBG_PERCENT = new BigNum(5000);
 const GOLOS_100_PERCENT = new BigNum(10000);
 
 module.exports = MongoDB.makeModel(
@@ -33,10 +33,20 @@ module.exports = MongoDB.makeModel(
         createdInBlockchain: {
             type: Date,
         },
+        scoring: {
+            actual: {
+                type: Number,
+                default: 0,
+            },
+            popular: {
+                type: Number,
+                default: 0,
+            }
+        },
         promote: {
             balance: {
                 type: BigNumType,
-                default: new BigNum('0'),
+                default: new BigNum(0),
             },
         },
         bandwidth: {
@@ -88,99 +98,101 @@ module.exports = MongoDB.makeModel(
             },
             netRshares: {
                 type: BigNumType,
-                default: new BigNum('0'),
+                default: new BigNum(0),
             },
             pending: {
                 authorValue: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 authorGolos: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 authorGbg: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 authorGests: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 curatorValue: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 curatorGests: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 benefactorValue: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 benefactorGests: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 totalValue: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
             },
             final: {
                 authorGolos: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 authorGbg: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 authorGests: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 curatorValue: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 curatorGests: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 benefactorValue: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 benefactorGests: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
                 totalValue: {
                     type: BigNumType,
-                    default: new BigNum('0'),
+                    default: new BigNum(0),
                 },
             },
         },
         vote: {
             likes: {
+                // name(string) -> power(BigNum)
                 type: Object,
             },
             dislikes: {
+                // name(string) -> power(BigNum)
                 type: Object,
             },
             rshares: {
                 type: BigNumType,
-                default: new BigNum('0'),
+                default: new BigNum(0),
             },
             totalWeight: {
                 type: BigNumType,
-                default: new BigNum('0'),
+                default: new BigNum(0),
             },
             totalRealWeight: {
                 type: BigNumType,
-                default: new BigNum('0'),
+                default: new BigNum(0),
             },
         },
         comments: {

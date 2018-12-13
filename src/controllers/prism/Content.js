@@ -93,7 +93,7 @@ class Content extends Abstract {
                 return;
             }
 
-            const currency = to.split(' ')[1];
+            const currency = amount.split(' ')[1];
 
             if (currency !== 'GBG') {
                 return;
@@ -109,7 +109,7 @@ class Content extends Abstract {
             return;
         }
 
-        model.promote.balance += new BigNum(amount);
+        model.promote.balance = model.promote.balance.plus(amount);
 
         await model.save();
     }

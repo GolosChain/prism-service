@@ -36,7 +36,7 @@ module.exports = MongoDB.makeModel(
         },
         votingPower: {
             type: BigNumType,
-            default: new BigNum('10000'),
+            default: new BigNum(10000),
         },
         lastVoteDate: {
             type: Date,
@@ -44,15 +44,19 @@ module.exports = MongoDB.makeModel(
         vesting: {
             original: {
                 type: BigNumType,
-                default: new BigNum('0'),
+                default: new BigNum(0),
             },
             delegatedFromAnother: {
                 type: BigNumType,
-                default: new BigNum('0'),
+                default: new BigNum(0),
+            },
+            delegatedFromAnotherMap: {
+                // name(string) -> value(BigNum)
+                type: Object,
             },
             delegatedToAnother: {
                 type: BigNumType,
-                default: new BigNum('0'),
+                default: new BigNum(0),
             },
         },
     },
