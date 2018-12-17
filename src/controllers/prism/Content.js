@@ -1,10 +1,9 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
-const BigNum = core.types.BigNum;
 const Abstract = require('./Abstract');
 const Comment = require('../../models/Comment');
 const Post = require('../../models/Post');
-const PendingCalc = require('../../utils/ContentPendingPayout');
+const ContentPendingPayout = require('../../utils/ContentPendingPayout');
 
 const POST_BODY_CUT_LENGTH = 600;
 
@@ -195,7 +194,7 @@ class Content extends Abstract {
     async _applyPendingPayout(model, isPost) {
         const chainProps = await this._chainPropsService.getCurrentValues();
         const feedPrice = await this._feedPriceService.getCurrentValues();
-        const calculator = new PendingCalc(model, isPost, {
+        const calculator = new ContentPendingPayout(model, isPost, {
             chainProps,
             gbgRate: feedPrice.gbgRate,
         });

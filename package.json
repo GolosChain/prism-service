@@ -24,10 +24,10 @@
     },
     "homepage": "https://github.com/GolosChain/prism-service#readme",
     "dependencies": {
-        "gls-core-service": "^2.13.4",
+        "gls-core-service": "^2.14.0",
         "golos": "^0.3.32",
-        "golos-js": "^0.7.5",
-        "moment": "^2.22.2",
+        "golos-js": "^0.7.7",
+        "moment": "^2.23.0",
         "then-sleep": "^1.0.1"
     }
 }
