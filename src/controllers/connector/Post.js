@@ -3,7 +3,7 @@ const Abstract = require('./Abstract');
 
 class Post extends Abstract {
     async handle() {
-        // TODO -
+        // TODO In next version (not in MVP)
     }
 }
 

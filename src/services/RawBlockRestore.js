@@ -116,12 +116,9 @@ class RawBlockRestore extends BasicService {
 
                 Logger.log(`Raw corrupted block loaded - ${blockNum}`);
             } catch (error) {
-                Logger.error(`Cant load corrupted raw block, but continue - ${error}`);
+                corrupted.push({ blockNum });
 
-                await new Promise(resolve => {
-                    corrupted.push({ blockNum });
-                    setTimeout(resolve, env.GLS_RAW_CORRUPTED_RESTORE_TIMEOUT);
-                });
+                Logger.error(`Cant load corrupted raw block, but continue - ${error}`);
             }
         }
     }

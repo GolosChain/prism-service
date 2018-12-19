@@ -5,8 +5,9 @@ const stats = core.utils.statsClient;
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
 const Controller = require('../controllers/prism/Main');
-const RawBlockRestore = require('../services/RawBlockRestore'); // TODO -
+const RawBlockRestore = require('../services/RawBlockRestore');
 const ForkRestore = require('../utils/ForkRestore');
+const RawBlock = require('../models/RawBlock');
 
 class Prism extends BasicService {
     constructor({ chainPropsService, feedPriceService }) {
@@ -16,14 +17,17 @@ class Prism extends BasicService {
 
         this._controller = new Controller({ chainPropsService, feedPriceService });
         this._blockQueue = [];
-        this._subscribe = new BlockSubscribe(); // TODO Add start params
+    }
+
+    async start() {
+        const lastBlockNum = await this._getLastBlockNum();
+
+        this._subscribe = new BlockSubscribe(lastBlockNum);
         this.addNested(this._subscribe);
 
         this._subscribe.on('block', this._handleBlock.bind(this));
         this._subscribe.on('fork', this._handleFork.bind(this));
-    }
 
-    async start() {
         await this._subscribe.start();
         this._runExtractorLoop().catch(error => {
             Logger.error(`Prism error - ${error.stack}`);
@@ -58,9 +62,7 @@ class Prism extends BasicService {
     async _runExtractorLoop() {
         while (true) {
             await this._extractFromQueue();
-            await new Promise(resolve => {
-                setImmediate(resolve);
-            });
+            await sleep(0);
         }
     }
 
@@ -73,6 +75,28 @@ class Prism extends BasicService {
             await this._controller.disperse(blockData);
             stats.timing('block_disperse', new Date() - timer);
         }
+    }
+
+    async _getLastBlockNum() {
+        const model = await RawBlock.findOne(
+            {},
+            { blockNum: true, _id: false },
+            { sort: { blockNum: -1 } }
+        );
+
+        if (!model) {
+            await this._restoreRawBlocks();
+
+            return await this._getLastBlockNum();
+        }
+
+        return model.blockNum;
+    }
+
+    async _restoreRawBlocks() {
+        const restorer = new RawBlockRestore();
+
+        await restorer.start(0);
     }
 }
 

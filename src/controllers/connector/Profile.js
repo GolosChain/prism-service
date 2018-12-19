@@ -3,7 +3,7 @@ const Abstract = require('./Abstract');
 
 class Profile extends Abstract {
     async handle() {
-        // TODO -
+        // TODO In next version (not in MVP)
     }
 }
 
