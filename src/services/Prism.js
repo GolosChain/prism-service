@@ -38,6 +38,8 @@ class Prism extends BasicService {
     async _handleBlock(block, blockNum) {
         if (!this._inForkState) {
             this._blockQueue.push([block, blockNum]);
+
+            await RawBlock.insert({ blockNum, ...block });
         }
     }
 
