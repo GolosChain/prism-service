@@ -99,6 +99,10 @@ class Prism extends BasicService {
         const restorer = new RawBlockRestore();
 
         await restorer.start(0);
+
+        for (let model of RawBlock.find({}, { sort: { blockNum: 1 } }).cursor()) {
+            await this._handleBlock(model.toObject(), model.blockNum);
+        }
     }
 }
 
