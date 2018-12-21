@@ -112,7 +112,20 @@ class RawBlockRestore extends BasicService {
                 block.blockNum = blockNum;
                 block.corrupted = false;
 
-                await Model.update({ blockNum }, block);
+                for (const key of Object.keys(block)) {
+                    if (key === '_virtual_operations') {
+                        await Model.update({ blockNum }, { $set: { [key]: [] } });
+
+                        for (const virtual of block[key]) {
+                            await Model.update(
+                                { blockNum },
+                                { $push: { _virtual_operations: virtual } }
+                            );
+                        }
+                    } else {
+                        await Model.update({ blockNum }, { $set: { [key]: block[key] } });
+                    }
+                }
 
                 Logger.log(`Raw corrupted block loaded - ${blockNum}`);
             } catch (error) {

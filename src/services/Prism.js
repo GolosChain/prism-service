@@ -15,6 +15,7 @@ class Prism extends BasicService {
 
         this._inForkState = false;
 
+        this._chainProsService = chainPropsService;
         this._controller = new Controller({ chainPropsService, feedPriceService });
         this._blockQueue = [];
     }
@@ -80,6 +81,7 @@ class Prism extends BasicService {
     }
 
     async _getLastBlockNum() {
+        const { lastIrreversibleBlockNum } = await this._chainProsService.getCurrentValues();
         const model = await RawBlock.findOne(
             {},
             { blockNum: true, _id: false },
@@ -87,7 +89,11 @@ class Prism extends BasicService {
         );
 
         if (!model) {
-            await this._restoreRawBlocks();
+            await this._restoreRawBlocks(0);
+
+            return await this._getLastBlockNum();
+        } else if (model.blockNum < lastIrreversibleBlockNum) {
+            await this._restoreRawBlocks(model.blockNum);
 
             return await this._getLastBlockNum();
         }
@@ -95,14 +101,26 @@ class Prism extends BasicService {
         return model.blockNum;
     }
 
-    async _restoreRawBlocks() {
+    async _restoreRawBlocks(lastBlock) {
         const restorer = new RawBlockRestore();
 
-        await restorer.start(0);
+        await restorer.start(lastBlock + 1);
 
-        for (let model of RawBlock.find({}, { sort: { blockNum: 1 } }).cursor()) {
+        const lastModel = await RawBlock.findOne(
+            {},
+            { blockNum: true },
+            { sort: { blockNum: -1 } }
+        );
+        const lastNum = lastModel.blockNum;
+
+        for (let blockNum = 1; blockNum < lastNum; blockNum++) {
+            const model = await RawBlock.findOne({ blockNum });
+
+            Logger.log(`Disperse restored block - ${blockNum}`);
             await this._handleBlock(model.toObject(), model.blockNum);
         }
+
+        Logger.info('Restore done.');
     }
 }
 
