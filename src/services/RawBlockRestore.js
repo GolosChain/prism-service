@@ -4,7 +4,10 @@ const Logger = core.utils.Logger;
 const BlockUtils = core.utils.Block;
 const BlockChainValues = core.utils.BlockChainValues;
 const env = require('../data/env');
-const Model = require('../models/RawBlock');
+const HeaderModel = require('../models/RawBlockHeader');
+const TransactionModel = require('../models/RawBlockTransaction');
+const RealOperationModel = require('../models/RawBlockRealOperation');
+const VirtualOperationModel = require('../models/RawBlockVirtualOperation');
 
 class RawBlockRestore extends BasicService {
     constructor(...args) {
@@ -134,6 +137,82 @@ class RawBlockRestore extends BasicService {
                 Logger.error(`Cant load corrupted raw block, but continue - ${error}`);
             }
         }
+    }
+
+    async _storeBlock(block, blockNum, corrupted = false) {
+        if (corrupted) {
+            const headerModel = new HeaderModel({ blockNum, corrupted: true });
+
+            await headerModel.save();
+            return;
+        }
+
+        let transactionNum = 0;
+        let virtualOperationNum = 0;
+
+        for (const transaction of BlockUtils.eachTransaction(block)) {
+            let realOperationNum = 0;
+            const operations = transaction.operations;
+
+            delete transaction.operations;
+
+            const transactionModel = new TransactionModel({
+                blockNum,
+                orderingNum: transactionNum,
+                ...transaction,
+            });
+
+            await transactionModel.save();
+
+            for (let [type, data] of operations) {
+                const realOperationModel = new RealOperationModel({
+                    blockNum,
+                    transactionNum,
+                    orderingNum: realOperationNum,
+                    operationType: type,
+                    ...data,
+                });
+
+                await realOperationModel.save();
+
+                realOperationNum++;
+            }
+
+            transactionNum++;
+        }
+
+        for (const [type, data] of BlockUtils.eachVirtualOperation(block)) {
+            const virtualOperationModel = new VirtualOperationModel({
+                blockNum,
+                transactionNum,
+                orderingNum: virtualOperationNum,
+                operationType: type,
+                ...data,
+            });
+
+            await virtualOperationModel.save();
+
+            virtualOperationNum++;
+        }
+
+        delete block.transactions;
+        delete block._virtual_operations;
+
+        const headerModel = new HeaderModel({ blockNum, ...block });
+
+        await headerModel.save();
+    }
+
+    async _storeTransactions() {
+        // TODO -
+    }
+
+    async _storeRealOperations() {
+        // TODO -
+    }
+
+    async _storeVirtualOperations() {
+        // TODO -
     }
 
     *_numQueue(current) {
