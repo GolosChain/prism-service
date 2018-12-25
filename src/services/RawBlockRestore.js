@@ -147,11 +147,21 @@ class RawBlockRestore extends BasicService {
             return;
         }
 
+        await this._storeTransactions(block, blockNum);
+        await this._storeVirtualOperations(block, blockNum);
+
+        delete block.transactions;
+        delete block._virtual_operations;
+
+        const headerModel = new HeaderModel({ blockNum, ...block });
+
+        await headerModel.save();
+    }
+
+    async _storeTransactions(block, blockNum) {
         let transactionNum = 0;
-        let virtualOperationNum = 0;
 
         for (const transaction of BlockUtils.eachTransaction(block)) {
-            let realOperationNum = 0;
             const operations = transaction.operations;
 
             delete transaction.operations;
@@ -163,28 +173,37 @@ class RawBlockRestore extends BasicService {
             });
 
             await transactionModel.save();
-
-            for (let [type, data] of operations) {
-                const realOperationModel = new RealOperationModel({
-                    blockNum,
-                    transactionNum,
-                    orderingNum: realOperationNum,
-                    operationType: type,
-                    ...data,
-                });
-
-                await realOperationModel.save();
-
-                realOperationNum++;
-            }
+            await this._storeRealOperations(operations, blockNum, transactionNum);
 
             transactionNum++;
         }
+    }
+
+    async _storeRealOperations(operations, blockNum, transactionNum) {
+        let realOperationNum = 0;
+
+        for (let [type, data] of operations) {
+            const realOperationModel = new RealOperationModel({
+                blockNum,
+                transactionNum,
+                orderingNum: realOperationNum,
+                operationType: type,
+                ...data,
+            });
+
+            await realOperationModel.save();
+
+            realOperationNum++;
+        }
+
+    }
+
+    async _storeVirtualOperations(block, blockNum) {
+        let virtualOperationNum = 0;
 
         for (const [type, data] of BlockUtils.eachVirtualOperation(block)) {
             const virtualOperationModel = new VirtualOperationModel({
                 blockNum,
-                transactionNum,
                 orderingNum: virtualOperationNum,
                 operationType: type,
                 ...data,
@@ -194,25 +213,6 @@ class RawBlockRestore extends BasicService {
 
             virtualOperationNum++;
         }
-
-        delete block.transactions;
-        delete block._virtual_operations;
-
-        const headerModel = new HeaderModel({ blockNum, ...block });
-
-        await headerModel.save();
-    }
-
-    async _storeTransactions() {
-        // TODO -
-    }
-
-    async _storeRealOperations() {
-        // TODO -
-    }
-
-    async _storeVirtualOperations() {
-        // TODO -
     }
 
     *_numQueue(current) {
