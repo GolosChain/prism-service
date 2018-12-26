@@ -4,11 +4,7 @@ const Logger = core.utils.Logger;
 const BlockUtils = core.utils.Block;
 const BlockChainValues = core.utils.BlockChainValues;
 const env = require('../data/env');
-const HeaderModel = require('../models/RawBlockHeader');
-const TransactionModel = require('../models/RawBlockTransaction');
-const RealOperationModel = require('../models/RawBlockRealOperation');
-const VirtualOperationModel = require('../models/RawBlockVirtualOperation');
-const CorruptedModel = require('../models/RawBlockCorrupted');
+const RawBlockUtil = require('../utils/RawBlock');
 
 class RawBlockRestore extends BasicService {
     constructor(...args) {
@@ -87,11 +83,11 @@ class RawBlockRestore extends BasicService {
             try {
                 block = await BlockUtils.getByNum(blockNum);
 
-                await this._storeBlock(block, blockNum);
+                await RawBlockUtil.save(block, blockNum);
 
                 Logger.log(`Raw block loaded - ${blockNum}`);
             } catch (error) {
-                await this._storeCorruptedBlock(blockNum);
+                await RawBlockUtil.saveCorrupted(blockNum);
 
                 Logger.error(`Cant load raw block, but continue - ${error}`);
             }
@@ -103,7 +99,7 @@ class RawBlockRestore extends BasicService {
             return;
         }
 
-        const corruptedList = await CorruptedModel.find({}, { blockNum: true });
+        const corruptedList = await RawBlockUtil.getCorruptedList();
 
         if (!corruptedList) {
             return;
@@ -115,7 +111,7 @@ class RawBlockRestore extends BasicService {
             try {
                 const block = await BlockUtils.getByNum(blockNum);
 
-                await this._storeBlock(block, blockNum);
+                await RawBlockUtil.save(block, blockNum);
                 await corruptedModel.remove();
 
                 Logger.log(`Raw corrupted block loaded - ${blockNum}`);
@@ -125,80 +121,6 @@ class RawBlockRestore extends BasicService {
                 Logger.error(`Cant load corrupted raw block, but continue - ${error}`);
             }
         }
-    }
-
-    async _storeBlock(block, blockNum) {
-        await this._storeTransactions(block, blockNum);
-        await this._storeVirtualOperations(block, blockNum);
-
-        delete block.transactions;
-        delete block._virtual_operations;
-
-        const headerModel = new HeaderModel({ blockNum, ...block });
-
-        await headerModel.save();
-    }
-
-    async _storeTransactions(block, blockNum) {
-        let transactionNum = 0;
-
-        for (const transaction of BlockUtils.eachTransaction(block)) {
-            const operations = transaction.operations;
-
-            delete transaction.operations;
-
-            const transactionModel = new TransactionModel({
-                blockNum,
-                orderingNum: transactionNum,
-                ...transaction,
-            });
-
-            await transactionModel.save();
-            await this._storeRealOperations(operations, blockNum, transactionNum);
-
-            transactionNum++;
-        }
-    }
-
-    async _storeRealOperations(operations, blockNum, transactionNum) {
-        let realOperationNum = 0;
-
-        for (let [type, data] of operations) {
-            const realOperationModel = new RealOperationModel({
-                blockNum,
-                transactionNum,
-                orderingNum: realOperationNum,
-                operationType: type,
-                ...data,
-            });
-
-            await realOperationModel.save();
-
-            realOperationNum++;
-        }
-    }
-
-    async _storeVirtualOperations(block, blockNum) {
-        let virtualOperationNum = 0;
-
-        for (const [type, data] of BlockUtils.eachVirtualOperation(block)) {
-            const virtualOperationModel = new VirtualOperationModel({
-                blockNum,
-                orderingNum: virtualOperationNum,
-                operationType: type,
-                ...data,
-            });
-
-            await virtualOperationModel.save();
-
-            virtualOperationNum++;
-        }
-    }
-
-    async _storeCorruptedBlock(blockNum) {
-        const corruptedModel = new CorruptedModel({ blockNum });
-
-        await corruptedModel.save();
     }
 
     *_numQueue(current) {

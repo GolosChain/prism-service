@@ -1,4 +1,5 @@
 const RevertTrace = require('../models/RevertTrace');
+const RawBlockUtil = require('../utils/RawBlock');
 
 class ForkRestore {
     async revert() {
@@ -27,6 +28,7 @@ class ForkRestore {
             }
         }
 
+        await RawBlockUtil.removeFullBlock(document.blockNum);
         await document.remove();
     }
 

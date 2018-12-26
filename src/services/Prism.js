@@ -7,7 +7,7 @@ const BlockSubscribe = core.services.BlockSubscribe;
 const Controller = require('../controllers/prism/Main');
 const RawBlockRestore = require('../services/RawBlockRestore');
 const ForkRestore = require('../utils/ForkRestore');
-const RawBlock = require('../models/RawBlock');
+const RawBlockUtil = require('../utils/RawBlock');
 
 class Prism extends BasicService {
     constructor({ chainPropsService, feedPriceService }) {
@@ -40,7 +40,7 @@ class Prism extends BasicService {
         if (!this._inForkState) {
             this._blockQueue.push([block, blockNum]);
 
-            await RawBlock.insert({ blockNum, ...block });
+            await RawBlockUtil.save(block, blockNum);
         }
     }
 
@@ -82,23 +82,19 @@ class Prism extends BasicService {
 
     async _getLastBlockNum() {
         const { lastIrreversibleBlockNum } = await this._chainProsService.getCurrentValues();
-        const model = await RawBlock.findOne(
-            {},
-            { blockNum: true, _id: false },
-            { sort: { blockNum: -1 } }
-        );
+        const lastBlockNum = await RawBlockUtil.getLastBlockNum();
 
-        if (!model) {
+        if (lastBlockNum === null) {
             await this._restoreRawBlocks(0);
 
             return await this._getLastBlockNum();
-        } else if (model.blockNum < lastIrreversibleBlockNum) {
-            await this._restoreRawBlocks(model.blockNum);
+        } else if (lastBlockNum < lastIrreversibleBlockNum) {
+            await this._restoreRawBlocks(lastBlockNum);
 
             return await this._getLastBlockNum();
         }
 
-        return model.blockNum;
+        return lastBlockNum;
     }
 
     async _restoreRawBlocks(lastBlock) {
@@ -106,18 +102,13 @@ class Prism extends BasicService {
 
         await restorer.start(lastBlock + 1);
 
-        const lastModel = await RawBlock.findOne(
-            {},
-            { blockNum: true },
-            { sort: { blockNum: -1 } }
-        );
-        const lastNum = lastModel.blockNum;
+        const lastBlockNum = await RawBlockUtil.getLastBlockNum();
 
-        for (let blockNum = 1; blockNum < lastNum; blockNum++) {
-            const model = await RawBlock.findOne({ blockNum });
+        for (let blockNum = 1; blockNum < lastBlockNum; blockNum++) {
+            const fullBlock = await RawBlockUtil.getFullBlock(blockNum);
 
             Logger.log(`Disperse restored block - ${blockNum}`);
-            await this._handleBlock(model.toObject(), model.blockNum);
+            await this._handleBlock(fullBlock, blockNum);
         }
 
         Logger.info('Restore done.');
