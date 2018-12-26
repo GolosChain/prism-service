@@ -70,7 +70,7 @@ class RawBlock {
     }
 
     static async getLastBlockNum() {
-        const model = await RawBlock.findOne(
+        const model = await HeaderModel.findOne(
             {},
             { blockNum: true, _id: false },
             { sort: { blockNum: -1 } }
