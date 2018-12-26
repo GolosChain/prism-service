@@ -28,9 +28,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     blockNum: -1,
                 },
-                options: {
-                    unique: true,
-                },
             },
         ],
         schema: {
