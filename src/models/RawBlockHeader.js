@@ -8,10 +8,6 @@ module.exports = MongoDB.makeModel(
             type: Number,
             required: true,
         },
-        corrupted: {
-            type: Boolean,
-            default: false,
-        },
     },
     {
         index: [

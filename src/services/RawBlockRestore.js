@@ -8,6 +8,7 @@ const HeaderModel = require('../models/RawBlockHeader');
 const TransactionModel = require('../models/RawBlockTransaction');
 const RealOperationModel = require('../models/RawBlockRealOperation');
 const VirtualOperationModel = require('../models/RawBlockVirtualOperation');
+const CorruptedModel = require('../models/RawBlockCorrupted');
 
 class RawBlockRestore extends BasicService {
     constructor(...args) {
@@ -80,17 +81,17 @@ class RawBlockRestore extends BasicService {
     }
 
     async _load() {
-        for (let blockNum of this._queue) {
+        for (const blockNum of this._queue) {
+            let block;
+
             try {
-                const block = await BlockUtils.getByNum(blockNum);
+                block = await BlockUtils.getByNum(blockNum);
 
-                block.blockNum = blockNum;
-
-                await Model.update({ blockNum }, block, { upsert: true });
+                await this._storeBlock(block, blockNum);
 
                 Logger.log(`Raw block loaded - ${blockNum}`);
             } catch (error) {
-                await Model.update({ blockNum }, { blockNum, corrupted: true }, { upsert: true });
+                await this._storeCorruptedBlock(blockNum);
 
                 Logger.error(`Cant load raw block, but continue - ${error}`);
             }
@@ -102,51 +103,31 @@ class RawBlockRestore extends BasicService {
             return;
         }
 
-        const corrupted = await Model.find({ corrupted: true }, { blockNum: true });
+        const corruptedList = await CorruptedModel.find({}, { blockNum: true });
 
-        if (!corrupted) {
+        if (!corruptedList) {
             return;
         }
 
-        for (let { blockNum } of corrupted) {
+        for (const corruptedModel of corruptedList) {
+            const { blockNum } = corruptedModel;
+
             try {
                 const block = await BlockUtils.getByNum(blockNum);
 
-                block.blockNum = blockNum;
-                block.corrupted = false;
-
-                for (const key of Object.keys(block)) {
-                    if (key === '_virtual_operations') {
-                        await Model.update({ blockNum }, { $set: { [key]: [] } });
-
-                        for (const virtual of block[key]) {
-                            await Model.update(
-                                { blockNum },
-                                { $push: { _virtual_operations: virtual } }
-                            );
-                        }
-                    } else {
-                        await Model.update({ blockNum }, { $set: { [key]: block[key] } });
-                    }
-                }
+                await this._storeBlock(block, blockNum);
+                await corruptedModel.remove();
 
                 Logger.log(`Raw corrupted block loaded - ${blockNum}`);
             } catch (error) {
-                corrupted.push({ blockNum });
+                corruptedList.push({ blockNum });
 
                 Logger.error(`Cant load corrupted raw block, but continue - ${error}`);
             }
         }
     }
 
-    async _storeBlock(block, blockNum, corrupted = false) {
-        if (corrupted) {
-            const headerModel = new HeaderModel({ blockNum, corrupted: true });
-
-            await headerModel.save();
-            return;
-        }
-
+    async _storeBlock(block, blockNum) {
         await this._storeTransactions(block, blockNum);
         await this._storeVirtualOperations(block, blockNum);
 
@@ -195,7 +176,6 @@ class RawBlockRestore extends BasicService {
 
             realOperationNum++;
         }
-
     }
 
     async _storeVirtualOperations(block, blockNum) {
@@ -213,6 +193,12 @@ class RawBlockRestore extends BasicService {
 
             virtualOperationNum++;
         }
+    }
+
+    async _storeCorruptedBlock(blockNum) {
+        const corruptedModel = new CorruptedModel({ blockNum });
+
+        await corruptedModel.save();
     }
 
     *_numQueue(current) {
