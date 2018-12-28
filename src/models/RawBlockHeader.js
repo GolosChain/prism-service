@@ -10,8 +10,8 @@ module.exports = MongoDB.makeModel(
         },
         dispersed: {
             type: Boolean,
-            default: false
-        }
+            default: false,
+        },
     },
     {
         index: [
@@ -22,6 +22,13 @@ module.exports = MongoDB.makeModel(
                 },
                 options: {
                     unique: true,
+                },
+            },
+            // Last dispersed search
+            {
+                fields: {
+                    blockNum: -1,
+                    dispersed: 1,
                 },
             },
             // Corrupted restore
