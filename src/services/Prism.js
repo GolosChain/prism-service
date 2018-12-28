@@ -29,18 +29,20 @@ class Prism extends BasicService {
         this._subscribe.on('block', this._handleBlock.bind(this));
         this._subscribe.on('fork', this._handleFork.bind(this));
 
-        await this._subscribe.start();
         this._runExtractorLoop().catch(error => {
             Logger.error(`Prism error - ${error.stack}`);
             process.exit(1);
         });
+
+        await this._tryDisperseUnhandledRawBlocks(lastBlockNum);
+        await this._subscribe.start();
     }
 
     async _handleBlock(block, blockNum) {
         if (!this._inForkState) {
             this._blockQueue.push([block, blockNum]);
 
-            await RawBlockUtil.save(block, blockNum);
+            await RawBlockUtil.save(block, blockNum, true);
         }
     }
 
@@ -100,18 +102,21 @@ class Prism extends BasicService {
     async _restoreRawBlocks(lastBlock) {
         const restorer = new RawBlockRestore();
 
-        await restorer.start(lastBlock + 1);
+        await restorer.start(lastBlock);
+    }
 
-        const lastBlockNum = await RawBlockUtil.getLastBlockNum();
+    async _tryDisperseUnhandledRawBlocks(lastBlockNum) {
+        const lastDispersedBlockNum = await RawBlockUtil.getLastDispersedBlockNum();
 
-        for (let blockNum = 1; blockNum < lastBlockNum; blockNum++) {
-            const fullBlock = await RawBlockUtil.getFullBlock(blockNum);
+        if (lastBlockNum !== lastDispersedBlockNum) {
+            for (let blockNum = lastDispersedBlockNum + 1; blockNum < lastBlockNum; blockNum++) {
+                const fullBlock = await RawBlockUtil.getFullBlock(blockNum);
 
-            Logger.log(`Disperse restored block - ${blockNum}`);
-            await this._handleBlock(fullBlock, blockNum);
+                Logger.log(`Disperse restored block - ${blockNum}`);
+                await this._handleBlock(fullBlock, blockNum);
+                await RawBlockUtil.markDispersed(blockNum);
+            }
         }
-
-        Logger.info('Restore done.');
     }
 }
 

@@ -47,7 +47,11 @@ class RawBlock {
         await VirtualOperationModel.deleteMany({ blockNum });
     }
 
-    static async save(block, blockNum) {
+    static async save(block, blockNum, withCheck = false) {
+        if (withCheck && (await HeaderModel.findOne({ blockNum }))) {
+            return;
+        }
+
         await this._storeTransactions(block, blockNum);
         await this._storeVirtualOperations(block, blockNum);
 
@@ -81,6 +85,24 @@ class RawBlock {
         } else {
             return null;
         }
+    }
+
+    static async getLastDispersedBlockNum() {
+        const model = await HeaderModel.findOne(
+            { dispersed: true },
+            { blockNum: true, _id: false },
+            { sort: { blockNum: -1 } }
+        );
+
+        if (model) {
+            return model.blockNum;
+        } else {
+            return 0;
+        }
+    }
+
+    static async markDispersed(blockNum) {
+        await HeaderModel.updateOne({ blockNum }, { dispersed: true });
     }
 
     static async _storeTransactions(block, blockNum) {
