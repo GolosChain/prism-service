@@ -23,15 +23,19 @@ class RawBlock {
 
         fullBlock.transactions = [];
 
+        let transactionNum = 0;
+
         for (const transactionModel of transactions) {
             const transactionObject = transactionModel.toObject();
             const operations = await RealOperationModel.find(
-                { blockNum },
+                { blockNum, transactionNum },
                 {},
                 { sort: { orderingNum: 1 } }
             );
 
             transactionObject.operations = operations.map(model => model.toObject());
+            fullBlock.transactions.push(transactionObject);
+            transactionNum++;
         }
 
         fullBlock._virtual_operations = virtualOperations.map(model => model.toObject());
