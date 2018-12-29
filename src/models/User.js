@@ -10,6 +10,9 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
+        registeredAt: {
+            type: Date,
+        },
         metaName: {
             type: String,
         },

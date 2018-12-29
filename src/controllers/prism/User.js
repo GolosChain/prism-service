@@ -212,8 +212,8 @@ class User extends Abstract {
         return await Model.findOne({ name }, { vesting: true });
     }
 
-    async handleAccountCreate({ new_account_name: name, fee: vesting }) {
-        const model = new Model({ name });
+    async handleAccountCreate({ new_account_name: name, fee: vesting }, { blockTime }) {
+        const model = new Model({ name, registeredAt: blockTime });
 
         model.vesting.original.plus(vesting);
 
