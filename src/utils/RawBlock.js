@@ -12,7 +12,7 @@ class RawBlock {
         const transactions = await TransactionModel.find(
             { blockNum },
             {},
-            { sort: { transactionNum: 1 } }
+            { sort: { orderingNum: 1 } }
         );
         const virtualOperations = await VirtualOperationModel.find(
             { blockNum },

@@ -31,15 +31,6 @@ module.exports = MongoDB.makeModel(
                     dispersed: 1,
                 },
             },
-            // Corrupted restore
-            {
-                fields: {
-                    corrupted: -1,
-                },
-                options: {
-                    sparse: true,
-                },
-            },
         ],
         schema: {
             strict: false,

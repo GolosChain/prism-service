@@ -21,6 +21,12 @@ module.exports = MongoDB.makeModel(
                     blockNum: -1,
                 },
             },
+            // Compose
+            {
+                fields: {
+                    orderingNum: 1,
+                },
+            },
         ],
         schema: {
             strict: false,
