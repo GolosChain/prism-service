@@ -62,7 +62,7 @@ class Main {
                 // Do noting for now
                 break;
             case 'account_create':
-                await this._user.handleAccountCreate(data);
+                await this._user.handleAccountCreate(data, this._blockMeta);
                 break;
             case 'account_update':
                 // Do noting for now

@@ -3,7 +3,8 @@ const VoteModel = require('../../models/Vote');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 const UserModel = require('../../models/User');
-const PendingCalc = require('../../utils/VotePendingPayout');
+const VotePendingPayout = require('../../utils/VotePendingPayout');
+const ContentPendingPayout = require('../../utils/ContentPendingPayout');
 const ContentScoring = require('../../utils/ContentScoring');
 
 class Vote extends Abstract {
@@ -99,18 +100,18 @@ class Vote extends Abstract {
             recentVoteModel = voteModel.toObject();
         }
 
-        const calculation = new PendingCalc(
-            {
-                voteModel,
-                recentVoteModel,
-                contentModel,
-                userModel,
-            },
-            await this._chainPropsService.getCurrentValues(),
-            blockTime
-        );
+        const chainProps = await this._chainPropsService.getCurrentValues();
+        const feedPrice = await this._feedPriceService.getCurrentValues();
+        const voteContext = { voteModel, recentVoteModel, contentModel, userModel };
+        const voteCalculation = new VotePendingPayout(voteContext, chainProps, blockTime);
+        const contentCalculation = new ContentPendingPayout(contentModel, true, {
+            chainProps,
+            gbgRate: feedPrice.gbgRate,
+        });
 
-        await calculation.calcAndApply();
+        await voteCalculation.calcAndApply();
+        contentCalculation.calc();
+        await contentModel.save();
     }
 
     async _applyPostScoring(model) {

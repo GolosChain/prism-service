@@ -4,7 +4,7 @@ const Logger = core.utils.Logger;
 const BlockUtils = core.utils.Block;
 const BlockChainValues = core.utils.BlockChainValues;
 const env = require('../data/env');
-const Model = require('../models/RawBlock');
+const RawBlockUtil = require('../utils/RawBlock');
 
 class RawBlockRestore extends BasicService {
     constructor(...args) {
@@ -77,17 +77,17 @@ class RawBlockRestore extends BasicService {
     }
 
     async _load() {
-        for (let blockNum of this._queue) {
+        for (const blockNum of this._queue) {
+            let block;
+
             try {
-                const block = await BlockUtils.getByNum(blockNum);
+                block = await BlockUtils.getByNum(blockNum);
 
-                block.blockNum = blockNum;
-
-                await Model.update({ blockNum }, block, { upsert: true });
+                await RawBlockUtil.save(block, blockNum);
 
                 Logger.log(`Raw block loaded - ${blockNum}`);
             } catch (error) {
-                await Model.update({ blockNum }, { blockNum, corrupted: true }, { upsert: true });
+                await RawBlockUtil.saveCorrupted(blockNum);
 
                 Logger.error(`Cant load raw block, but continue - ${error}`);
             }
@@ -99,29 +99,26 @@ class RawBlockRestore extends BasicService {
             return;
         }
 
-        const corrupted = await Model.find({ corrupted: true }, { blockNum: true });
+        const corruptedList = await RawBlockUtil.getCorruptedList();
 
-        if (!corrupted) {
+        if (!corruptedList) {
             return;
         }
 
-        for (let { blockNum } of corrupted) {
+        for (const corruptedModel of corruptedList) {
+            const { blockNum } = corruptedModel;
+
             try {
                 const block = await BlockUtils.getByNum(blockNum);
 
-                block.blockNum = blockNum;
-                block.corrupted = false;
-
-                await Model.update({ blockNum }, block);
+                await RawBlockUtil.save(block, blockNum);
+                await corruptedModel.remove();
 
                 Logger.log(`Raw corrupted block loaded - ${blockNum}`);
             } catch (error) {
-                Logger.error(`Cant load corrupted raw block, but continue - ${error}`);
+                corruptedList.push({ blockNum });
 
-                await new Promise(resolve => {
-                    corrupted.push({ blockNum });
-                    setTimeout(resolve, env.GLS_RAW_CORRUPTED_RESTORE_TIMEOUT);
-                });
+                Logger.error(`Cant load corrupted raw block, but continue - ${error}`);
             }
         }
     }

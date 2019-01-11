@@ -2,15 +2,23 @@ const core = require('gls-core-service');
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
-    'RawBlock',
+    'RawBlockRealOperation',
     {
         blockNum: {
             type: Number,
             required: true,
         },
-        corrupted: {
-            type: Boolean,
-            default: false,
+        transactionNum: {
+            type: Number,
+            required: true,
+        },
+        orderingNum: {
+            type: Number,
+            required: true,
+        },
+        operationType: {
+            type: String,
+            required: true,
         },
     },
     {
@@ -20,18 +28,11 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     blockNum: -1,
                 },
-                options: {
-                    unique: true,
-                },
             },
-            // Corrupted restore
+            // Compose
             {
                 fields: {
-                    corrupted: -1,
-                },
-                // Optimization for mongoose
-                options: {
-                    sparse: true,
+                    orderingNum: 1,
                 },
             },
         ],
