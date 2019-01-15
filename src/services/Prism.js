@@ -106,9 +106,15 @@ class Prism extends BasicService {
     }
 
     async _tryDisperseUnhandledRawBlocks(lastBlockNum) {
+        Logger.info('Get last dispersed block...');
+
         const lastDispersedBlockNum = await RawBlockUtil.getLastDispersedBlockNum();
 
+        Logger.info(`Last dispersed block is - ${lastDispersedBlockNum}`);
+
         if (lastBlockNum !== lastDispersedBlockNum) {
+            Logger.info('Start disperse restored blocks...');
+
             for (let blockNum = lastDispersedBlockNum + 1; blockNum < lastBlockNum; blockNum++) {
                 const fullBlock = await RawBlockUtil.getFullBlock(blockNum);
 
@@ -116,6 +122,8 @@ class Prism extends BasicService {
                 await this._handleBlock(fullBlock, blockNum);
                 await RawBlockUtil.markDispersed(blockNum);
             }
+
+            Logger.info('Restore dispersed done!');
         }
     }
 }
