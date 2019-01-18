@@ -9,6 +9,11 @@ const CorruptedModel = require('../models/RawBlockCorrupted');
 class RawBlock {
     static async getFullBlock(blockNum) {
         const header = await HeaderModel.findOne({ blockNum });
+
+        if (!header) {
+            return null;
+        }
+
         const transactions = await TransactionModel.find(
             { blockNum },
             {},
