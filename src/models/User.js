@@ -1,73 +1,62 @@
 const core = require('gls-core-service');
-const BigNum = core.types.BigNum;
-const BigNumType = core.types.MongoBigNum;
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
     'User',
     {
+        id: {
+            type: String,
+        },
         name: {
             type: String,
-            required: true,
         },
-        registeredAt: {
-            type: Date,
-        },
-        metaName: {
-            type: String,
-        },
-        profileImage: {
-            type: String,
-        },
-        coverImage: {
-            type: String,
-        },
-        about: {
-            type: String,
-        },
-        location: {
-            type: String,
-        },
-        website: {
-            type: String,
-        },
-        pinnedPosts: {
-            type: [String],
-        },
-        following: {
-            type: [String],
-        },
-        votingPower: {
-            type: BigNumType,
-            default: new BigNum(10000),
-        },
-        lastVoteDate: {
-            type: Date,
-        },
-        vesting: {
-            original: {
-                type: BigNumType,
-                default: new BigNum(0),
+        personalization: {
+            avatarUrl: {
+                type: String,
             },
-            delegatedFromAnother: {
-                type: BigNumType,
-                default: new BigNum(0),
+            coverUrl: {
+                type: String,
             },
-            delegatedFromAnotherMap: {
-                // name(string) -> value(BigNum)
-                type: Object,
+            biography: {
+                type: String,
             },
-            delegatedToAnother: {
-                type: BigNumType,
-                default: new BigNum(0),
+        },
+        community: {
+            subscriptionsList: {
+                type: [String],
+            },
+        },
+        registration: {
+            time: {
+                type: Date,
+            },
+        },
+        content: {
+            postsCount: {
+                type: Number,
+            },
+        },
+        messenger: {
+            facebookMessenger: {
+                type: String,
+            },
+            telegram: {
+                type: String,
+            },
+            whatsApp: {
+                type: String,
+            },
+            weChat: {
+                type: String,
             },
         },
     },
     {
         index: [
+            // Default
             {
                 fields: {
-                    name: 1,
+                    id: 1,
                 },
                 options: {
                     unique: true,

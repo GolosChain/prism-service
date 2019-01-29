@@ -1,213 +1,71 @@
 const core = require('gls-core-service');
-const BigNum = core.types.BigNum;
 const MongoDB = core.services.MongoDB;
-const BigNumType = MongoDB.type.MongoBigNum;
-
-const BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT = new BigNum(1000000.000);
-const BLOCKCHAIN_DEFAULT_GBG_PERCENT = new BigNum(5000);
 
 module.exports = MongoDB.makeModel(
     'Comment',
     {
-        parentAuthor: {
+        id: {
             type: String,
         },
-        parentPermlink: {
+        postId: {
             type: String,
+        },
+        parentCommentId: {
+            type: String,
+        },
+        meta: {
+            time: {
+                type: Date,
+            },
         },
         author: {
-            type: String,
-        },
-        permlink: {
-            type: String,
-        },
-        body: {
-            type: String,
-        },
-        createdInBlockchain: {
-            type: Date,
-        },
-        options: {
-            maxAcceptedPayout: {
-                type: BigNumType,
-                default: BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT,
+            name: {
+                type: String,
             },
-            gbgPercent: {
-                type: BigNumType,
-                default: BLOCKCHAIN_DEFAULT_GBG_PERCENT,
+            avatarUrl: {
+                type: String,
             },
-            allowCurationRewards: {
-                type: Boolean,
-                default: true,
+        },
+        content: {
+            title: {
+                type: String,
             },
-            beneficiaries: {
-                type: [
-                    {
-                        name: {
-                            type: String,
-                        },
-                        weight: {
-                            type: Number,
-                        },
-                    },
-                ],
+            body: {
+                full: {
+                    type: String,
+                },
             },
         },
         payout: {
-            date: {
-                type: Date,
-            },
-            isDone: {
-                type: Boolean,
-                default: false,
-            },
-            rewardWeight: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-            netRshares: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-            pending: {
-                authorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGolos: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGbg: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                curatorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                curatorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                benefactorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                benefactorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                totalValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-            },
-            final: {
-                authorGolos: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGbg: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                curatorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                curatorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                benefactorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                benefactorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                totalValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-            },
-        },
-        vote: {
-            likes: {
-                // name(string) -> power(BigNum)
-                type: Object,
-            },
-            dislikes: {
-                // name(string) -> power(BigNum)
-                type: Object,
-            },
-            rshares: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-            totalWeight: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-            totalRealWeight: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-        },
-        comments: {
-            count: {
+            rShares: {
                 type: Number,
-                default: 0,
             },
         },
-        metadata: {
-            rawJson: {
-                type: String,
-            },
-            app: {
-                type: String,
-            },
-            format: {
-                type: String,
-            },
-            tags: {
+        votes: {
+            upUserList: {
                 type: [String],
             },
-            images: {
-                type: [String],
-            },
-            links: {
-                type: [String],
-            },
-            users: {
+            downUserList: {
                 type: [String],
             },
         },
     },
     {
         index: [
+            // Default
             {
                 fields: {
-                    author: 1,
-                    permlink: 1,
+                    id: 1,
                 },
                 options: {
                     unique: true,
                 },
             },
+            // Post apply, sorted by time
             {
                 fields: {
-                    createdInBlockchain: 1,
+                    postId: 1,
+                    'meta.time': 1,
                 },
             },
         ],

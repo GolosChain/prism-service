@@ -1,249 +1,83 @@
 const core = require('gls-core-service');
-const BigNum = core.types.BigNum;
 const MongoDB = core.services.MongoDB;
-const BigNumType = MongoDB.type.MongoBigNum;
-
-const BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT = new BigNum(1000000.000);
-const BLOCKCHAIN_DEFAULT_GBG_PERCENT = new BigNum(5000);
-const GOLOS_100_PERCENT = new BigNum(10000);
 
 module.exports = MongoDB.makeModel(
     'Post',
     {
-        parentPermlink: {
+        id: {
             type: String,
+        },
+        meta: {
+            time: {
+                type: Date,
+            },
         },
         author: {
-            type: String,
-        },
-        permlink: {
-            type: String,
-        },
-        title: {
-            type: String,
-        },
-        body: {
-            full: {
-                type: String,
-            },
-            cut: {
+            name: {
                 type: String,
             },
         },
-        createdInBlockchain: {
-            type: Date,
-        },
-        scoring: {
-            actual: {
-                type: Number,
-                default: 0,
+        content: {
+            title: {
+                type: String,
             },
-            popular: {
-                type: Number,
-                default: 0,
-            }
-        },
-        promote: {
-            balance: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-        },
-        bandwidth: {
-            lastUpdate: {
-                type: Date,
-            },
-            averageBandwidth: {
-                type: BigNumType,
-                default: GOLOS_100_PERCENT,
-            },
-        },
-        options: {
-            maxAcceptedPayout: {
-                type: BigNumType,
-                default: BLOCKCHAIN_DEFAULT_MAX_ACCEPTED_PAYOUT,
-            },
-            gbgPercent: {
-                type: BigNumType,
-                default: BLOCKCHAIN_DEFAULT_GBG_PERCENT,
-            },
-            allowCurationRewards: {
-                type: Boolean,
-                default: true,
-            },
-            beneficiaries: {
-                type: [
-                    {
-                        name: {
-                            type: String,
-                        },
-                        weight: {
-                            type: Number,
-                        },
-                    },
-                ],
-            },
-        },
-        payout: {
-            date: {
-                type: Date,
-            },
-            isDone: {
-                type: Boolean,
-                default: false,
-            },
-            rewardWeight: {
-                type: BigNumType,
-                default: GOLOS_100_PERCENT,
-            },
-            netRshares: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-            pending: {
-                authorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
+            body: {
+                full: {
+                    type: String,
                 },
-                authorGolos: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGbg: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                curatorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                curatorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                benefactorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                benefactorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                totalValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-            },
-            final: {
-                authorGolos: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGbg: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                authorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                curatorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                curatorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                benefactorValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                benefactorGests: {
-                    type: BigNumType,
-                    default: new BigNum(0),
-                },
-                totalValue: {
-                    type: BigNumType,
-                    default: new BigNum(0),
+                preview: {
+                    type: String,
                 },
             },
         },
-        vote: {
-            likes: {
-                // name(string) -> power(BigNum)
-                type: Object,
+        votes: {
+            upUserList: {
+                type: [String],
             },
-            dislikes: {
-                // name(string) -> power(BigNum)
-                type: Object,
-            },
-            rshares: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-            totalWeight: {
-                type: BigNumType,
-                default: new BigNum(0),
-            },
-            totalRealWeight: {
-                type: BigNumType,
-                default: new BigNum(0),
+            downUserList: {
+                type: [String],
             },
         },
         comments: {
             count: {
                 type: Number,
-                default: 0,
             },
         },
-        metadata: {
-            rawJson: {
+        community: {
+            name: {
                 type: String,
             },
-            app: {
+            avatarUrl: {
                 type: String,
             },
-            format: {
-                type: String,
-            },
-            tags: {
-                type: [String],
-            },
-            images: {
-                type: [String],
-            },
-            links: {
-                type: [String],
-            },
-            users: {
-                type: [String],
+        },
+        payout: {
+            rShares: {
+                type: Number,
             },
         },
     },
     {
         index: [
+            // Default
             {
                 fields: {
-                    author: 1,
-                    permlink: 1,
+                    id: 1,
                 },
                 options: {
                     unique: true,
                 },
             },
+            // Personal feed
             {
                 fields: {
-                    author: 1,
+                    'author.name': 1,
                 },
             },
+            // Time-sorted feed
             {
                 fields: {
-                    createdInBlockchain: 1,
+                    'meta.time': -1,
                 },
             },
         ],
