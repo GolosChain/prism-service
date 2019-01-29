@@ -1,10 +1,8 @@
-const env = require('../../data/env');
-const Abstract = require('./Abstract');
+const core = require('gls-core-service');
+const BasicController = core.controllers.Basic;
 
-class Profile extends Abstract {
-    async handle() {
-        // TODO In next version (not in MVP)
-    }
+class Profile extends BasicController {
+    // TODO -
 }
 
 module.exports = Profile;
