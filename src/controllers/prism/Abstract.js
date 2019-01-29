@@ -33,7 +33,7 @@ class Abstract {
         return await modelClass.findOne(query);
     }
 
-    async _updateRevertTrace(data) {
+    async _updateRevertTrace({ command, modelBody, modelClassName }) {
         const model = await RevertTrace.findOne(
             {},
             {
@@ -52,7 +52,7 @@ class Abstract {
             },
             {
                 $push: {
-                    stack: data,
+                    stack: { command, modelBody, modelClassName },
                 },
             }
         );
