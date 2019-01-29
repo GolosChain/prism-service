@@ -100,13 +100,13 @@ class Vote extends Abstract {
             recentVoteModel = voteModel.toObject();
         }
 
-        const chainProps = await this._chainPropsService.getCurrentValues();
-        const feedPrice = await this._feedPriceService.getCurrentValues();
+        const chainProps = await this._chainPropsService.getCurrentValues(); // TODO REMOVED!
+        const feedPrice = await this._feedPriceService.getCurrentValues(); // TODO REMOVED!
         const voteContext = { voteModel, recentVoteModel, contentModel, userModel };
-        const voteCalculation = new VotePendingPayout(voteContext, chainProps, blockTime);
+        const voteCalculation = new VotePendingPayout(voteContext, chainProps, blockTime); // TODO REMOVED!
         const contentCalculation = new ContentPendingPayout(contentModel, true, {
-            chainProps,
-            gbgRate: feedPrice.gbgRate,
+            chainProps, // TODO REMOVED!
+            gbgRate: feedPrice.gbgRate, // TODO REMOVED!
         });
 
         await voteCalculation.calcAndApply();

@@ -192,11 +192,11 @@ class Content extends Abstract {
     }
 
     async _applyPendingPayout(model, isPost) {
-        const chainProps = await this._chainPropsService.getCurrentValues();
-        const feedPrice = await this._feedPriceService.getCurrentValues();
+        const chainProps = await this._chainPropsService.getCurrentValues(); // TODO REMOVED!
+        const feedPrice = await this._feedPriceService.getCurrentValues(); // TODO REMOVED!
         const calculator = new ContentPendingPayout(model, isPost, {
-            chainProps,
-            gbgRate: feedPrice.gbgRate,
+            chainProps, // TODO REMOVED!
+            gbgRate: feedPrice.gbgRate, // TODO REMOVED!
         });
 
         calculator.calc();

@@ -11,13 +11,12 @@ const ForkRestore = require('../utils/ForkRestore');
 const RawBlockUtil = require('../utils/RawBlock');
 
 class Prism extends BasicService {
-    constructor({ chainPropsService, feedPriceService }) {
+    constructor() {
         super();
 
         this._inForkState = false;
 
-        this._chainProsService = chainPropsService;
-        this._controller = new Controller({ chainPropsService, feedPriceService });
+        this._controller = new Controller();
         this._blockQueue = [];
     }
 

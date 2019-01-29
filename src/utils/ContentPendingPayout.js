@@ -7,12 +7,12 @@ const GOLOS_100_PERCENT = new BigNum(10000);
 
 // Warning: Ported and refactored from blockchain node (C++)
 class ContentPendingPayout {
-    constructor(contentModel, isPost, { chainProps, gbgRate }) {
+    constructor(contentModel, isPost, { chainProps, gbgRate }) { // TODO REMOVED!
         this._contentModel = contentModel;
-        this._chainProps = chainProps;
+        this._chainProps = chainProps; // TODO REMOVED!
         this._gbgRate = gbgRate;
-        this._pot = chainProps.totalRewardFundGolos;
-        this._totalR2 = chainProps.totalRewardShares2;
+        this._pot = chainProps.totalRewardFundGolos; // TODO REMOVED!
+        this._totalR2 = chainProps.totalRewardShares2; // TODO REMOVED!
         this._authorTokens = null;
         this._isPost = isPost;
     }
@@ -52,7 +52,7 @@ class ContentPendingPayout {
     _calcAuthorRewardsContext() {
         const gbg = this._calcGbgForAuthorReward();
         const vestingGolos = this._authorTokens.minus(gbg);
-        const toGbg = this._chainProps.gbgPrintRate.times(gbg).div(GOLOS_100_PERCENT);
+        const toGbg = this._chainProps.gbgPrintRate.times(gbg).div(GOLOS_100_PERCENT); // TODO REMOVED!
         const toGolos = gbg.minus(toGbg);
 
         return { toGolos, toGbg, vestingGolos };
@@ -114,7 +114,7 @@ class ContentPendingPayout {
     _appendCurationRewards(crsClaim) {
         const gests = BlockChainValues.golosToVests(
             crsClaim.times(this._getVestingSharePrice()),
-            this._chainProps
+            this._chainProps // TODO REMOVED!
         );
 
         this._contentModel.payout.pending.curatorValue = this._toGbg(crsClaim);
@@ -127,7 +127,7 @@ class ContentPendingPayout {
     _appendBenefactorRewards(totalBeneficiary) {
         const gests = BlockChainValues.golosToVests(
             totalBeneficiary.times(this._getVestingSharePrice()),
-            this._chainProps
+            this._chainProps // TODO REMOVED!
         );
 
         this._contentModel.payout.pending.benefactorValue = this._toGbg(totalBeneficiary);
@@ -146,7 +146,7 @@ class ContentPendingPayout {
 
         this._contentModel.payout.pending.authorGests = BlockChainValues.golosToVests(
             vestingGolos.times(this._getVestingSharePrice()),
-            this._chainProps
+            this._chainProps // TODO REMOVED!
         );
         this._contentModel.payout.pending.totalValue = (
             this._contentModel.payout.pending.totalValue || new BigNum(0)
@@ -158,14 +158,14 @@ class ContentPendingPayout {
     }
 
     _getVestingSharePrice() {
-        const fund = this._chainProps.totalVestingFundGolos;
-        const shares = this._chainProps.totalVestingShares;
+        const fund = this._chainProps.totalVestingFundGolos; // TODO REMOVED!
+        const shares = this._chainProps.totalVestingShares; // TODO REMOVED!
 
         if (fund.eq(0) || shares.eq(0)) {
             return new BigNum(1);
         }
 
-        return BlockChainValues.vestsToGolos(shares, this._chainProps).div(fund);
+        return BlockChainValues.vestsToGolos(shares, this._chainProps).div(fund); // TODO REMOVED!
     }
 
     _toGbg(value) {

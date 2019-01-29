@@ -10,12 +10,12 @@ const BIG_INT_VOTE_FILTER = new BigNum(2).pow(64);
 
 // Warning: Ported and refactored from blockchain node (C++)
 class VotePendingPayout {
-    constructor({ voteModel, recentVoteModel, contentModel, userModel }, chainProps, blockTime) {
+    constructor({ voteModel, recentVoteModel, contentModel, userModel }, chainProps, blockTime) { // TODO REMOVED!
         this._voteModel = voteModel;
         this._recentVoteModel = recentVoteModel;
         this._contentModel = contentModel;
         this._userModel = userModel;
-        this._voteRegenerationPerDay = chainProps.voteRegenerationPerDay;
+        this._voteRegenerationPerDay = chainProps.voteRegenerationPerDay; // TODO REMOVED!
         this._blockTime = blockTime;
         this._absRshares = null;
     }
