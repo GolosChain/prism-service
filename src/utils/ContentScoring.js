@@ -7,6 +7,7 @@ const HOT_TIME_DEGRADATION = 10000;
 const TRENDING_RSHARES_BASE = 10000000;
 const TRENDING_TIME_DEGRADATION = 480000;
 
+// TODO -
 // Warning: Ported and refactored from blockchain node (C++)
 class ContentScoring {
     calcActual(netRshares, createdInBlockChain) {
