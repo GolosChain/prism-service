@@ -1,21 +1,21 @@
 version: '3.6'
 services:
-  mongo:
-    container_name: mongo
+  prism-mongo:
+    container_name: prism-mongo
     image: mongo
     restart: always
     volumes:
-      - mongodb_vol:/data/db
+      - prism-mongodb-vol:/data/db
     ports:
       - 127.0.0.1:27017:27017
     networks:
       - services-tier
 
-  node:
-    container_name: node
+  prism-node:
+    container_name: prism-node
     restart: always
     depends_on:
-      - mongo
+      - prism-mongo
     build:
       context: .
       dockerfile: Dockerfile
@@ -27,7 +27,7 @@ services:
       - .env
 
 volumes:
-  mongodb_vol:
+  prism-monodb-vol:
 
 networks:
   services-tier:

@@ -3,11 +3,11 @@ const RevertTrace = require('../../models/RevertTrace');
 // TODO -
 
 class Main {
-    constructor(sevices) {
+    constructor(sevices) { // TODO -
         // TODO -
     }
 
-    async disperse([block, blockNum]) {
+    async disperse([block, blockNum]) { // TODO -
         const tracer = new RevertTrace({ blockNum });
 
         await tracer.save();
