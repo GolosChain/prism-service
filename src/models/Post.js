@@ -31,12 +31,28 @@ module.exports = MongoDB.makeModel(
             },
         },
         votes: {
+            // Inner use only
             upUserList: {
                 type: [String],
             },
+            // Inner use only
             downUserList: {
                 type: [String],
             },
+            
+            /*
+            Extra fields:
+
+            upByUser: {
+                type: Boolean,
+                default: false,
+            },
+
+            downByUser: {
+                type: Boolean,
+                default: false,
+            },
+             */
         },
         comments: {
             count: {
@@ -59,6 +75,7 @@ module.exports = MongoDB.makeModel(
     },
     {
         index: [
+            // TODO Mixed feed indexes
             // Default
             {
                 fields: {
