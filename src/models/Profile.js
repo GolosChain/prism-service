@@ -23,7 +23,16 @@ module.exports = MongoDB.makeModel(
         },
         community: {
             subscriptionsList: {
-                type: [String],
+                type: [
+                    {
+                        id: {
+                            type: String,
+                        },
+                        name: {
+                            type: String,
+                        },
+                    },
+                ],
             },
         },
         registration: {

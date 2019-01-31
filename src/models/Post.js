@@ -7,13 +7,22 @@ module.exports = MongoDB.makeModel(
         id: {
             type: String,
         },
-        meta: {
-            time: {
-                type: Date,
+        user: {
+            id: {
+                type: String,
+            },
+            name: {
+                type: String,
             },
         },
-        author: {
+        community: {
+            id: {
+                type: String,
+            },
             name: {
+                type: String,
+            },
+            avatarUrl: {
                 type: String,
             },
         },
@@ -32,14 +41,14 @@ module.exports = MongoDB.makeModel(
         },
         votes: {
             // Inner use only
-            upUserList: {
+            upUserIdList: {
                 type: [String],
             },
             // Inner use only
-            downUserList: {
+            downUserIdList: {
                 type: [String],
             },
-            
+
             /*
             Extra fields:
 
@@ -59,23 +68,19 @@ module.exports = MongoDB.makeModel(
                 type: Number,
             },
         },
-        community: {
-            name: {
-                type: String,
-            },
-            avatarUrl: {
-                type: String,
-            },
-        },
         payout: {
             rShares: {
                 type: Number,
             },
         },
+        meta: {
+            time: {
+                type: Date,
+            },
+        },
     },
     {
         index: [
-            // TODO Mixed feed indexes
             // Default
             {
                 fields: {
@@ -85,15 +90,19 @@ module.exports = MongoDB.makeModel(
                     unique: true,
                 },
             },
-            // Personal feed
+            // Community/Subscriptions feed
+            // ...with sort by time
             {
                 fields: {
-                    'author.name': 1,
+                    'community.id': 1,
+                    'meta.time': -1,
                 },
             },
-            // Time-sorted feed
+            // By user feed
+            // ...with sort by time
             {
                 fields: {
+                    'user.id': 1,
                     'meta.time': -1,
                 },
             },

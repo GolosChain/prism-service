@@ -13,12 +13,10 @@ module.exports = MongoDB.makeModel(
         parentCommentId: {
             type: String,
         },
-        meta: {
-            time: {
-                type: Date,
-            },
-        },
         author: {
+            id: {
+                type: String,
+            },
             name: {
                 type: String,
             },
@@ -42,11 +40,32 @@ module.exports = MongoDB.makeModel(
             },
         },
         votes: {
-            upUserList: {
+            // Inner use only
+            upUserIdList: {
                 type: [String],
             },
-            downUserList: {
+            // Inner use only
+            downUserIdList: {
                 type: [String],
+            },
+
+            /*
+            Extra fields:
+
+            upByUser: {
+                type: Boolean,
+                default: false,
+            },
+
+            downByUser: {
+                type: Boolean,
+                default: false,
+            },
+             */
+        },
+        meta: {
+            time: {
+                type: Date,
             },
         },
     },
