@@ -3,12 +3,12 @@ const BasicController = core.controllers.Basic;
 const Model = require('../../models/Post');
 
 class Post extends BasicController {
-    async getPost({ id, user = null }) {
-        // TODO User by id only
-        id = String(id);
+    async getPost({ postId, userID: userId = null }) {
+        postId = String(postId);
+        userId = String(userId);
 
         const model = await Model.findOne(
-            { id },
+            { postId },
             { _id: false, versionKey: false, 'content.body.preview': false }
         );
 
@@ -19,9 +19,9 @@ class Post extends BasicController {
         const result = model.toObject();
         const votes = result.votes;
 
-        if (user) {
-            votes.upByUser = votes.upUserList.includes(user);
-            votes.downByUser = votes.downUserList.includes(user);
+        if (userId) {
+            votes.upByUser = votes.upUserIdList.includes(userId);
+            votes.downByUser = votes.downUserIdList.includes(userId);
         } else {
             votes.upByUser = false;
             votes.downByUser = false;
