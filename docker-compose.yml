@@ -27,7 +27,7 @@ services:
       - .env
 
 volumes:
-  prism-monodb-vol:
+  prism-mongodb-vol:
 
 networks:
   services-tier:

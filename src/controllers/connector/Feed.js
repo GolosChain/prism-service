@@ -81,7 +81,7 @@ class Feed extends BasicController {
             }
 
             query.meta = {};
-            query.meta.time = { $gt: nextFrom - 1 };
+            query.meta.time = { $gte: nextFrom };
         } else if (nextAfter) {
             nextAfter = Number(nextAfter);
 
