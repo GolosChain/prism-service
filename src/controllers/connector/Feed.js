@@ -19,7 +19,7 @@ class Feed extends BasicController {
         const query = {};
         const options = {};
         const fullQuery = { query, options };
-        const projection = { 'content.body.full': false, _id: false, versionKey: false };
+        const projection = { 'content.body.full': false, _id: false, __v: false };
 
         this._applySortingAndSequence(fullQuery, { nextFrom, nextAfter, sortBy, limit });
         await this._applyFeedTypeConditions(fullQuery, { type, userId, communityId });
@@ -113,7 +113,7 @@ class Feed extends BasicController {
     async _applyUserSubscriptions(query, userId) {
         const model = await ProfileModel.findOne(
             { id: userId },
-            { 'community.subscriptionsList': true, _id: false, versionKey: false }
+            { 'community.subscriptionsList': true, _id: false, __v: false }
         );
 
         if (!model) {

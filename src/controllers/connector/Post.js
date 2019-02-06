@@ -3,13 +3,13 @@ const BasicController = core.controllers.Basic;
 const Model = require('../../models/Post');
 
 class Post extends BasicController {
-    async getPost({ postId, userID: userId = null }) {
+    async getPost({ postId, userId = null }) {
         postId = String(postId);
         userId = String(userId);
 
         const model = await Model.findOne(
-            { postId },
-            { _id: false, versionKey: false, 'content.body.preview': false }
+            { id: postId },
+            { _id: false, __v: false, 'content.body.preview': false }
         );
 
         if (!model) {
@@ -27,8 +27,8 @@ class Post extends BasicController {
             votes.downByUser = false;
         }
 
-        delete result.votes.upUserList;
-        delete result.votes.downUserList;
+        delete result.votes.upUserIdList;
+        delete result.votes.downUserIdList;
 
         return result;
     }
