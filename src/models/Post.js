@@ -66,11 +66,13 @@ module.exports = MongoDB.makeModel(
         comments: {
             count: {
                 type: Number,
+                default: 0,
             },
         },
         payout: {
             rShares: {
                 type: Number,
+                default: 0,
             },
         },
         meta: {
