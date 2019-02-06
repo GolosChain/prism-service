@@ -15,7 +15,7 @@ class Prism extends BasicService {
 
     async start() {
         const lastBlock = await this._getLastBlockNum();
-        const subscriber = new BlockSubscribe(lastBlock);
+        const subscriber = new BlockSubscribe(lastBlock + 1);
 
         subscriber.on('block', this._handleBlock.bind(this));
         subscriber.on('fork', this._handleFork.bind(this));
@@ -53,9 +53,9 @@ class Prism extends BasicService {
     }
 
     async _getLastBlockNum() {
-        const model = await ServiceMetaModel.findOne({}, { blockNum: true });
+        const model = await ServiceMetaModel.findOne({}, { lastBlockNum: true });
 
-        return model.blockNum;
+        return model.lastBlockNum;
     }
 
     async _openNewRevertZone(blockNum) {
@@ -65,7 +65,7 @@ class Prism extends BasicService {
     }
 
     async _setLastBlockNum(blockNum) {
-        await ServiceMetaModel.updateOne({}, { blockNum });
+        await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum: blockNum } });
     }
 }
 
