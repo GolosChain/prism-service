@@ -6,7 +6,10 @@ class Profile extends BasicController {
     async getProfile({ id }) {
         id = String(id);
 
-        const model = await Model.findOne({ id }, { _id: false, __v: false });
+        const model = await Model.findOne(
+            { id },
+            { _id: false, __v: false, createdAt: false, updatedAt: false }
+        );
 
         if (!model) {
             return { code: 404, message: 'Not found' };

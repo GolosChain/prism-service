@@ -1,10 +1,8 @@
-const core = require('gls-core-service');
-const BasicController = core.controllers.Basic;
-const env = require('../../data/env');
+const AbstractFeed = require('./AbstractFeed');
 const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
-class Feed extends BasicController {
+class Feed extends AbstractFeed {
     async getFeed(params) {
         const {
             type,
@@ -17,32 +15,32 @@ class Feed extends BasicController {
         } = this._normalizeParams(params);
 
         const query = {};
-        const options = {};
+        const options = { lean: true };
         const fullQuery = { query, options };
-        const projection = { 'content.body.full': false, _id: false, __v: false };
+        const projection = {
+            'content.body.full': false,
+            _id: false,
+            __v: false,
+            createdAt: false,
+            updatedAt: false,
+        };
 
         this._applySortingAndSequence(fullQuery, { nextFrom, nextAfter, sortBy, limit });
         await this._applyFeedTypeConditions(fullQuery, { type, userId, communityId });
 
         const models = await PostModel.find(query, projection, options);
 
-        this._applyVoteMarkers(models, userId);
+        if (userId) {
+            this._applyVoteMarkers(models, userId);
+        }
 
         return models;
     }
 
-    _normalizeParams({
-        type = 'community',
-        sortBy = 'time',
-        nextFrom = null,
-        nextAfter = null,
-        limit = 10,
-        userId = null,
-        communityId = null,
-    }) {
+    _normalizeParams({ type = 'community', userId = null, communityId = null, ...params }) {
+        params = super._normalizeParams(params);
+
         type = String(type);
-        sortBy = String(sortBy);
-        limit = Number(limit);
 
         if (userId) {
             userId = String(userId);
@@ -52,46 +50,7 @@ class Feed extends BasicController {
             communityId = String(communityId);
         }
 
-        if (limit > env.GLS_MAX_FEED_LIMIT) {
-            limit = env.GLS_MAX_FEED_LIMIT;
-        }
-
-        return { type, sortBy, nextFrom, nextAfter, limit, userId, communityId };
-    }
-
-    _applySortingAndSequence({ query, options }, { nextFrom, nextAfter, sortBy, limit }) {
-        options.limit = limit;
-        options.lean = true;
-
-        switch (sortBy) {
-            case 'byTime':
-            default:
-                this._applySortByTime(query, nextFrom, nextAfter);
-        }
-
-        return { query, options };
-    }
-
-    _applySortByTime(query, nextFrom, nextAfter) {
-        if (nextFrom) {
-            nextFrom = Number(nextFrom);
-
-            if (isNaN(nextFrom) || !isFinite(nextFrom)) {
-                this._throwBadSequence();
-            }
-
-            query.meta = {};
-            query.meta.time = { $gte: nextFrom };
-        } else if (nextAfter) {
-            nextAfter = Number(nextAfter);
-
-            if (isNaN(nextFrom) || !isFinite(nextFrom)) {
-                this._throwBadSequence();
-            }
-
-            query.meta = {};
-            query.meta.time = { $gt: nextAfter };
-        }
+        return { type, userId, communityId, ...params };
     }
 
     async _applyFeedTypeConditions({ query, options }, { type, userId, communityId }) {
@@ -142,10 +101,6 @@ class Feed extends BasicController {
             delete votes.upUserList;
             delete votes.downUserList;
         }
-    }
-
-    _throwBadSequence() {
-        throw { code: 400, message: 'Bad sequence params' };
     }
 
     _throwBadUserId() {

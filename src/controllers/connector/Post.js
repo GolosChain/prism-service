@@ -9,7 +9,13 @@ class Post extends BasicController {
 
         const model = await Model.findOne(
             { id: postId },
-            { _id: false, __v: false, 'content.body.preview': false }
+            {
+                'content.body.preview': false,
+                _id: false,
+                __v: false,
+                createdAt: false,
+                updatedAt: false,
+            }
         );
 
         if (!model) {
