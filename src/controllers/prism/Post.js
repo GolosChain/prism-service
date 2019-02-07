@@ -1,6 +1,7 @@
 const env = require('../../data/env');
 const Abstract = require('./Abstract');
 const PostModel = require('../../models/Post');
+const ProfileModel = require('../../models/Profile');
 
 // TODO Remove after MVP
 const HARDCODE_COMMUNITY_ID = 'GOLOSID';
@@ -17,10 +18,11 @@ class Post extends Abstract {
             return;
         }
 
+        const userId = await this._getUserId(content);
         const model = new PostModel({
             id: await this._makeId(content, blockNum),
             user: {
-                id: await this._getUserId(content),
+                id: userId,
                 name: content.account,
             },
             community: {
@@ -42,6 +44,7 @@ class Post extends Abstract {
         });
 
         await model.save();
+        await this._updateUserPostCount(userId, 1);
     }
 
     _isPost(content) {
@@ -58,6 +61,10 @@ class Post extends Abstract {
 
     async _getUserId(content) {
         return TMP_USER_ID_PREFIX + content.account;
+    }
+
+    async _updateUserPostCount(userId, increment) {
+        await ProfileModel.updateOne({ id: userId }, { $inc: { 'content.postsCount': increment } });
     }
 }
 
