@@ -6,6 +6,7 @@ module.exports = MongoDB.makeModel(
     {
         id: {
             type: String,
+            required: true,
         },
         name: {
             type: String,
@@ -43,6 +44,7 @@ module.exports = MongoDB.makeModel(
         content: {
             postsCount: {
                 type: Number,
+                default: 0,
             },
         },
         messenger: {

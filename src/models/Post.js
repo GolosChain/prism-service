@@ -6,6 +6,7 @@ module.exports = MongoDB.makeModel(
     {
         id: {
             type: String,
+            required: true,
         },
         user: {
             id: {
