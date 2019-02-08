@@ -34,7 +34,7 @@ class Feed extends AbstractFeed {
             this._applyVoteMarkers(models, userId);
         }
 
-        return models;
+        return { data: models };
     }
 
     _normalizeParams({ type = 'community', userId = null, communityId = null, ...params }) {

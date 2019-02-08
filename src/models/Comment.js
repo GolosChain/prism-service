@@ -8,13 +8,29 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        postId: {
-            type: String,
+        post: {
+            id: {
+                type: String,
+            },
+            content: {
+                title: {
+                    type: String,
+                },
+            },
         },
-        parentCommentId: {
-            type: String,
+        parentComment: {
+            id: {
+                type: String,
+            },
+            content: {
+                body: {
+                    preview: {
+                        type: String,
+                    },
+                },
+            },
         },
-        author: {
+        user: {
             id: {
                 type: String,
             },
@@ -82,10 +98,17 @@ module.exports = MongoDB.makeModel(
                     unique: true,
                 },
             },
-            // Post apply, sorted by time
+            // Post comments, sorted by time
             {
                 fields: {
-                    postId: 1,
+                    'post.id': 1,
+                    'meta.time': 1,
+                },
+            },
+            // User comments, sorted by time
+            {
+                fields: {
+                    'user.id': 1,
                     'meta.time': 1,
                 },
             },

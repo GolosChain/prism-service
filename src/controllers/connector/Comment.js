@@ -3,16 +3,17 @@ const CommentModel = require('../../models/Comment');
 
 class Comment extends AbstractFeed {
     async getComments(params) {
-        const { sortBy, nextFrom, nextAfter, limit, userId, communityId } = this._normalizeParams(
+        const { sortBy, nextFrom, nextAfter, limit, userId, postId, type } = this._normalizeParams(
             params
         );
 
-        const query = { communityId };
+        const query = {};
         const options = { lean: true };
         const fullQuery = { query, options };
         const projection = { _id: false, __v: false, createdAt: false, updatedAt: false };
 
         this._applySortingAndSequence(fullQuery, { nextFrom, nextAfter, sortBy, limit });
+        this._applyFeedTypeConditions(fullQuery, { type, userId, postId });
 
         const models = await CommentModel.find(query, projection, options);
 
@@ -20,19 +21,33 @@ class Comment extends AbstractFeed {
             this._applyVoteMarkers(models, userId);
         }
 
-        return models;
+        return { data: models };
     }
 
-    _normalizeParams({ userId = null, communityId, ...params }) {
+    _normalizeParams({ type = 'post', userId = null, postId, ...params }) {
         params = super._normalizeParams(params);
 
-        communityId = String(communityId);
+        type = String(type);
+        postId = String(postId);
 
         if (userId) {
             userId = String(userId);
         }
 
-        return { userId, communityId, ...params };
+        return { type, userId, postId, ...params };
+    }
+
+    _applyFeedTypeConditions({ query }, { type, userId, postId }) {
+        switch (type) {
+            case 'user':
+                query['user.id'] = userId;
+                break;
+
+            case 'post':
+            default:
+                query['post.id'] = postId;
+                break;
+        }
     }
 }
 
