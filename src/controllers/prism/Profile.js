@@ -5,7 +5,7 @@ const ProfileModel = require('../../models/Profile');
 // TODO Subscriptions
 // TODO Add revert
 class Profile extends Abstract {
-    async handleCreation({ args: { name: id } }) {
+    async handleCreate({ args: { name: id } }) {
         let profile = await ProfileModel.findOne({ id });
 
         if (profile) {

@@ -13,7 +13,7 @@ const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
 
 // TODO Add revert
 class Post extends Abstract {
-    async handleCreation({ args: content }, blockNum) {
+    async handleCreate({ args: content }, blockNum) {
         if (!this._isPost(content)) {
             return;
         }
@@ -47,8 +47,40 @@ class Post extends Abstract {
         await this._updateUserPostCount(userId, 1);
     }
 
+    async handleUpdate({ args: content }, blockMeta) {
+        if (!this._isPost(content)) {
+            return;
+        }
+
+        const model = await PostModel.findOne({}); // TODO -
+
+        if (!model) {
+            // Can be valid in blockchain as transaction,
+            // but invalid as logic (post not found in blockchain)
+            return;
+        }
+
+        // TODO -
+    }
+
+    async handleDelete({ args: content }, blockMeta) {
+        if (!this._isPost(content)) {
+            return;
+        }
+
+        const model = await PostModel.findOne({}); // TODO -
+
+        if (!model) {
+            // Can be valid in blockchain as transaction,
+            // but invalid as logic (post not found in blockchain)
+            return;
+        }
+
+        // TODO -
+    }
+
     _isPost(content) {
-        return !content.parentacc;
+        return !Boolean(content.parentacc);
     }
 
     _makeContentPreview(content) {

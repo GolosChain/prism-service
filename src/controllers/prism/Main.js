@@ -1,7 +1,9 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const Post = require('./Post');
+const Comment = require('./Comment');
 const Profile = require('./Profile');
+const Vote = require('./Vote');
 
 // TODO Change after MVP
 const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'eosio'];
@@ -9,7 +11,9 @@ const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'eosio'];
 class Main {
     constructor() {
         this._post = new Post();
+        this._comment = new Comment();
         this._profile = new Profile();
+        this._vote = new Vote();
     }
 
     async disperse({ transactions, blockNum }) {
@@ -32,10 +36,11 @@ class Main {
 
         switch (pathName) {
             case 'gls.publish->createmssg':
-                await this._post.handleCreation(transaction, blockNum);
+                await this._post.handleCreate(transaction, blockNum);
+                await this._comment.handleCreate(transaction, blockNum);
                 break;
             case 'eosio->newaccount':
-                await this._profile.handleCreation(transaction);
+                await this._profile.handleCreate(transaction);
                 break;
             case 'gls.social->updatemeta':
                 await this._profile.handleMeta(transaction);

@@ -1,10 +1,6 @@
 const RevertTrace = require('../../models/RevertTrace');
 
 class Abstract {
-    async handle(data, blockMeta) {
-        throw 'Handler not implemented';
-    }
-
     async _getOrCreateModelWithTrace(modelClass, queryForCheck, initData) {
         let model = await this._getModelWithoutTrace(modelClass, queryForCheck);
 
