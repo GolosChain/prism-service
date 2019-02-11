@@ -7,8 +7,7 @@ class Feed extends AbstractFeed {
         const {
             type,
             sortBy,
-            nextFrom,
-            nextAfter,
+            sequenceKey,
             limit,
             userId,
             communityId,
@@ -25,7 +24,7 @@ class Feed extends AbstractFeed {
             updatedAt: false,
         };
 
-        this._applySortingAndSequence(fullQuery, { nextFrom, nextAfter, sortBy, limit });
+        this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit });
         await this._applyFeedTypeConditions(fullQuery, { type, userId, communityId });
 
         const models = await PostModel.find(query, projection, options);
@@ -34,7 +33,10 @@ class Feed extends AbstractFeed {
             this._applyVoteMarkers(models, userId);
         }
 
-        return { data: models };
+        return {
+            data: models,
+            sequenceKey: this._getSequenceKey(models),
+        };
     }
 
     _normalizeParams({ type = 'community', userId = null, communityId = null, ...params }) {

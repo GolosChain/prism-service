@@ -3,7 +3,7 @@ const BasicController = core.controllers.Basic;
 const env = require('../../data/env');
 
 class AbstractFeed extends BasicController {
-    _normalizeParams({ sortBy = 'time', nextFrom = null, nextAfter = null, limit = 10 }) {
+    _normalizeParams({ sortBy = 'time', sequenceKey, limit = 10 }) {
         sortBy = String(sortBy);
         limit = Number(limit);
 
@@ -11,40 +11,29 @@ class AbstractFeed extends BasicController {
             limit = env.GLS_MAX_FEED_LIMIT;
         }
 
-        return { sortBy, nextFrom, nextAfter, limit, userId };
+        return { sortBy, sequenceKey, limit };
     }
 
-    _applySortingAndSequence({ query, options }, { nextFrom, nextAfter, sortBy, limit }) {
+    _applySortingAndSequence({ query, options }, { sortBy, sequenceKey, limit }) {
         options.limit = limit;
 
         switch (sortBy) {
             case 'byTime':
             default:
-                this._applySortByTime(query, nextFrom, nextAfter);
+                this._applySortByTime(query, options, sequenceKey);
         }
 
         return { query, options };
     }
 
-    _applySortByTime(query, nextFrom, nextAfter) {
-        if (nextFrom) {
-            nextFrom = Number(nextFrom);
-
-            if (isNaN(nextFrom) || !isFinite(nextFrom)) {
+    _applySortByTime(query, options, sequenceKey) {
+        if (sequenceKey) {
+            if (typeof sequenceKey !== 'string') {
                 this._throwBadSequence();
             }
 
-            query.meta = {};
-            query.meta.time = { $gte: nextFrom };
-        } else if (nextAfter) {
-            nextAfter = Number(nextAfter);
-
-            if (isNaN(nextFrom) || !isFinite(nextFrom)) {
-                this._throwBadSequence();
-            }
-
-            query.meta = {};
-            query.meta.time = { $gt: nextAfter };
+            query._id = { $lt: sequenceKey };
+            options.sort = { _id: -1 };
         }
     }
 
@@ -66,6 +55,22 @@ class AbstractFeed extends BasicController {
 
             delete votes.upUserList;
             delete votes.downUserList;
+        }
+    }
+
+    _getSequenceKey(sortBy, models) {
+        switch (sortBy) {
+            case 'byTime':
+            default:
+                return this._getSequenceKeyByTime(models);
+        }
+    }
+
+    _getSequenceKeyByTime(models) {
+        if (models.length === 0) {
+            return null;
+        } else {
+            return models[models.length - 1]._id;
         }
     }
 }
