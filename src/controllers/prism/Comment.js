@@ -1,6 +1,6 @@
 const core = require('gls-core-service');
 const Content = core.utils.Content;
-const Abstract = require('./Abstract');
+const AbstractContent = require('./AbstractContent');
 const CommentModel = require('../../models/Comment');
 
 // TODO Remove after MVP
@@ -12,7 +12,7 @@ const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
 
 // TODO Extract parent
 
-class Comment extends Abstract {
+class Comment extends AbstractContent {
     constructor(...args) {
         super(...args);
 

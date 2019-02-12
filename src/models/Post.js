@@ -39,6 +39,9 @@ module.exports = MongoDB.makeModel(
                     type: String,
                 },
             },
+            metadata: {
+                type: Object,
+            },
         },
         votes: {
             // Inner use only

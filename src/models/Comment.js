@@ -50,6 +50,9 @@ module.exports = MongoDB.makeModel(
                     type: String,
                 },
             },
+            metadata: {
+                type: Object,
+            },
         },
         payout: {
             rShares: {

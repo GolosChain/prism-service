@@ -1,7 +1,7 @@
 const core = require('gls-core-service');
 const Content = core.utils.Content;
 const env = require('../../data/env');
-const Abstract = require('./Abstract');
+const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
@@ -13,7 +13,7 @@ const HARDCODE_COMMUNITY_AVATAR_URL = 'none';
 // TODO REMOVE AFTER USER CREATION LOGIC
 const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
 
-class Post extends Abstract {
+class Post extends AbstractContent {
     constructor(...args) {
         super(...args);
 
@@ -48,6 +48,7 @@ class Post extends Abstract {
                     full: bodyFull,
                     preview: bodyPreview,
                 },
+                metadata: this._extractMetadata(content),
             },
             meta: {
                 // TODO Change after blockchain implement block time
