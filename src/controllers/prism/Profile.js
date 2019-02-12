@@ -1,9 +1,6 @@
 const Abstract = require('./Abstract');
 const ProfileModel = require('../../models/Profile');
 
-// TODO Post count
-// TODO Subscriptions
-// TODO Add revert
 class Profile extends Abstract {
     async handleCreate({ args: { name: id } }) {
         let profile = await ProfileModel.findOne({ id });
@@ -52,6 +49,10 @@ class Profile extends Abstract {
         mess.facebookMessenger = this._currentOrNew(mess.facebookMessenger, meta.facebook);
 
         await profile.save();
+    }
+
+    async handleSubscription() { // TODO -
+        // TODO -
     }
 
     _currentOrNew(currentValue, newValue) {

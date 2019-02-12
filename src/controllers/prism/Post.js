@@ -11,7 +11,6 @@ const HARDCODE_COMMUNITY_AVATAR_URL = 'none';
 // TODO REMOVE AFTER USER CREATION LOGIC
 const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
 
-// TODO Add revert
 class Post extends Abstract {
     async handleCreate({ args: content }, blockNum) {
         if (!this._isPost(content)) {

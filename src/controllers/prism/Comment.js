@@ -8,6 +8,8 @@ const HARDCODE_COMMUNITY_NAME = 'GOLOSNAME';
 // TODO REMOVE AFTER USER CREATION LOGIC
 const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
 
+// TODO Extract parent
+
 class Comment extends Abstract {
     async handleCreate({ args: content }, blockNum) {
         if (!this._isComment(content)) {
