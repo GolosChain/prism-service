@@ -1,3 +1,5 @@
+const core = require('gls-core-service');
+const Content = core.utils.Content;
 const Abstract = require('./Abstract');
 const CommentModel = require('../../models/Comment');
 
@@ -11,6 +13,12 @@ const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
 // TODO Extract parent
 
 class Comment extends Abstract {
+    constructor(...args) {
+        super(...args);
+
+        this._contentUtil = new Content();
+    }
+
     async handleCreate({ args: content }, blockNum) {
         if (!this._isComment(content)) {
             return;
@@ -20,6 +28,7 @@ class Comment extends Abstract {
         const model = new CommentModel({
             id: await this._makeId(content, blockNum),
             // TODO -
+            // TODO Sanitize
         });
 
         await model.save();

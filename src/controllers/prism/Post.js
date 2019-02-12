@@ -1,3 +1,5 @@
+const core = require('gls-core-service');
+const Content = core.utils.Content;
 const env = require('../../data/env');
 const Abstract = require('./Abstract');
 const PostModel = require('../../models/Post');
@@ -12,11 +14,22 @@ const HARDCODE_COMMUNITY_AVATAR_URL = 'none';
 const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
 
 class Post extends Abstract {
+    constructor(...args) {
+        super(...args);
+
+        this._contentUtil = new Content();
+    }
+
     async handleCreate({ args: content }, blockNum) {
         if (!this._isPost(content)) {
             return;
         }
 
+        const bodyFull = this._contentUtil.sanitize(content.bodymssg);
+        const bodyPreview = this._contentUtil.sanitizePreview(
+            content.bodymssg,
+            env.GLS_CONTENT_PREVIEW_LENGTH
+        );
         const userId = await this._getUserId(content);
         const model = new PostModel({
             id: await this._makeId(content, blockNum),
@@ -32,8 +45,8 @@ class Post extends Abstract {
             content: {
                 title: content.headermssg,
                 body: {
-                    full: content.bodymssg,
-                    preview: this._makeContentPreview(content.bodymssg),
+                    full: bodyFull,
+                    preview: bodyPreview,
                 },
             },
             meta: {
@@ -80,10 +93,6 @@ class Post extends Abstract {
 
     _isPost(content) {
         return !Boolean(content.parentacc);
-    }
-
-    _makeContentPreview(content) {
-        return content.slice(0, env.GLS_CONTENT_PREVIEW_LENGTH);
     }
 
     async _makeId(content, blockNum) {
