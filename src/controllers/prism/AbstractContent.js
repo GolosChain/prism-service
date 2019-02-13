@@ -1,23 +1,28 @@
+const core = require('gls-core-service');
+const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
 
 class AbstractContent extends Abstract {
     _extractMetadata(content) {
         const raw = content.jsonmetadata;
-        let result;
+
+        if (raw === '') {
+            return {};
+        }
 
         try {
-            result = JSON.parse(raw);
+            const result = JSON.parse(raw);
 
-            if (typeof result !== 'object' || Array.isArray(result)) {
+            if (result === null || typeof result !== 'object' || Array.isArray(result)) {
                 Logger.log('Invalid content metadata.');
-                result = {};
+                return {};
+            } else {
+                return result;
             }
         } catch (error) {
             Logger.log('Invalid content metadata.');
-            result = {};
+            return {};
         }
-
-        return result;
     }
 }
 

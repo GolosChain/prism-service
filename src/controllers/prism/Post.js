@@ -6,8 +6,8 @@ const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
 // TODO Remove after MVP
-const HARDCODE_COMMUNITY_ID = 'GOLOSID';
-const HARDCODE_COMMUNITY_NAME = 'GOLOSNAME';
+const HARDCODE_COMMUNITY_ID = 'gls';
+const HARDCODE_COMMUNITY_NAME = 'GOLOS';
 const HARDCODE_COMMUNITY_AVATAR_URL = 'none';
 
 // TODO REMOVE AFTER USER CREATION LOGIC
@@ -34,8 +34,8 @@ class Post extends AbstractContent {
         const model = new PostModel({
             id: await this._makeId(content, blockNum),
             user: {
-                id: userId,
-                name: content.account,
+                id: content.account,
+                name: content.account, // TODO Change to community account name
             },
             community: {
                 id: HARDCODE_COMMUNITY_ID,
@@ -60,7 +60,7 @@ class Post extends AbstractContent {
         await this._updateUserPostCount(userId, 1);
     }
 
-    async handleUpdate({ args: content }, blockMeta) {
+    async handleUpdate({ args: content }, blockNum) {
         if (!this._isPost(content)) {
             return;
         }
@@ -76,7 +76,7 @@ class Post extends AbstractContent {
         // TODO -
     }
 
-    async handleDelete({ args: content }, blockMeta) {
+    async handleDelete({ args: content }, blockNum) {
         if (!this._isPost(content)) {
             return;
         }

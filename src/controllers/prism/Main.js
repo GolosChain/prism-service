@@ -39,12 +39,25 @@ class Main {
                 await this._post.handleCreate(transaction, blockNum);
                 await this._comment.handleCreate(transaction, blockNum);
                 break;
+
+            case 'gls.publish->updatemssg':
+                await this._post.handleUpdate(transaction, blockNum);
+                await this._comment.handleUpdate(transaction, blockNum);
+                break;
+
+            case 'gls.publish->deletemssg':
+                await this._post.handleDelete(transaction, blockNum);
+                await this._comment.handleDelete(transaction, blockNum);
+                break;
+
             case 'eosio->newaccount':
                 await this._profile.handleCreate(transaction);
                 break;
+
             case 'gls.social->updatemeta':
                 await this._profile.handleMeta(transaction);
                 break;
+                
             default:
             // unknown transaction, do nothing
         }
