@@ -4,6 +4,7 @@ const Logger = core.utils.Logger;
 const stats = core.utils.statsClient;
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
+const BlockUtils = core.utils.Block;
 const Controller = require('../controllers/prism/Main');
 const RawBlockRestore = require('../services/RawBlockRestore');
 const ForkRestore = require('../utils/ForkRestore');
@@ -106,17 +107,39 @@ class Prism extends BasicService {
     }
 
     async _tryDisperseUnhandledRawBlocks(lastBlockNum) {
+        Logger.info('Get last dispersed block...');
+
         const lastDispersedBlockNum = await RawBlockUtil.getLastDispersedBlockNum();
 
+        Logger.info(`Last dispersed block is - ${lastDispersedBlockNum}`);
+
         if (lastBlockNum !== lastDispersedBlockNum) {
+            Logger.info('Start disperse restored blocks...');
+
             for (let blockNum = lastDispersedBlockNum + 1; blockNum < lastBlockNum; blockNum++) {
                 const fullBlock = await RawBlockUtil.getFullBlock(blockNum);
+
+                if (fullBlock === null) {
+                    await this._reloadRawBlock(blockNum);
+                    blockNum--;
+                    continue;
+                }
 
                 Logger.log(`Disperse restored block - ${blockNum}`);
                 await this._handleBlock(fullBlock, blockNum);
                 await RawBlockUtil.markDispersed(blockNum);
             }
+
+            Logger.info('Restore dispersed done!');
         }
+    }
+
+    async _reloadRawBlock(blockNum) {
+        const block = await BlockUtils.getByNum(blockNum);
+
+        await RawBlockUtil.save(block, blockNum);
+
+        Logger.log(`Raw block reloaded - ${blockNum}`);
     }
 }
 

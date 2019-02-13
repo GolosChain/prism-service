@@ -27,7 +27,6 @@ module.exports = MongoDB.makeModel(
             // Last dispersed search
             {
                 fields: {
-                    blockNum: -1,
                     dispersed: 1,
                 },
             },

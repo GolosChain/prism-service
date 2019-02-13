@@ -32,6 +32,8 @@ module.exports = MongoDB.makeModel(
             // Compose
             {
                 fields: {
+                    blockNum: 1,
+                    transactionNum: 1,
                     orderingNum: 1,
                 },
             },
