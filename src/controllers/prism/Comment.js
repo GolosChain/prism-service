@@ -24,11 +24,43 @@ class Comment extends AbstractContent {
             return;
         }
 
-        const userId = await this._getUserId(content);
+        console.log(content);
+        return; // TODO -
+
         const model = new CommentModel({
             id: await this._makeId(content, blockNum),
-            // TODO -
-            // TODO Sanitize
+            post: {
+                id: '', // TODO -
+                content: {
+                    title: '', // TODO -
+                },
+            },
+            parentComment: {
+                id: '', // TODO -
+                content: {
+                    body: {
+                        preview: '', // TODO -
+                    },
+                },
+            },
+            user: {
+                id: content.account,
+                name: content.account, // TODO Change to community account name
+                avatarUrl: 'none', // TODO Get user and add avatar here
+            },
+            content: {
+                title: content.headermssg,
+                body: {
+                    full: this._contentUtil.sanitize(content.bodymssg),
+                },
+                metadata: {
+                    type: this._extractMetadata(content),
+                },
+            },
+            meta: {
+                // TODO Change after blockchain implement block time
+                time: new Date(),
+            },
         });
 
         await model.save();
@@ -72,10 +104,6 @@ class Comment extends AbstractContent {
 
     async _makeId(content, blockNum) {
         return [blockNum, HARDCODE_COMMUNITY_ID, content.account, content.permlink].join(':');
-    }
-
-    async _getUserId(content) {
-        return TMP_USER_ID_PREFIX + content.account;
     }
 }
 

@@ -10,9 +10,6 @@ const HARDCODE_COMMUNITY_ID = 'gls';
 const HARDCODE_COMMUNITY_NAME = 'GOLOS';
 const HARDCODE_COMMUNITY_AVATAR_URL = 'none';
 
-// TODO REMOVE AFTER USER CREATION LOGIC
-const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
-
 class Post extends AbstractContent {
     constructor(...args) {
         super(...args);
@@ -30,7 +27,6 @@ class Post extends AbstractContent {
             content.bodymssg,
             env.GLS_CONTENT_PREVIEW_LENGTH
         );
-        const userId = await this._getUserId(content);
         const model = new PostModel({
             id: await this._makeId(content, blockNum),
             user: {
@@ -57,7 +53,7 @@ class Post extends AbstractContent {
         });
 
         await model.save();
-        await this._updateUserPostCount(userId, 1);
+        await this._updateUserPostCount(content.account, 1);
     }
 
     async handleUpdate({ args: content }, blockNum) {
@@ -98,10 +94,6 @@ class Post extends AbstractContent {
 
     async _makeId(content, blockNum) {
         return [blockNum, HARDCODE_COMMUNITY_ID, content.account, content.permlink].join(':');
-    }
-
-    async _getUserId(content) {
-        return TMP_USER_ID_PREFIX + content.account;
     }
 
     async _updateUserPostCount(userId, increment) {
