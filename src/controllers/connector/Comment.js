@@ -3,14 +3,12 @@ const CommentModel = require('../../models/Comment');
 
 class Comment extends AbstractFeed {
     async getComments(params) {
-        const { sortBy, sequenceKey, limit, userId, postId, type } = this._normalizeParams(
-            params
-        );
+        const { sortBy, sequenceKey, limit, userId, postId, type } = this._normalizeParams(params);
 
         const query = {};
         const options = { lean: true };
         const fullQuery = { query, options };
-        const projection = { _id: false, __v: false, createdAt: false, updatedAt: false };
+        const projection = { __v: false, createdAt: false, updatedAt: false };
 
         this._applySortingAndSequence(fullQuery, { sequenceKey, sortBy, limit });
         this._applyFeedTypeConditions(fullQuery, { type, userId, postId });
@@ -23,10 +21,14 @@ class Comment extends AbstractFeed {
             this._applyVoteMarkers(models, userId);
         }
 
-        return {
+        const result = {
             data: models,
             sequenceKey: this._getSequenceKey(sortBy, models),
         };
+
+        this._removeMongoId(models);
+
+        return result;
     }
 
     _normalizeParams({ type = 'post', userId = null, postId, ...params }) {

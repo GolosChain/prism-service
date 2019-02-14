@@ -60,7 +60,7 @@ class AbstractFeed extends BasicController {
 
     _getSequenceKey(sortBy, models) {
         switch (sortBy) {
-            case 'byTime':
+            case 'time':
             default:
                 return this._getSequenceKeyByTime(models);
         }
@@ -71,6 +71,12 @@ class AbstractFeed extends BasicController {
             return null;
         } else {
             return models[models.length - 1]._id;
+        }
+    }
+
+    _removeMongoId(models) {
+        for (const model of models) {
+            delete model._id;
         }
     }
 }

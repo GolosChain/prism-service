@@ -4,21 +4,15 @@ const ProfileModel = require('../../models/Profile');
 
 class Feed extends AbstractFeed {
     async getFeed(params) {
-        const {
-            type,
-            sortBy,
-            sequenceKey,
-            limit,
-            userId,
-            communityId,
-        } = this._normalizeParams(params);
+        const { type, sortBy, sequenceKey, limit, userId, communityId } = this._normalizeParams(
+            params
+        );
 
         const query = {};
         const options = { lean: true };
         const fullQuery = { query, options };
         const projection = {
             'content.body.full': false,
-            _id: false,
             __v: false,
             createdAt: false,
             updatedAt: false,
@@ -35,10 +29,14 @@ class Feed extends AbstractFeed {
             this._applyVoteMarkers(models, userId);
         }
 
-        return {
+        const result = {
             data: models,
             sequenceKey: this._getSequenceKey(sortBy, models),
         };
+
+        this._removeMongoId(models);
+
+        return result;
     }
 
     _normalizeParams({ type = 'community', userId = null, communityId = null, ...params }) {
