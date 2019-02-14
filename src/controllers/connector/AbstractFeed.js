@@ -46,15 +46,15 @@ class AbstractFeed extends BasicController {
             const votes = model.votes;
 
             if (userId) {
-                votes.upByUser = votes.upUserList.includes(userId);
-                votes.downByUser = votes.downUserList.includes(userId);
+                votes.upByUser = votes.upUserIdList.includes(userId);
+                votes.downByUser = votes.downUserIdList.includes(userId);
             } else {
                 votes.upByUser = false;
                 votes.downByUser = false;
             }
 
-            delete votes.upUserList;
-            delete votes.downUserList;
+            delete votes.upUserIdList;
+            delete votes.downUserIdList;
         }
     }
 

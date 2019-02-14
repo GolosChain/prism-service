@@ -90,23 +90,6 @@ class Feed extends AbstractFeed {
         }
     }
 
-    _applyVoteMarkers(models, userId) {
-        for (const model of models) {
-            const votes = model.votes;
-
-            if (userId) {
-                votes.upByUser = votes.upUserList.includes(userId);
-                votes.downByUser = votes.downUserList.includes(userId);
-            } else {
-                votes.upByUser = false;
-                votes.downByUser = false;
-            }
-
-            delete votes.upUserList;
-            delete votes.downUserList;
-        }
-    }
-
     _throwBadUserId() {
         throw { code: 400, message: 'Bad user id' };
     }
