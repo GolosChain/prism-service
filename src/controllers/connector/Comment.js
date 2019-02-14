@@ -21,14 +21,7 @@ class Comment extends AbstractFeed {
             this._applyVoteMarkers(models, userId);
         }
 
-        const result = {
-            data: models,
-            sequenceKey: this._getSequenceKey(sortBy, models),
-        };
-
-        this._removeMongoId(models);
-
-        return result;
+        return this._makeFeedResult(models, sortBy);
     }
 
     _normalizeParams({ type = 'post', userId = null, postId, ...params }) {
