@@ -15,7 +15,9 @@ class Comment extends AbstractFeed {
         this._applySortingAndSequence(fullQuery, { sequenceKey, sortBy, limit });
         this._applyFeedTypeConditions(fullQuery, { type, userId, postId });
 
-        const models = await CommentModel.find(query, projection, options);
+        let models = await CommentModel.find(query, projection, options);
+
+        models = models || [];
 
         if (userId) {
             this._applyVoteMarkers(models, userId);

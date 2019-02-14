@@ -27,7 +27,9 @@ class Feed extends AbstractFeed {
         this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit });
         await this._applyFeedTypeConditions(fullQuery, { type, userId, communityId });
 
-        const models = await PostModel.find(query, projection, options);
+        let models = await PostModel.find(query, projection, options);
+
+        models = models || [];
 
         if (userId) {
             this._applyVoteMarkers(models, userId);
