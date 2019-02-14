@@ -37,7 +37,7 @@ class Feed extends AbstractFeed {
 
         return {
             data: models,
-            sequenceKey: this._getSequenceKey(models),
+            sequenceKey: this._getSequenceKey(sortBy, models),
         };
     }
 
