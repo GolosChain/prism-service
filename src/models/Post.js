@@ -5,27 +5,19 @@ module.exports = MongoDB.makeModel(
     'Post',
     {
         id: {
+            userId: {
+                type: String,
+                required: true,
+            },
+            permlink: {
+                type: String,
+            },
+            refBlockNum: {
+                type: String,
+            },
+        },
+        communityId: {
             type: String,
-            required: true,
-        },
-        user: {
-            id: {
-                type: String,
-            },
-            name: {
-                type: String,
-            },
-        },
-        community: {
-            id: {
-                type: String,
-            },
-            name: {
-                type: String,
-            },
-            avatarUrl: {
-                type: String,
-            },
         },
         content: {
             title: {
@@ -44,28 +36,12 @@ module.exports = MongoDB.makeModel(
             },
         },
         votes: {
-            // Inner use only
-            upUserIdList: {
+            upUserIds: {
                 type: [String],
             },
-            // Inner use only
-            downUserIdList: {
+            downUserIds: {
                 type: [String],
             },
-
-            /*
-            Extra fields:
-
-            upByUser: {
-                type: Boolean,
-                default: false,
-            },
-
-            downByUser: {
-                type: Boolean,
-                default: false,
-            },
-             */
         },
         comments: {
             count: {
@@ -90,7 +66,9 @@ module.exports = MongoDB.makeModel(
             // Default
             {
                 fields: {
-                    id: 1,
+                    'id.userId': 1,
+                    'id.permlink': 1,
+                    'id.refBlockNum': 1,
                 },
                 options: {
                     unique: true,
@@ -100,7 +78,7 @@ module.exports = MongoDB.makeModel(
             // ...with sort by time
             {
                 fields: {
-                    'community.id': 1,
+                    'communityId': 1,
                     'meta.time': -1,
                 },
             },
@@ -108,7 +86,7 @@ module.exports = MongoDB.makeModel(
             // ...with sort by time
             {
                 fields: {
-                    'user.id': 1,
+                    'id.userId': 1,
                     'meta.time': -1,
                 },
             },

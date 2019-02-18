@@ -1,8 +1,7 @@
-const core = require('gls-core-service');
-const BasicController = core.controllers.Basic;
+const AbstractContent = require('./AbstractContent');
 const env = require('../../data/env');
 
-class AbstractFeed extends BasicController {
+class AbstractFeed extends AbstractContent {
     _normalizeParams({ sortBy = 'time', sequenceKey, limit = 10 }) {
         sortBy = String(sortBy);
         limit = Number(limit);
