@@ -6,39 +6,48 @@
 API JSON-RPC:
 
 ```
-content.getComments:            // Получение ленты комментариев
-    sortBy <string>('time')     // Способ сортировки
-    sequenceKey <string/null>   // Идентификатор пагинации для получения следующего контента
-    limit <number>(10)          // Количество элементов
-    type <string>('post')       // Тип ленты
+content.getComments:               // Получение ленты комментариев
+    sortBy <string>('time')        // Способ сортировки
     [
-      'user'                    // Получить комментарии пользователя, требует userId
-    | 'post'                    // Получить комментарии для поста, требует postId
+      time                         // Сортировка по времени добавления
     ]
-    userId <string/null>        // Идентификатор пользователя
-    postId <string/null>        // Идентификатор поста
-
-content.getPost:                // Получение конкретного поста
-    postId <string>             // Идентификатор поста
-    userId <string/null>        // Идентификатор пользователя
-                                // Если указан - проверит лайкал/дислайкал ли этот пользователь пост
-
-content.getFeed:                // Получение ленты постов
-    type <string>('community')  // Тип ленты
+    sequenceKey <string/null>      // Идентификатор пагинации для получения следующего контента
+    limit <number>(10)             // Количество элементов
+    type <string>('post')          // Тип ленты
     [
-      community                 // Лента комьюнити, требует communityId
-    | subscriptions             // Лента подписок пользователя, требует userId
-    | byUser                    // Лента постов самого пользователя, требует userId
+      'user'                       // Получить комментарии пользователя, требует requestedUserId
+    | 'post'                       // Получить комментарии для поста, требует requestedUserId, permlink, refBlockNum
     ]
-    sortBy <string>             // Способ сортировки
-    sequenceKey <string/null>   // Идентификатор пагинации для получения следующего контента
-    limit <number>              // Количество элементов
-    userId <string/null>        // Идентификатор пользователя
-                                // Если указан - проверит лайкал/дислайкал ли этот пользователь посты
-    communityId <string>        // Идентификатор комьюнити
+    currentUserId <string/null>    // Идентификатор текущего пользователя
+    requestedUserId <string/null>  // Идетификатор запрошенного пользователя
+    permlink <string/null>         // Пермлинк поста
+    refBlockNum <number/null>      // Привязанный блок поста
 
-content.getProfile:             // Получение профиля пользователя
-    id <string>                 // Идентификатор пользователя
+content.getPost:                   // Получение конкретного поста
+    currentUserId <string/null>    // Идентификатор текущего пользователя
+    requestedUserId <string>       // Идетификатор запрошенного пользователя
+    permlink <string>              // Пермлинк поста
+    refBlockNum <number>           // Привязанный блок поста
+
+content.getFeed:                   // Получение ленты постов
+    type <string>('community')     // Тип ленты
+    [
+      community                    // Лента комьюнити, требует communityId
+    | subscriptions                // Лента подписок пользователя, требует requestedUserId
+    | byUser                       // Лента постов самого пользователя, требует requestedUserId
+    ]
+    sortBy <string>('time')        // Способ сортировки
+    [
+      time                         // Сортировка по времени добавления
+    ]
+    sequenceKey <string/null>      // Идентификатор пагинации для получения следующего контента
+    limit <number>                 // Количество элементов
+    currentUserId <string/null>    // Идентификатор текущего пользователя
+    requestedUserId <string/null>  // Идетификатор запрошенного пользователя
+    communityId <string/null>      // Идентификатор комьюнити
+
+content.getProfile:                // Получение профиля пользователя
+    requestedUserId <string>       // Идентификатор пользователя
 ```
 
 Возможные переменные окружения `ENV`:
