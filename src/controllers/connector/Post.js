@@ -33,7 +33,14 @@ class Post extends AbstractContent {
         }
 
         if (currentUserId) {
-            this._markIfLiked(modelObject, currentUserId);
+            const { hasUpVote, hasDownVote } = this._detectVotes(
+                Model,
+                modelObject.id,
+                currentUserId
+            );
+
+            modelObject.votes.hasUpVote = hasUpVote;
+            modelObject.votes.hasDownVote = hasDownVote;
         }
 
         return modelObject;
