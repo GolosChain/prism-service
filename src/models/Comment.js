@@ -5,39 +5,38 @@ module.exports = MongoDB.makeModel(
     'Comment',
     {
         id: {
-            type: String,
-            required: true,
-        },
-        post: {
-            id: {
+            userId: {
                 type: String,
+                required: true,
             },
-            content: {
-                title: {
-                    type: String,
-                },
-            },
-        },
-        parentComment: {
-            id: {
+            permlink: {
                 type: String,
+                required: true,
             },
-            content: {
-                body: {
-                    preview: {
-                        type: String,
-                    },
-                },
+            refBlockNum: {
+                type: String,
+                required: true,
             },
         },
-        user: {
-            id: {
+        postId: {
+            userId: {
                 type: String,
             },
-            name: {
+            permlink: {
                 type: String,
             },
-            avatarUrl: {
+            refBlockNum: {
+                type: String,
+            },
+        },
+        parentCommentId: {
+            userId: {
+                type: String,
+            },
+            permlink: {
+                type: String,
+            },
+            refBlockNum: {
                 type: String,
             },
         },
@@ -61,28 +60,12 @@ module.exports = MongoDB.makeModel(
             },
         },
         votes: {
-            // Inner use only
-            upUserIdList: {
+            upUserIds: {
                 type: [String],
             },
-            // Inner use only
-            downUserIdList: {
+            downUserIds: {
                 type: [String],
             },
-
-            /*
-            Extra fields:
-
-            upByUser: {
-                type: Boolean,
-                default: false,
-            },
-
-            downByUser: {
-                type: Boolean,
-                default: false,
-            },
-             */
         },
         meta: {
             time: {
@@ -95,7 +78,9 @@ module.exports = MongoDB.makeModel(
             // Default
             {
                 fields: {
-                    id: 1,
+                    'id.userId': 1,
+                    'id.permlink': 1,
+                    'id.refBlockNum': 1,
                 },
                 options: {
                     unique: true,
@@ -104,14 +89,19 @@ module.exports = MongoDB.makeModel(
             // Post comments, sorted by time
             {
                 fields: {
-                    'post.id': 1,
+                    'postId.userId': 1,
+                    'postId.permlink': 1,
+                    'postId.refBlockNum': 1,
                     'meta.time': 1,
+                },
+                options: {
+                    unique: true,
                 },
             },
             // User comments, sorted by time
             {
                 fields: {
-                    'user.id': 1,
+                    'id.userId': 1,
                     'meta.time': 1,
                 },
             },

@@ -11,9 +11,11 @@ module.exports = MongoDB.makeModel(
             },
             permlink: {
                 type: String,
+                required: true,
             },
             refBlockNum: {
                 type: String,
+                required: true,
             },
         },
         communityId: {
