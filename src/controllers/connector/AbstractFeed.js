@@ -13,26 +13,39 @@ class AbstractFeed extends AbstractContent {
         return { sortBy, sequenceKey, limit };
     }
 
-    _applySortingAndSequence({ query, options }, { sortBy, sequenceKey, limit }) {
+    _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit }) {
         options.limit = limit;
+        projection.__v = false;
+        projection.createdAt = false;
+        projection.updatedAt = false;
+        projection['votes.upUserIds'] = false;
+        projection['votes.downUserIds'] = false;
 
         switch (sortBy) {
-            case 'byTime':
+            case 'timeInverted':
+                this._applySortByTime({ query, options, sequenceKey, direction: -1 });
+                break;
+            case 'time':
             default:
-                this._applySortByTime(query, options, sequenceKey);
+                this._applySortByTime({ query, options, sequenceKey, direction: 1 });
         }
 
         return { query, options };
     }
 
-    _applySortByTime(query, options, sequenceKey) {
+    _applySortByTime({ query, options, sequenceKey, direction }) {
         if (sequenceKey) {
             if (typeof sequenceKey !== 'string') {
                 this._throwBadSequence();
             }
 
-            query._id = { $lt: sequenceKey };
-            options.sort = { _id: -1 };
+            if (direction > 0) {
+                query._id = { $gt: sequenceKey };
+            } else {
+                query._id = { $lt: sequenceKey };
+            }
+
+            options.sort = { _id: direction };
         }
     }
 
@@ -40,25 +53,22 @@ class AbstractFeed extends AbstractContent {
         throw { code: 400, message: 'Bad sequence params' };
     }
 
-    _applyVoteMarkers(models, userId) {
-        for (const model of models) {
-            const votes = model.votes;
+    _makeFeedResult(modelObjects, sortBy) {
+        const sequenceKey = this._getSequenceKey(modelObjects, sortBy);
 
-            if (userId) {
-                votes.upByUser = votes.upUserIdList.includes(userId);
-                votes.downByUser = votes.downUserIdList.includes(userId);
-            } else {
-                votes.upByUser = false;
-                votes.downByUser = false;
-            }
-
-            delete votes.upUserIdList;
-            delete votes.downUserIdList;
+        for (const modelObject of modelObjects) {
+            delete modelObject._id;
         }
+
+        return {
+            items: modelObjects,
+            sequenceKey,
+        };
     }
 
     _getSequenceKey(models, sortBy) {
         switch (sortBy) {
+            case 'timeInverted':
             case 'time':
             default:
                 return this._getSequenceKeyByTime(models);
@@ -71,19 +81,6 @@ class AbstractFeed extends AbstractContent {
         } else {
             return models[models.length - 1]._id;
         }
-    }
-
-    _makeFeedResult(models, sortBy) {
-        const sequenceKey = this._getSequenceKey(models, sortBy);
-
-        for (const model of models) {
-            delete model._id;
-        }
-
-        return {
-            items: models,
-            sequenceKey,
-        };
     }
 }
 
