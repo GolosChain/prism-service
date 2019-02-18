@@ -18,12 +18,12 @@ class Post extends AbstractContent {
             },
             {
                 'content.body.preview': false,
+                'votes.upUserIds': false,
+                'votes.downUserIds': false,
                 _id: false,
                 __v: false,
                 createdAt: false,
                 updatedAt: false,
-                upUserIds: false,
-                downUserIds: false,
             },
             { lean: true }
         );
@@ -32,16 +32,7 @@ class Post extends AbstractContent {
             throw { code: 404, message: 'Not found' };
         }
 
-        if (currentUserId) {
-            const { hasUpVote, hasDownVote } = this._detectVotes(
-                Model,
-                modelObject.id,
-                currentUserId
-            );
-
-            modelObject.votes.hasUpVote = hasUpVote;
-            modelObject.votes.hasDownVote = hasDownVote;
-        }
+        this._tryApplyVotes({ Model, modelObject, currentUserId });
 
         return modelObject;
     }
