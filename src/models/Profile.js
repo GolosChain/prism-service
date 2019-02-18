@@ -8,10 +8,10 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        name: {
+        username: {
             type: String,
         },
-        personalization: {
+        personal: {
             avatarUrl: {
                 type: String,
             },
@@ -21,19 +21,24 @@ module.exports = MongoDB.makeModel(
             biography: {
                 type: String,
             },
+            contacts: {
+                facebook: {
+                    type: String,
+                },
+                telegram: {
+                    type: String,
+                },
+                whatsApp: {
+                    type: String,
+                },
+                weChat: {
+                    type: String,
+                },
+            },
         },
-        community: {
-            subscriptionsList: {
-                type: [
-                    {
-                        id: {
-                            type: String,
-                        },
-                        name: {
-                            type: String,
-                        },
-                    },
-                ],
+        subscriptions: {
+            communityIds: {
+                type: [String],
             },
         },
         registration: {
@@ -41,24 +46,10 @@ module.exports = MongoDB.makeModel(
                 type: Date,
             },
         },
-        content: {
+        stats: {
             postsCount: {
                 type: Number,
                 default: 0,
-            },
-        },
-        messenger: {
-            facebookMessenger: {
-                type: String,
-            },
-            telegram: {
-                type: String,
-            },
-            whatsApp: {
-                type: String,
-            },
-            weChat: {
-                type: String,
             },
         },
     },

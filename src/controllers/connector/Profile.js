@@ -3,19 +3,40 @@ const BasicController = core.controllers.Basic;
 const Model = require('../../models/Profile');
 
 class Profile extends BasicController {
-    async getProfile({ id }) {
-        id = String(id);
+    async getProfile({ requestedUserId }) {
+        requestedUserId = String(requestedUserId);
 
-        const model = await Model.findOne(
-            { id },
-            { _id: false, __v: false, createdAt: false, updatedAt: false }
+        const modelObject = await Model.findOne(
+            { id: requestedUserId },
+            { _id: false, __v: false, createdAt: false, updatedAt: false },
+            { lean: true }
         );
 
-        if (!model) {
-            return { code: 404, message: 'Not found' };
+        if (!modelObject) {
+            throw { code: 404, message: 'Not found' };
         }
 
-        return model.toObject();
+        await this._populateSubscriptions(modelObject.subscriptions);
+
+        return modelObject;
+    }
+
+    async _populateSubscriptions(subscriptions) {
+        subscriptions.communities = [];
+
+        // TODO Change after MVP
+        subscriptions.communities.push('gls');
+
+        for (const id of subscriptions.communityIds) {
+            // TODO Change after MVP
+            subscriptions.communities.push({
+                id,
+                name: 'GOLOS',
+                avatarUrl: 'none', // TODO Set before MVP
+            });
+        }
+
+        delete subscriptions.communityIds;
     }
 }
 
