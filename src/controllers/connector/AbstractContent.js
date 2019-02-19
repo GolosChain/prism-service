@@ -2,8 +2,8 @@ const core = require('gls-core-service');
 const BasicController = core.controllers.Basic;
 
 class AbstractContent extends BasicController {
-    async _tryApplyVotesForModels({ Model, models, currentUserId }) {
-        for (const modelObject of models) {
+    async _tryApplyVotesForModels({ Model, modelObjects, currentUserId }) {
+        for (const modelObject of modelObjects) {
             await this._tryApplyVotes({ Model, modelObject, currentUserId });
         }
     }
@@ -22,14 +22,8 @@ class AbstractContent extends BasicController {
     }
 
     async _detectVotes(Model, contentId, currentUserId) {
-        const upVoteCount = await Model.count({
-            contentId: contentId,
-            votes: { upUserIds: currentUserId },
-        });
-        const downVoteCount = await Model.count({
-            contentId: contentId,
-            votes: { downUserIds: currentUserId },
-        });
+        const upVoteCount = await Model.count({ contentId, 'votes.upUserIds': currentUserId });
+        const downVoteCount = await Model.count({ contentId, 'votes.downUserIds': currentUserId });
 
         return { hasUpVote: Boolean(upVoteCount), hasDownVote: Boolean(downVoteCount) };
     }

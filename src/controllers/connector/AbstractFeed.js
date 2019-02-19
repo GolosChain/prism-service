@@ -47,9 +47,9 @@ class AbstractFeed extends AbstractContent {
             } else {
                 query._id = { $lt: sequenceKey };
             }
-
-            options.sort = { _id: direction };
         }
+
+        options.sort = { _id: direction };
     }
 
     _throwBadSequence() {

@@ -24,9 +24,6 @@ class Profile extends BasicController {
     async _populateSubscriptions(subscriptions) {
         subscriptions.communities = [];
 
-        // TODO Change after MVP
-        subscriptions.communities.push('gls');
-
         for (const id of subscriptions.communityIds) {
             // TODO Change after MVP
             subscriptions.communities.push({

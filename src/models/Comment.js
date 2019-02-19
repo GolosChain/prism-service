@@ -96,6 +96,7 @@ module.exports = MongoDB.makeModel(
                 },
                 options: {
                     unique: true,
+                    sparse: true,
                 },
             },
             // User comments, sorted by time

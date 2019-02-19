@@ -5,7 +5,7 @@ const ProfileModel = require('../../models/Profile');
 class Feed extends AbstractFeed {
     async getFeed(params) {
         const { fullQuery, currentUserId, sortBy } = await this._prepareQuery(params);
-        const modelObjects = await PostModel.find(...fullQuery);
+        const modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
@@ -83,7 +83,7 @@ class Feed extends AbstractFeed {
                 break;
 
             case 'byUser':
-                query['id.userId'] = requestedUserId;
+                query['contentId.userId'] = requestedUserId;
                 break;
 
             case 'community':

@@ -7,7 +7,7 @@ const PostModel = require('../../models/Post');
 class Comment extends AbstractFeed {
     async getComments(params) {
         const { type, fullQuery, currentUserId, sortBy } = await this._prepareQuery(params);
-        const modelObjects = await CommentModel.find(...fullQuery);
+        const modelObjects = await CommentModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
@@ -46,7 +46,7 @@ class Comment extends AbstractFeed {
         await this._populateAuthors(modelObjects);
 
         if (type === 'user') {
-            await this._populateUserCommentsMetaForModels();
+            await this._populateUserCommentsMetaForModels(modelObjects);
         }
     }
 
@@ -124,7 +124,7 @@ class Comment extends AbstractFeed {
     _applyFeedTypeConditions({ query }, { type, requestedUserId, permlink, refBlockNum }) {
         switch (type) {
             case 'user':
-                query['id.userId'] = requestedUserId;
+                query['contentId.userId'] = requestedUserId;
                 break;
 
             case 'post':
