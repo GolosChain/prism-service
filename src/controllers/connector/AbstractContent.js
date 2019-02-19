@@ -2,15 +2,15 @@ const core = require('gls-core-service');
 const BasicController = core.controllers.Basic;
 
 class AbstractContent extends BasicController {
-    _tryApplyVotesForModels({ Model, models, currentUserId }) {
+    async _tryApplyVotesForModels({ Model, models, currentUserId }) {
         for (const modelObject of models) {
-            this._tryApplyVotes({ Model, modelObject, currentUserId });
+            await this._tryApplyVotes({ Model, modelObject, currentUserId });
         }
     }
 
-    _tryApplyVotes({ Model, modelObject, currentUserId }) {
+    async _tryApplyVotes({ Model, modelObject, currentUserId }) {
         if (currentUserId) {
-            const { hasUpVote, hasDownVote } = this._detectVotes(
+            const { hasUpVote, hasDownVote } = await this._detectVotes(
                 Model,
                 modelObject.id,
                 currentUserId
@@ -21,13 +21,17 @@ class AbstractContent extends BasicController {
         }
     }
 
-    _detectVotes(Model, contentId, userId) {
-        const hasUpVote = false;
-        const hasDownVote = false;
+    async _detectVotes(Model, contentId, currentUserId) {
+        const upVoteCount = await Model.count({
+            id: contentId,
+            votes: { upUserIds: currentUserId },
+        });
+        const downVoteCount = await Model.count({
+            id: contentId,
+            votes: { downUserIds: currentUserId },
+        });
 
-        // TODO -
-
-        return { hasUpVote, hasDownVote };
+        return { hasUpVote: Boolean(upVoteCount), hasDownVote: Boolean(downVoteCount) };
     }
 }
 

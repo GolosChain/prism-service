@@ -42,7 +42,7 @@ class Comment extends AbstractFeed {
     }
 
     async _populate(modelObjects, currentUserId, type) {
-        this._tryApplyVotesForModels({ Model: CommentModel, modelObjects, currentUserId });
+        await this._tryApplyVotesForModels({ Model: CommentModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects);
 
         if (type === 'user') {

@@ -45,7 +45,7 @@ class Feed extends AbstractFeed {
     }
 
     async _populate(modelObjects, currentUserId) {
-        this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
+        await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects);
         await this._populateCommunities(modelObjects);
     }
