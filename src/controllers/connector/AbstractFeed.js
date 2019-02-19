@@ -9,7 +9,7 @@ class AbstractFeed extends AbstractContent {
         sortBy = String(sortBy);
         limit = Number(limit);
 
-        if (limit > env.GLS_MAX_FEED_LIMIT || limit < 1) {
+        if (Number.isNaN(limit) || limit > env.GLS_MAX_FEED_LIMIT || limit < 1) {
             limit = env.GLS_MAX_FEED_LIMIT;
         }
 
