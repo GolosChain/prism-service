@@ -66,6 +66,13 @@ class AbstractFeed extends AbstractContent {
         };
     }
 
+    _makeEmptyFeedResult() {
+        return {
+            items: [],
+            sequenceKey: null,
+        };
+    }
+
     _getSequenceKey(models, sortBy) {
         switch (sortBy) {
             case 'timeInverted':

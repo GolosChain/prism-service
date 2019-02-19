@@ -2,6 +2,12 @@ const core = require('gls-core-service');
 const BasicController = core.controllers.Basic;
 
 class AbstractContent extends BasicController {
+    _tryApplyVotesForModels({ Model, models, currentUserId }) {
+        for (const modelObject of models) {
+            this._tryApplyVotes({ Model, modelObject, currentUserId });
+        }
+    }
+
     _tryApplyVotes({ Model, modelObject, currentUserId }) {
         if (currentUserId) {
             const { hasUpVote, hasDownVote } = this._detectVotes(
