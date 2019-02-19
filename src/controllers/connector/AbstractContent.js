@@ -12,7 +12,7 @@ class AbstractContent extends BasicController {
         if (currentUserId) {
             const { hasUpVote, hasDownVote } = await this._detectVotes(
                 Model,
-                modelObject.id,
+                modelObject.contentId,
                 currentUserId
             );
 
@@ -23,11 +23,11 @@ class AbstractContent extends BasicController {
 
     async _detectVotes(Model, contentId, currentUserId) {
         const upVoteCount = await Model.count({
-            id: contentId,
+            contentId: contentId,
             votes: { upUserIds: currentUserId },
         });
         const downVoteCount = await Model.count({
-            id: contentId,
+            contentId: contentId,
             votes: { downUserIds: currentUserId },
         });
 

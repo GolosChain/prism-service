@@ -7,7 +7,7 @@ class Profile extends BasicController {
         requestedUserId = String(requestedUserId);
 
         const modelObject = await Model.findOne(
-            { id: requestedUserId },
+            { userId: requestedUserId },
             { _id: false, __v: false, createdAt: false, updatedAt: false },
             { lean: true }
         );

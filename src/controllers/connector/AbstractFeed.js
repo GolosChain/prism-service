@@ -98,12 +98,12 @@ class AbstractFeed extends AbstractContent {
     }
 
     async _populateAuthor(modelObject, authors) {
-        const id = modelObject.id.userId;
+        const id = modelObject.contentId.userId;
 
         if (authors.has(id)) {
             modelObject.author = authors.get(id);
         } else {
-            const profile = await ProfileModel.findOne({ id }, { username: true, _id: false });
+            const profile = await ProfileModel.findOne({ contentId: id }, { username: true, _id: false });
 
             if (!profile) {
                 Logger.error(`Feed - unknown user - ${id}`);

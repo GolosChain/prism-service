@@ -62,10 +62,10 @@ class Comment extends AbstractFeed {
 
     async _populateUserPostMeta(modelObject) {
         const id = modelObject.postId;
-        const post = await PostModel.findOne({ id }, { 'content.title': true });
+        const post = await PostModel.findOne({ contentId: id }, { 'content.title': true });
 
         if (!post) {
-            Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
+            Logger.error(`Comments - unknown parent post - ${JSON.stringify(contentId)}`);
             return;
         }
 
@@ -76,7 +76,7 @@ class Comment extends AbstractFeed {
 
     async _populateUserParentCommentMeta(modelObject) {
         const id = modelObject.parentCommentId;
-        const comment = await CommentModel.findOne({ id }, { 'content.body.preview': true });
+        const comment = await CommentModel.findOne({ contentId: id }, { 'content.body.preview': true });
 
         if (!comment) {
             Logger.error(`Comments - unknown parent comment - ${JSON.stringify(id)}`);

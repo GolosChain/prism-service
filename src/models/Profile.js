@@ -4,7 +4,7 @@ const MongoDB = core.services.MongoDB;
 module.exports = MongoDB.makeModel(
     'Profile',
     {
-        id: {
+        userId: {
             type: String,
             required: true,
         },
@@ -59,7 +59,7 @@ module.exports = MongoDB.makeModel(
             // Default
             {
                 fields: {
-                    id: 1,
+                    userId: 1,
                 },
                 options: {
                     unique: true,

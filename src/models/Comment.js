@@ -4,7 +4,7 @@ const MongoDB = core.services.MongoDB;
 module.exports = MongoDB.makeModel(
     'Comment',
     {
-        id: {
+        contentId: {
             userId: {
                 type: String,
                 required: true,
@@ -78,9 +78,9 @@ module.exports = MongoDB.makeModel(
             // Default
             {
                 fields: {
-                    'id.userId': 1,
-                    'id.permlink': 1,
-                    'id.refBlockNum': 1,
+                    'contentId.userId': 1,
+                    'contentId.permlink': 1,
+                    'contentId.refBlockNum': 1,
                 },
                 options: {
                     unique: true,
@@ -101,7 +101,7 @@ module.exports = MongoDB.makeModel(
             // User comments, sorted by time
             {
                 fields: {
-                    'id.userId': 1,
+                    'contentId.userId': 1,
                     'meta.time': 1,
                 },
             },

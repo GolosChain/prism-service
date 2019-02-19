@@ -94,7 +94,7 @@ class Feed extends AbstractFeed {
 
     async _applyUserSubscriptions(query, requestedUserId) {
         const model = await ProfileModel.findOne(
-            { id: requestedUserId },
+            { userId: requestedUserId },
             { subscriptions: true, _id: false }
         );
 

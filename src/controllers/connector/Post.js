@@ -10,7 +10,7 @@ class Post extends AbstractContent {
 
         const modelObject = await Model.findOne(
             {
-                id: {
+                contentId: {
                     userId: requestedUserId,
                     permlink,
                     refBlockNum,
