@@ -14,7 +14,7 @@ module.exports = MongoDB.makeModel(
                 required: true,
             },
             refBlockNum: {
-                type: String,
+                type: Number,
                 required: true,
             },
         },

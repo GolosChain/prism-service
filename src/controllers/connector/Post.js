@@ -32,7 +32,7 @@ class Post extends AbstractContent {
             throw { code: 404, message: 'Not found' };
         }
 
-        this._tryApplyVotes({ Model, modelObject, currentUserId });
+        await this._tryApplyVotes({ Model, modelObject, currentUserId });
 
         return modelObject;
     }

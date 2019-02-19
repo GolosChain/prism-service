@@ -14,7 +14,7 @@ module.exports = MongoDB.makeModel(
                 required: true,
             },
             refBlockNum: {
-                type: String,
+                type: Number,
                 required: true,
             },
         },
@@ -26,7 +26,7 @@ module.exports = MongoDB.makeModel(
                 type: String,
             },
             refBlockNum: {
-                type: String,
+                type: Number,
             },
         },
         parentCommentId: {
@@ -37,7 +37,7 @@ module.exports = MongoDB.makeModel(
                 type: String,
             },
             refBlockNum: {
-                type: String,
+                type: Number,
             },
         },
         content: {

@@ -65,7 +65,7 @@ class Comment extends AbstractFeed {
         const post = await PostModel.findOne({ contentId: id }, { 'content.title': true });
 
         if (!post) {
-            Logger.error(`Comments - unknown parent post - ${JSON.stringify(contentId)}`);
+            Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
             return;
         }
 
