@@ -1,5 +1,3 @@
-const core = require('gls-core-service');
-const Logger = core.utils.Logger;
 const AbstractFeed = require('./AbstractFeed');
 const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
@@ -30,10 +28,10 @@ class Feed extends AbstractFeed {
         } = this._normalizeParams(params);
 
         const query = {};
-        const options = { lean: true };
         const projection = {
             'content.body.full': false,
         };
+        const options = { lean: true };
         const fullQuery = { query, projection, options };
 
         this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit });
@@ -105,58 +103,6 @@ class Feed extends AbstractFeed {
         }
 
         query['communityId'] = { $in: model.subscriptions.communityIds };
-    }
-
-    async _populateAuthors(modelObjects) {
-        await this._populateWithCache(modelObjects, this._populateAuthor);
-    }
-
-    async _populateAuthor(modelObject, authors) {
-        const id = modelObject.id.userId;
-
-        if (authors.has(id)) {
-            modelObject.author = authors.get(id);
-        } else {
-            const profile = await ProfileModel.findOne({ id }, { username: true, _id: false });
-
-            if (!profile) {
-                Logger.error(`Feed - unknown user - ${id}`);
-                return;
-            }
-
-            modelObject.author = { username: profile.username };
-        }
-    }
-
-    async _populateCommunities(modelObjects) {
-        await this._populateWithCache(modelObjects, this._populateCommunity);
-    }
-
-    async _populateCommunity(modelObject, communities) {
-        const id = modelObject.communityId;
-
-        if (communities.has(id)) {
-            modelObject.community = communities.get(id);
-        } else {
-            // TODO After MVP
-            modelObject.community = {
-                id: 'gls',
-                name: 'GOLOS',
-                avatarUrl: 'none', // TODO Set before MVP
-            };
-
-            communities.set(id, modelObject.community);
-        }
-
-        delete modelObject.communityId;
-    }
-
-    async _populateWithCache(modelObjects, method) {
-        const cacheMap = new Map();
-
-        for (const modelObject of modelObjects) {
-            await method.call(this, modelObject, cacheMap);
-        }
     }
 }
 
