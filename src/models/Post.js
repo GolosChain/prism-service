@@ -26,10 +26,10 @@ module.exports = MongoDB.makeModel(
                 type: String,
             },
             body: {
-                full: {
+                preview: {
                     type: String,
                 },
-                preview: {
+                full: {
                     type: String,
                 },
             },
@@ -80,7 +80,7 @@ module.exports = MongoDB.makeModel(
             // ...with sort by time
             {
                 fields: {
-                    'communityId': 1,
+                    communityId: 1,
                     'meta.time': -1,
                 },
             },

@@ -45,6 +45,9 @@ module.exports = MongoDB.makeModel(
                 type: String,
             },
             body: {
+                preview: {
+                    type: String,
+                },
                 full: {
                     type: String,
                 },
@@ -72,6 +75,14 @@ module.exports = MongoDB.makeModel(
                 type: Date,
             },
         },
+        ordering: {
+            root: {
+                type: Number,
+            },
+            child: {
+                type: Number,
+            },
+        },
     },
     {
         index: [
@@ -92,7 +103,8 @@ module.exports = MongoDB.makeModel(
                     'postId.userId': 1,
                     'postId.permlink': 1,
                     'postId.refBlockNum': 1,
-                    'meta.time': 1,
+                    'ordering.root': 1,
+                    'ordering.child': 1,
                 },
                 options: {
                     unique: true,

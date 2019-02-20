@@ -48,8 +48,6 @@ class AbstractFeed extends AbstractContent {
                 query._id = { $lt: sequenceKey };
             }
         }
-
-        options.sort = { _id: direction };
     }
 
     _throwBadSequence() {
@@ -103,14 +101,17 @@ class AbstractFeed extends AbstractContent {
         if (authors.has(id)) {
             modelObject.author = authors.get(id);
         } else {
-            const profile = await ProfileModel.findOne({ contentId: id }, { username: true, _id: false });
+            const profile = await ProfileModel.findOne(
+                { userId: id },
+                { username: true, _id: false }
+            );
 
             if (!profile) {
                 Logger.error(`Feed - unknown user - ${id}`);
                 return;
             }
 
-            modelObject.author = { username: profile.username };
+            modelObject.author = { userId: id, username: profile.username };
         }
     }
 

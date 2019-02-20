@@ -44,6 +44,12 @@ class Feed extends AbstractFeed {
         return { fullQuery, currentUserId, sortBy };
     }
 
+    _applySortByTime({ query, options, sequenceKey, direction }) {
+        super._applySortByTime({ query, options, sequenceKey, direction });
+
+        options.sort = { _id: direction };
+    }
+
     async _populate(modelObjects, currentUserId) {
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects);

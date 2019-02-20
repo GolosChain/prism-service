@@ -41,6 +41,12 @@ class Comment extends AbstractFeed {
         return { type, fullQuery, currentUserId, sortBy };
     }
 
+    _applySortByTime({ query, options, sequenceKey, direction }) {
+        super._applySortByTime({ query, options, sequenceKey, direction });
+
+        options.sort = { 'ordering.root': direction, 'ordering.child': direction };
+    }
+
     async _populate(modelObjects, currentUserId, type) {
         await this._tryApplyVotesForModels({ Model: CommentModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects);
@@ -53,9 +59,9 @@ class Comment extends AbstractFeed {
     async _populateUserCommentsMetaForModels(modelObjects) {
         for (const modelObject of modelObjects) {
             if (modelObject.parentCommentId) {
-                await this._populateUserParentCommentMeta(modelObjects);
+                await this._populateUserParentCommentMeta(modelObject);
             } else {
-                await this._populateUserPostMeta(modelObjects);
+                await this._populateUserPostMeta(modelObject);
             }
         }
     }
@@ -69,14 +75,17 @@ class Comment extends AbstractFeed {
             return;
         }
 
-        modelObject.post = { id, content: { title: post.content.title } };
+        modelObject.post = { contentId: id, content: { title: post.content.title } };
 
         delete modelObject.postId;
     }
 
     async _populateUserParentCommentMeta(modelObject) {
         const id = modelObject.parentCommentId;
-        const comment = await CommentModel.findOne({ contentId: id }, { 'content.body.preview': true });
+        const comment = await CommentModel.findOne(
+            { contentId: id },
+            { 'content.body.preview': true }
+        );
 
         if (!comment) {
             Logger.error(`Comments - unknown parent comment - ${JSON.stringify(id)}`);
@@ -84,7 +93,7 @@ class Comment extends AbstractFeed {
         }
 
         modelObject.parentComment = {
-            id,
+            contentId: id,
             content: { body: { preview: comment.content.body.preview } },
         };
     }
