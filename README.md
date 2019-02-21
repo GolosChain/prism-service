@@ -6,26 +6,26 @@
 API JSON-RPC:
 
 ```
-content.getProfile:                // Получение профиля пользователя
+getProfile:                        // Получение профиля пользователя
     requestedUserId <string>       // Идентификатор пользователя
 
-content.getPost:                   // Получение конкретного поста
+getPost:                           // Получение конкретного поста
     currentUserId <string/null>    // Идентификатор текущего пользователя
     requestedUserId <string>       // Идетификатор запрошенного пользователя
     permlink <string>              // Пермлинк поста
     refBlockNum <number>           // Привязанный блок поста
 
-content.getFeed:                   // Получение ленты постов
+getFeed:                           // Получение ленты постов
     type <string>('community')     // Тип ленты
         [
-          community                    // Лента комьюнити, требует communityId
-        | subscriptions                // Лента подписок пользователя, требует requestedUserId
-        | byUser                       // Лента постов самого пользователя, требует requestedUserId
+          community                // Лента комьюнити, требует communityId
+        | subscriptions            // Лента подписок пользователя, требует requestedUserId
+        | byUser                   // Лента постов самого пользователя, требует requestedUserId
         ]
     sortBy <string>('time')        // Способ сортировки
         [
-          time                         // Сначала старые, потом новые
-        | timeInverted                 // Сначала новые, потом старые
+          time                     // Сначала старые, потом новые
+        | timeInverted             // Сначала новые, потом старые
         ]
     sequenceKey <string/null>      // Идентификатор пагинации для получения следующего контента
     limit <number>                 // Количество элементов
@@ -33,18 +33,18 @@ content.getFeed:                   // Получение ленты постов
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
     communityId <string/null>      // Идентификатор комьюнити
 
-content.getComments:               // Получение ленты комментариев
+getComments:                       // Получение ленты комментариев
     sortBy <string>('time')        // Способ сортировки
         [
-          time                         // Сначала старые, потом новые
-        | timeInverted                 // Сначала новые, потом старые
+          time                     // Сначала старые, потом новые
+        | timeInverted             // Сначала новые, потом старые
         ]
     sequenceKey <string/null>      // Идентификатор пагинации для получения следующего контента
     limit <number>(10)             // Количество элементов
     type <string>('post')          // Тип ленты
         [
-          'user'                       // Получить комментарии пользователя, требует requestedUserId
-        | 'post'                       // Получить комментарии для поста, требует requestedUserId, permlink, refBlockNum
+          'user'                   // Получить комментарии пользователя, требует requestedUserId
+        | 'post'                   // Получить комментарии для поста, требует requestedUserId, permlink, refBlockNum
         ]
     currentUserId <string/null>    // Идентификатор текущего пользователя
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
