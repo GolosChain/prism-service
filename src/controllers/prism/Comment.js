@@ -20,7 +20,7 @@ class Comment extends AbstractContent {
     }
 
     async handleCreate({ args: content }, blockNum) {
-        if (!this._isComment(content)) {
+        if (!(await this._isComment(content))) {
             return;
         }
 
@@ -67,15 +67,7 @@ class Comment extends AbstractContent {
     }
 
     async handleUpdate({ args: content }, blockNum) {
-        if (!this._isComment(content)) {
-            return;
-        }
-
-        const model = await CommentModel.findOne({}); // TODO -
-
-        if (!model) {
-            // Can be valid in blockchain as transaction,
-            // but invalid as logic (comment not found in blockchain)
+        if (!(await this._isComment(content))) {
             return;
         }
 
@@ -83,23 +75,29 @@ class Comment extends AbstractContent {
     }
 
     async handleDelete({ args: content }, blockNum) {
-        if (!this._isComment(content)) {
-            return;
-        }
-
-        const model = await CommentModel.findOne({}); // TODO -
-
-        if (!model) {
-            // Can be valid in blockchain as transaction,
-            // but invalid as logic (comment not found in blockchain)
+        if (!(await this._isComment(content))) {
             return;
         }
 
         // TODO -
     }
 
-    _isComment(content) {
-        return Boolean(content.parentacc);
+    async _isComment(content) {
+        const id = content.parent_id;
+
+        if (id) {
+            return Boolean(id.author);
+        }
+
+        const postCount = await CommentModel.count({
+            contentId: {
+                userId: content.message_id.author,
+                permlink: content.message_id.permlink,
+                refBlockNum: content.message_id.ref_block_num,
+            },
+        });
+
+        return Boolean(postCount);
     }
 
     async _makeId(content, blockNum) {

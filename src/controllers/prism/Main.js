@@ -6,7 +6,7 @@ const Profile = require('./Profile');
 const Vote = require('./Vote');
 
 // TODO Change after MVP
-const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'eosio'];
+const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'cyber'];
 
 class Main {
     constructor() {
@@ -16,13 +16,13 @@ class Main {
         this._vote = new Vote();
     }
 
-    async disperse({ transactions, blockNum }) {
+    async disperse({ transactions, blockNum, blockTime }) {
         for (const transaction of transactions) {
-            await this._disperseTransaction(transaction, blockNum);
+            await this._disperseTransaction(transaction, { blockNum, blockTime });
         }
     }
 
-    async _disperseTransaction(transaction, blockNum) {
+    async _disperseTransaction(transaction, { blockNum, blockTime }) {
         if (!transaction) {
             Logger.error('Empty transaction! But continue.');
             return;
@@ -33,34 +33,51 @@ class Main {
         }
 
         const pathName = [transaction.code, transaction.action].join('->');
+        const communityId = this._extractCommunityId(transaction);
+
+        console.log(pathName);
 
         switch (pathName) {
             case 'gls.publish->createmssg':
-                await this._post.handleCreate(transaction, blockNum);
-                await this._comment.handleCreate(transaction, blockNum);
+                await this._post.handleCreate(transaction, { communityId, blockTime });
+                //await this._comment.handleCreate(transaction, blockNum);
                 break;
 
             case 'gls.publish->updatemssg':
                 await this._post.handleUpdate(transaction, blockNum);
-                await this._comment.handleUpdate(transaction, blockNum);
+                //await this._comment.handleUpdate(transaction, blockNum);
                 break;
 
             case 'gls.publish->deletemssg':
                 await this._post.handleDelete(transaction, blockNum);
-                await this._comment.handleDelete(transaction, blockNum);
+                //await this._comment.handleDelete(transaction, blockNum);
                 break;
 
-            case 'eosio->newaccount':
-                await this._profile.handleCreate(transaction);
+            case 'cyber->newaccount':
+                await this._profile.handleCreate(transaction, { blockTime });
                 break;
 
             case 'gls.social->updatemeta':
                 await this._profile.handleMeta(transaction);
                 break;
-                
+
+            case 'gls.social->changereput':
+                //await this._vote.handleVote(transaction);
+                break;
+
+            case 'gls.social->unvote':
+                //await this._vote.handleUnVote(transaction);
+                break;
+
             default:
             // unknown transaction, do nothing
         }
+    }
+
+    _extractCommunityId(transaction) {
+        const calledCodeName = transaction.code;
+
+        return calledCodeName.split('.')[0];
     }
 }
 

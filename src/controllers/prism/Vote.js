@@ -1,7 +1,11 @@
 const Abstract = require('./Abstract');
 
 class Vote extends Abstract {
-    handleVote({ args: content }, blockNum) {
+    handleVote({ args: content }) {
+        // TODO -
+    }
+
+    handleUnVote({ args: content }) {
         // TODO -
     }
 }

@@ -2,57 +2,50 @@ const Abstract = require('./Abstract');
 const ProfileModel = require('../../models/Profile');
 
 class Profile extends Abstract {
-    async handleCreate({ args: { name: id } }) {
-        let profile = await ProfileModel.findOne({ id });
-
-        if (profile) {
+    async handleCreate(
+        {
+            args: { name: userId },
+        },
+        { blockTime }
+    ) {
+        if (await ProfileModel.findOne({ userId })) {
             return;
         }
 
-        // TODO Time from block time
-        profile = new ProfileModel({ id, registration: { time: new Date() } });
-
-        await profile.save();
+        await ProfileModel.create({
+            userId,
+            username: userId, // TODO Change after MVP
+            registration: {
+                time: blockTime,
+            },
+            subscriptions: ['gls'], // TODO Change after MVP
+        });
     }
 
-    async handleMeta({ args: { account: id, meta } }) {
-        let profile = await ProfileModel.findOne({ id });
+    async handleMeta({ args: { account: userId, meta } }) {
+        let profile = await ProfileModel.findOne({ userId });
 
         if (!profile) {
             return;
         }
 
-        profile.personalization = profile.personalization || {};
-        profile.messenger = profile.messenger || {};
+        profile.personal = profile.personal || {};
+        profile.personal.contacts = profile.personal.contacts || {};
 
-        const person = profile.personalization || {};
-        const mess = profile.messenger;
+        const personal = profile.personal;
+        const contacts = personal.contacts;
+        const or = this._currentOrNew.bind(this);
 
-        person.avatarUrl = this._currentOrNew(person.avatarUrl, meta.avatar_url);
-        person.coverUrl = this._currentOrNew(person.coverUrl, meta.cover_image);
-        person.biography = this._currentOrNew(person.biography, meta.biography);
-        mess.telegram = this._currentOrNew(mess.telegram, meta.telegram);
-        mess.whatsApp = this._currentOrNew(mess.whatsApp, meta.whats_app);
-        mess.weChat = this._currentOrNew(mess.weChat, meta.we_chat);
-        mess.facebookMessenger = this._currentOrNew(
-            mess.facebookMessenger,
-            meta.facebook_messenger
-        );
-
-        // TODO Change when cyberway lib changed
-        person.avatarUrl = this._currentOrNew(person.avatarUrl, meta.profile_image);
-        person.coverUrl = this._currentOrNew(person.coverUrl, meta.cover_image);
-        person.biography = this._currentOrNew(person.biography, meta.about);
-        mess.telegram = this._currentOrNew(mess.telegram, meta.telegram);
-        mess.whatsApp = this._currentOrNew(mess.whatsApp, 'none');
-        mess.weChat = this._currentOrNew(mess.weChat, 'none');
-        mess.facebookMessenger = this._currentOrNew(mess.facebookMessenger, meta.facebook);
+        // TODO Wait for blockchain...
+        personal.avatarUrl = or(personal.avatarUrl, 'WAIT FOR BLOCKCHAIN');
+        personal.coverUrl = or(personal.coverUrl, 'WAIT FOR BLOCKCHAIN');
+        personal.biography = or(personal.biography, 'WAIT FOR BLOCKCHAIN');
+        contacts.facebook = or(contacts.facebook, 'WAIT FOR BLOCKCHAIN');
+        contacts.telegram = or(contacts.telegram, 'WAIT FOR BLOCKCHAIN');
+        contacts.whatsApp = or(contacts.whatsApp, 'WAIT FOR BLOCKCHAIN');
+        contacts.weChat = or(contacts.weChat, 'WAIT FOR BLOCKCHAIN');
 
         await profile.save();
-    }
-
-    async handleSubscription() { // TODO -
-        // TODO -
     }
 
     _currentOrNew(currentValue, newValue) {
