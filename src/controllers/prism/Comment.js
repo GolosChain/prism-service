@@ -1,16 +1,8 @@
 const core = require('gls-core-service');
 const Content = core.utils.Content;
 const AbstractContent = require('./AbstractContent');
+const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
-
-// TODO Remove after MVP
-const HARDCODE_COMMUNITY_ID = 'GOLOSID';
-const HARDCODE_COMMUNITY_NAME = 'GOLOSNAME';
-
-// TODO REMOVE AFTER USER CREATION LOGIC
-const TMP_USER_ID_PREFIX = 'GOLOS_TMP_ID';
-
-// TODO Extract parent
 
 class Comment extends AbstractContent {
     constructor(...args) {
@@ -19,67 +11,68 @@ class Comment extends AbstractContent {
         this._contentUtil = new Content();
     }
 
-    async handleCreate({ args: content }, blockNum) {
+    async handleCreate({ args: content }, { blockTime }) {
         if (!(await this._isComment(content))) {
             return;
         }
 
-        console.log(content);
-        return; // TODO -
-
         const model = new CommentModel({
-            id: await this._makeId(content, blockNum),
-            post: {
-                id: '', // TODO -
-                content: {
-                    title: '', // TODO -
-                },
-            },
-            parentComment: {
-                id: '', // TODO -
-                content: {
-                    body: {
-                        preview: '', // TODO -
-                    },
-                },
-            },
-            user: {
-                id: content.account,
-                name: content.account, // TODO Change to community account name
-                avatarUrl: 'none', // TODO Get user and add avatar here
-            },
+            contentId: this._extractContentId(content),
             content: {
-                title: content.headermssg,
+                title: this._extractTitle(content),
                 body: {
-                    full: this._contentUtil.sanitize(content.bodymssg),
+                    preview: this._extractBodyPreview(content),
+                    full: this._extractBodyFull(content),
                 },
-                metadata: {
-                    type: this._extractMetadata(content),
-                },
+                metadata: this._extractMetadata(content),
             },
             meta: {
-                // TODO Change after blockchain implement block time
-                time: new Date(),
+                time: blockTime,
             },
         });
 
+        await this._applyParent(model, content);
         await model.save();
+        await this._updatePostCommentsCount(model, 1);
     }
 
-    async handleUpdate({ args: content }, blockNum) {
+    async handleUpdate({ args: content }) {
         if (!(await this._isComment(content))) {
             return;
         }
 
-        // TODO -
+        await CommentModel.updateOne(
+            {
+                contentId: this._extractContentId(content),
+            },
+            {
+                content: {
+                    title: this._extractTitle(content),
+                    body: {
+                        preview: this._extractBodyPreview(content),
+                        full: this._extractBodyFull(content),
+                    },
+                    metadata: this._extractMetadata(content),
+                },
+            }
+        );
     }
 
-    async handleDelete({ args: content }, blockNum) {
+    async handleDelete({ args: content }) {
         if (!(await this._isComment(content))) {
             return;
         }
 
-        // TODO -
+        const model = await CommentModel.findOne({
+            contentId: this._extractContentId(content),
+        });
+
+        if (!model) {
+            return;
+        }
+
+        await this._updatePostCommentsCount(model, -1);
+        await model.remove();
     }
 
     async _isComment(content) {
@@ -89,19 +82,59 @@ class Comment extends AbstractContent {
             return Boolean(id.author);
         }
 
-        const postCount = await CommentModel.count({
-            contentId: {
-                userId: content.message_id.author,
-                permlink: content.message_id.permlink,
-                refBlockNum: content.message_id.ref_block_num,
-            },
+        const postCount = await CommentModel.countDocuments({
+            contentId: this._extractContentId(content),
         });
 
         return Boolean(postCount);
     }
 
-    async _makeId(content, blockNum) {
-        return [blockNum, HARDCODE_COMMUNITY_ID, content.account, content.permlink].join(':');
+    async _applyParent(model, content) {
+        const contentId = this._extractContentIdFromId(content.parent_id);
+        const post = await this._getParentPost(contentId);
+
+        if (post) {
+            model.parent = {
+                contentId,
+                isPost: true,
+            };
+            return;
+        }
+
+        const comment = await this._getParentComment(contentId);
+
+        if (comment) {
+            model.parent = {
+                contentId,
+                isPost: false,
+            };
+        }
+    }
+
+    async _getParentPost(contentId) {
+        return await PostModel(contentId, { contentId: true });
+    }
+
+    async _getParentComment(contentId) {
+        return await CommentModel(contentId, { contentId: true });
+    }
+
+    async _updatePostCommentsCount(model, increment) {
+        let contentId;
+
+        if (model.parent.isPost) {
+            contentId = model.parent.contentId;
+        } else {
+            const parentComment = await CommentModel.findOne({ parentId: model.parent.contentId });
+
+            if (!parentComment) {
+                return;
+            }
+
+            contentId = parentComment.parent.contentId;
+        }
+
+        await PostModel.updateOne({ contentId }, { $inc: { 'stats.commentsCount': increment } });
     }
 }
 

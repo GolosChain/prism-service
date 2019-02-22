@@ -45,8 +45,8 @@ module.exports = MongoDB.makeModel(
                 type: [String],
             },
         },
-        comments: {
-            count: {
+        stats: {
+            commentsCount: {
                 type: Number,
                 default: 0,
             },

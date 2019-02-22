@@ -37,6 +37,18 @@ class AbstractContent extends Abstract {
             return {};
         }
     }
+
+    _extractContentId(content) {
+        return this._extractContentIdFromId(content.message_id);
+    }
+
+    _extractContentIdFromId(id) {
+        return {
+            userId: id.author,
+            permlink: id.permlink,
+            refBlockNum: id.ref_block_num,
+        };
+    }
 }
 
 module.exports = AbstractContent;

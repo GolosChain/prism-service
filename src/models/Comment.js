@@ -18,26 +18,20 @@ module.exports = MongoDB.makeModel(
                 required: true,
             },
         },
-        postId: {
-            userId: {
-                type: String,
+        parent: {
+            contentId: {
+                userId: {
+                    type: String,
+                },
+                permlink: {
+                    type: String,
+                },
+                refBlockNum: {
+                    type: Number,
+                },
             },
-            permlink: {
-                type: String,
-            },
-            refBlockNum: {
-                type: Number,
-            },
-        },
-        parentCommentId: {
-            userId: {
-                type: String,
-            },
-            permlink: {
-                type: String,
-            },
-            refBlockNum: {
-                type: Number,
+            isPost: {
+                type: Boolean,
             },
         },
         content: {

@@ -40,17 +40,17 @@ class Main {
         switch (pathName) {
             case 'gls.publish->createmssg':
                 await this._post.handleCreate(transaction, { communityId, blockTime });
-                //await this._comment.handleCreate(transaction, blockNum);
+                await this._comment.handleCreate(transaction, { communityId, blockTime });
                 break;
 
             case 'gls.publish->updatemssg':
-                await this._post.handleUpdate(transaction, blockNum);
-                //await this._comment.handleUpdate(transaction, blockNum);
+                await this._post.handleUpdate(transaction);
+                await this._comment.handleUpdate(transaction);
                 break;
 
             case 'gls.publish->deletemssg':
-                await this._post.handleDelete(transaction, blockNum);
-                //await this._comment.handleDelete(transaction, blockNum);
+                await this._post.handleDelete(transaction);
+                await this._comment.handleDelete(transaction);
                 break;
 
             case 'cyber->newaccount':

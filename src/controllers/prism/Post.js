@@ -16,13 +16,11 @@ class Post extends AbstractContent {
             return;
         }
 
+        const contentId = this._extractContentId(content);
+
         await PostModel.create({
             communityId,
-            contentId: {
-                userId: content.message_id.author,
-                permlink: content.message_id.permlink,
-                refBlockNum: content.message_id.ref_block_num,
-            },
+            contentId,
             content: {
                 title: this._extractTitle(content),
                 body: {
@@ -35,8 +33,7 @@ class Post extends AbstractContent {
                 time: blockTime,
             },
         });
-
-        await this._updateUserPostCount(content.message_id.author, 1);
+        await this._updateUserPostCount(contentId.userId, 1);
     }
 
     async handleUpdate({ args: content }) {
@@ -44,14 +41,10 @@ class Post extends AbstractContent {
             return;
         }
 
+        const contentId = this._extractContentId(content);
+
         await PostModel.updateOne(
-            {
-                contentId: {
-                    userId: content.message_id.author,
-                    permlink: content.message_id.permlink,
-                    refBlockNum: content.message_id.ref_block_num,
-                },
-            },
+            { contentId },
             {
                 content: {
                     title: this._extractTitle(content),
@@ -70,13 +63,10 @@ class Post extends AbstractContent {
             return;
         }
 
-        await PostModel.deleteOne({
-            contentId: {
-                userId: content.message_id.author,
-                permlink: content.message_id.permlink,
-                refBlockNum: content.message_id.ref_block_num,
-            },
-        });
+        const contentId = this._extractContentId(content);
+
+        await PostModel.deleteOne({ contentId });
+        await this._updateUserPostCount(contentId.userId, -1);
     }
 
     async _isPost(content) {
@@ -86,12 +76,8 @@ class Post extends AbstractContent {
             return !Boolean(id.author);
         }
 
-        const postCount = await PostModel.count({
-            contentId: {
-                userId: content.message_id.author,
-                permlink: content.message_id.permlink,
-                refBlockNum: content.message_id.ref_block_num,
-            },
+        const postCount = await PostModel.countDocuments({
+            contentId: this._extractContentId(content),
         });
 
         return Boolean(postCount);
