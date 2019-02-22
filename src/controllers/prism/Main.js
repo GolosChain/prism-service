@@ -18,55 +18,66 @@ class Main {
 
     async disperse({ transactions, blockNum, blockTime }) {
         for (const transaction of transactions) {
-            await this._disperseTransaction(transaction, { blockNum, blockTime });
+            let previous = null;
+
+            for (const action of transaction.actions) {
+                await this._disperseAction(action, previous, { blockNum, blockTime });
+                previous = action;
+            }
         }
     }
 
-    async _disperseTransaction(transaction, { blockNum, blockTime }) {
-        if (!transaction) {
+    async _disperseAction(action, previous, { blockNum, blockTime }) {
+        if (!action) {
             Logger.error('Empty transaction! But continue.');
             return;
         }
 
-        if (!communityRegistry.includes(transaction.receiver)) {
+        if (!communityRegistry.includes(action.receiver)) {
             return;
         }
 
-        const pathName = [transaction.code, transaction.action].join('->');
-        const communityId = this._extractCommunityId(transaction);
-
-        console.log(pathName);
+        const pathName = [action.code, action.action].join('->');
+        const communityId = this._extractCommunityId(action);
 
         switch (pathName) {
             case 'gls.publish->createmssg':
-                await this._post.handleCreate(transaction, { communityId, blockTime });
-                await this._comment.handleCreate(transaction, { communityId, blockTime });
+                await this._post.handleCreate(action, { communityId, blockTime });
+                await this._comment.handleCreate(action, { communityId, blockTime });
                 break;
 
             case 'gls.publish->updatemssg':
-                await this._post.handleUpdate(transaction);
-                await this._comment.handleUpdate(transaction);
+                await this._post.handleUpdate(action);
+                await this._comment.handleUpdate(action);
                 break;
 
             case 'gls.publish->deletemssg':
-                await this._post.handleDelete(transaction);
-                await this._comment.handleDelete(transaction);
+                await this._post.handleDelete(action);
+                await this._comment.handleDelete(action);
                 break;
 
             case 'cyber->newaccount':
-                await this._profile.handleCreate(transaction, { blockTime });
+                await this._profile.handleCreate(action, { blockTime });
                 break;
 
             case 'gls.social->updatemeta':
-                await this._profile.handleMeta(transaction);
+                await this._profile.handleMeta(action);
                 break;
 
             case 'gls.social->changereput':
-                //await this._vote.handleVote(transaction);
+                await this._vote.handleReputation(action, previous);
+                break;
+
+            case 'gls.publish->upvote':
+                await this._vote.handleUpVote(action);
+                break;
+
+            case 'gls.publish->downvote':
+                await this._vote.handleDownVote(action);
                 break;
 
             case 'gls.social->unvote':
-                //await this._vote.handleUnVote(transaction);
+                await this._vote.handleUnVote(transaction);
                 break;
 
             default:
