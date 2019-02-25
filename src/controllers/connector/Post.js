@@ -34,6 +34,7 @@ class Post extends AbstractContent {
 
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
         await this._populateCommunities([modelObject]);
+        await this._populateAuthors([modelObject]);
 
         return modelObject;
     }
