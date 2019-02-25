@@ -45,8 +45,8 @@ class Vote extends AbstractContent {
     _includeUpVote(model, userId) {
         const pack = model.votes.upUserIds;
 
-        if (pack.includes(userId)) {
-            pack.splice(pack.indexOf(userId));
+        if (!pack.includes(userId)) {
+            pack.push(userId);
             model.markModified('votes.upUserIds');
         }
     }
@@ -54,8 +54,8 @@ class Vote extends AbstractContent {
     _includeDownVote(model, userId) {
         const pack = model.votes.downUserIds;
 
-        if (pack.includes(userId)) {
-            pack.splice(pack.indexOf(userId));
+        if (!pack.includes(userId)) {
+            pack.push(userId);
             model.markModified('votes.downUserIds');
         }
     }
