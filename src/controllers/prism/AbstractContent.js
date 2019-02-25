@@ -9,11 +9,11 @@ class AbstractContent extends Abstract {
     }
 
     _extractBodyFull(content) {
-        return this._contentUtil.sanitizePreview(content.bodymssg, env.GLS_CONTENT_PREVIEW_LENGTH);
+        return this._contentUtil.sanitize(content.bodymssg);
     }
 
     _extractBodyPreview(content) {
-        return this._contentUtil.sanitize(content.bodymssg);
+        return this._contentUtil.sanitizePreview(content.bodymssg, env.GLS_CONTENT_PREVIEW_LENGTH);
     }
 
     _extractMetadata(content) {
