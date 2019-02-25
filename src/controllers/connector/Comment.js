@@ -68,23 +68,33 @@ class Comment extends AbstractFeed {
 
     async _populateUserPostMeta(modelObject) {
         const id = modelObject.postId;
-        const post = await PostModel.findOne({ contentId: id }, { 'content.title': true });
+        const post = await PostModel.findOne(
+            { contentId: id },
+            { 'content.title': true, communityId: true }
+        );
 
         if (!post) {
             Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
             return;
         }
 
-        modelObject.post = { contentId: id, content: { title: post.content.title } };
+        modelObject.post = {
+            contentId: id,
+            content: { title: post.content.title },
+            communityId: post.communityId,
+        };
+
+        await this._populateCommunities([modelObject.post]);
 
         delete modelObject.postId;
+        delete modelObject.post.communityId;
     }
 
     async _populateUserParentCommentMeta(modelObject) {
         const id = modelObject.parentCommentId;
         const comment = await CommentModel.findOne(
             { contentId: id },
-            { 'content.body.preview': true }
+            { 'content.body.preview': true, 'parent.contentId': true }
         );
 
         if (!comment) {
@@ -96,6 +106,10 @@ class Comment extends AbstractFeed {
             contentId: id,
             content: { body: { preview: comment.content.body.preview } },
         };
+
+        await this._populateAuthors([modelObject.parentComment]);
+
+        delete modelObject.parentCommentId;
     }
 
     _normalizeParams({
