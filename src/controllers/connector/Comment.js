@@ -31,7 +31,7 @@ class Comment extends AbstractFeed {
         } = this._normalizeParams(params);
 
         const query = {};
-        const projection = { 'content.title': false };
+        const projection = { 'content.title': false, ordering: false };
         const options = { lean: true };
         const fullQuery = { query, projection, options };
 
