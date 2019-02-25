@@ -1,9 +1,14 @@
-version: '3.6'
+ersion: '2.1'
 services:
   prism-mongo:
     container_name: prism-mongo
     image: mongo
     restart: always
+    healthcheck:
+      test: mongo --eval 'db.getCollectionNames()'
+      interval: 10s
+      timeout: 2s
+      retries: 10
     volumes:
       - prism-mongodb-vol:/data/db
     ports:
@@ -25,6 +30,20 @@ services:
       - $GLS_CONNECTOR_HOST:$GLS_CONNECTOR_PORT:$GLS_CONNECTOR_PORT
     env_file:
       - .env
+
+  mongodb-exporter:
+    container_name: mongodb-exporter
+    image: cyberway/mongodb-exporter:v0.6.2
+    restart: always
+    depends_on:
+      prism-mongo:
+        condition: service_healthy
+    ports:
+      - 9216:9216
+    environment:
+      - MONGODB_URI=mongodb://prism-mongo:27017
+    networks:
+      - services-tier
 
 volumes:
   prism-mongodb-vol:
