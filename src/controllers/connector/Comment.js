@@ -152,9 +152,9 @@ class Comment extends AbstractFeed {
 
             case 'post':
             default:
-                query['postId.userId'] = requestedUserId;
-                query['postId.permlink'] = permlink;
-                query['postId.refBlockNum'] = refBlockNum;
+                query['parent.contentId.userId'] = requestedUserId;
+                query['parent.contentId.permlink'] = permlink;
+                query['parent.contentId.refBlockNum'] = refBlockNum;
                 break;
         }
     }
