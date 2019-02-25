@@ -22,7 +22,7 @@ class AbstractFeed extends AbstractContent {
         projection['votes.downUserIds'] = false;
 
         switch (sortBy) {
-            case 'timeInverted':
+            case 'timeDesc':
                 this._applySortByTime({ query, options, sequenceKey, direction: -1 });
                 break;
             case 'time':
@@ -73,7 +73,7 @@ class AbstractFeed extends AbstractContent {
 
     _getSequenceKey(models, sortBy) {
         switch (sortBy) {
-            case 'timeInverted':
+            case 'timeDesc':
             case 'time':
             default:
                 return this._getSequenceKeyByTime(models);
