@@ -9,6 +9,8 @@ class AbstractContent extends BasicController {
     }
 
     async _tryApplyVotes({ Model, modelObject, currentUserId }) {
+        const votes = modelObject.votes;
+
         if (currentUserId) {
             const { hasUpVote, hasDownVote } = await this._detectVotes(
                 Model,
@@ -16,8 +18,11 @@ class AbstractContent extends BasicController {
                 currentUserId
             );
 
-            modelObject.votes.hasUpVote = hasUpVote;
-            modelObject.votes.hasDownVote = hasDownVote;
+            votes.hasUpVote = hasUpVote;
+            votes.hasDownVote = hasDownVote;
+        } else {
+            votes.hasUpVote = false;
+            votes.hasDownVote = false;
         }
     }
 
