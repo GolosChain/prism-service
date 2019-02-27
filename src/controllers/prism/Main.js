@@ -76,8 +76,8 @@ class Main {
                 await this._vote.handleDownVote(action);
                 break;
 
-            case 'gls.social->unvote':
-                await this._vote.handleUnVote(transaction);
+            case 'gls.publish->unvote':
+                await this._vote.handleUnVote(action);
                 break;
 
             default:
