@@ -1,15 +1,6 @@
 const RevertTrace = require('../../models/RevertTrace');
 
 class Abstract {
-    constructor({ chainPropsService, feedPriceService }) {
-        this._chainPropsService = chainPropsService;
-        this._feedPriceService = feedPriceService;
-    }
-
-    async handle(data, blockMeta) {
-        throw 'Handler not implemented';
-    }
-
     async _getOrCreateModelWithTrace(modelClass, queryForCheck, initData) {
         let model = await this._getModelWithoutTrace(modelClass, queryForCheck);
 
@@ -38,7 +29,7 @@ class Abstract {
         return await modelClass.findOne(query);
     }
 
-    async _updateRevertTrace(data) {
+    async _updateRevertTrace({ command, modelBody, modelClassName }) {
         const model = await RevertTrace.findOne(
             {},
             {
@@ -57,7 +48,7 @@ class Abstract {
             },
             {
                 $push: {
-                    stack: data,
+                    stack: { command, modelBody, modelClassName },
                 },
             }
         );

@@ -1,32 +1,43 @@
 {
-    "name": "prism-service",
-    "version": "0.3.0",
-    "description": "",
-    "main": "./src/index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/GolosChain/prism-service.git"
-    },
-    "prettier": {
-        "singleQuote": true,
-        "tabWidth": 4,
-        "semi": true,
-        "trailingComma": "es5",
-        "printWidth": 100
-    },
-    "author": "golos.io",
-    "license": "GPL-3.0",
-    "bugs": {
-        "url": "https://github.com/GolosChain/prism-service/issues"
-    },
-    "homepage": "https://github.com/GolosChain/prism-service#readme",
-    "dependencies": {
-        "gls-core-service": "^2.16.1",
-        "golos-js": "^0.7.7",
-        "moment": "^2.23.0",
-        "then-sleep": "^1.0.1"
-    }
+  "name": "prism-service",
+  "version": "0.5.0",
+  "description": "",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GolosChain/prism-service.git"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "tabWidth": 4,
+    "semi": true,
+    "trailingComma": "es5",
+    "printWidth": 100,
+    "overrides": [
+      {
+        "files": [
+          "*.json",
+          "*.yml"
+        ],
+        "options": {
+          "tabWidth": 2
+        }
+      }
+    ]
+  },
+  "author": "golos.io",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/GolosChain/prism-service/issues"
+  },
+  "homepage": "https://github.com/GolosChain/prism-service#readme",
+  "dependencies": {
+    "gls-core-service": "^3.6.0",
+    "golos-js": "^0.7.7",
+    "moment": "^2.24.0",
+    "then-sleep": "^1.0.1"
+  }
 }
