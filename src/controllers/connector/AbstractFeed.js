@@ -29,8 +29,6 @@ class AbstractFeed extends AbstractContent {
             default:
                 this._applySortByTime({ query, options, sequenceKey, direction: 1 });
         }
-
-        return { query, options };
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {

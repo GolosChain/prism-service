@@ -4,8 +4,17 @@ const ProfileModel = require('../../models/Profile');
 
 class Feed extends AbstractFeed {
     async getFeed(params) {
-        const { fullQuery, currentUserId, sortBy } = await this._prepareQuery(params);
-        const modelObjects = await PostModel.find(...Object.values(fullQuery));
+        const { fullQuery, currentUserId, type, sortBy, sequenceKey } = await this._prepareQuery(
+            params
+        );
+
+        let modelObjects;
+
+        if (this._isCachedQueryType(type, sortBy)) {
+            modelObjects = this._getModelObjectsFromCache(fullQuery, sequenceKey);
+        } else {
+            modelObjects = await PostModel.find(...Object.values(fullQuery));
+        }
 
         if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
@@ -20,6 +29,7 @@ class Feed extends AbstractFeed {
         const {
             type,
             sortBy,
+            timeframe,
             sequenceKey,
             limit,
             currentUserId,
@@ -34,14 +44,24 @@ class Feed extends AbstractFeed {
         const options = { lean: true };
         const fullQuery = { query, projection, options };
 
-        this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit });
+        this._applySortingAndSequence(fullQuery, { type, sortBy, timeframe, sequenceKey, limit });
         await this._applyFeedTypeConditions(fullQuery, {
             type,
             requestedUserId,
             communityId,
         });
 
-        return { fullQuery, currentUserId, sortBy };
+        return { fullQuery, currentUserId, type, sortBy, sequenceKey };
+    }
+
+    _applySortingAndSequence(
+        { query, projection, options },
+        { type, sortBy, timeframe, sequenceKey, limit }
+    ) {
+        super._applySortingAndSequence(
+            { query, projection, options },
+            { type, sortBy, sequenceKey, limit }
+        );
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {
@@ -109,6 +129,14 @@ class Feed extends AbstractFeed {
         }
 
         query['communityId'] = { $in: model.subscriptions.communityIds };
+    }
+
+    _isCachedQueryType(type, sortBy) {
+        return type === 'community' && sortBy === 'popular';
+    }
+
+    _getModelObjectsFromCache({ query, projection, options }, sequenceKey) {
+        // TODO -
     }
 }
 
