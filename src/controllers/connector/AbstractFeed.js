@@ -49,8 +49,8 @@ class AbstractFeed extends AbstractContent {
         throw { code: 400, message: 'Bad sequence params' };
     }
 
-    _makeFeedResult(modelObjects, sortBy) {
-        const sequenceKey = this._getSequenceKey(modelObjects, sortBy);
+    _makeFeedResult(modelObjects, sortBy, meta) {
+        const sequenceKey = this._getSequenceKey(modelObjects, sortBy, meta);
 
         for (const modelObject of modelObjects) {
             delete modelObject._id;

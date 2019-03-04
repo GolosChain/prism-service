@@ -10,7 +10,7 @@ class Feed extends AbstractFeed {
     }
 
     async getFeed(params) {
-        const { fullQuery, currentUserId, sortBy } = await this._prepareQuery(params);
+        const { fullQuery, currentUserId, sortBy, meta } = await this._prepareQuery(params);
         const modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -19,7 +19,7 @@ class Feed extends AbstractFeed {
 
         await this._populate(modelObjects, currentUserId);
 
-        return this._makeFeedResult(modelObjects, sortBy);
+        return this._makeFeedResult(modelObjects, sortBy, meta);
     }
 
     async _prepareQuery(params) {
@@ -40,20 +40,26 @@ class Feed extends AbstractFeed {
         };
         const options = { lean: true };
         const fullQuery = { query, projection, options };
+        const meta = {};
 
-        this._applySortingAndSequence(fullQuery, { type, sortBy, timeframe, sequenceKey, limit });
+        this._applySortingAndSequence(
+            fullQuery,
+            { type, sortBy, timeframe, sequenceKey, limit },
+            meta
+        );
         await this._applyFeedTypeConditions(fullQuery, {
             type,
             requestedUserId,
             communityId,
         });
 
-        return { fullQuery, currentUserId, sortBy };
+        return { fullQuery, currentUserId, sortBy, meta };
     }
 
     _applySortingAndSequence(
         { query, projection, options },
-        { type, sortBy, timeframe, sequenceKey, limit }
+        { type, sortBy, timeframe, sequenceKey, limit },
+        meta
     ) {
         super._applySortingAndSequence(
             { query, projection, options },
@@ -62,9 +68,16 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                const ids = this._feedCache.getIds({ sortBy, timeframe, sequenceKey, limit });
+                const { ids, newSequenceKey } = this._feedCache.getIdsWithSequenceKey({
+                    communityId: query.communityId,
+                    sortBy,
+                    timeframe,
+                    sequenceKey,
+                    limit,
+                });
 
                 delete query.communityId;
+                meta.newSequenceKey = newSequenceKey;
                 query._id = { $in: ids };
                 break;
 
@@ -145,12 +158,13 @@ class Feed extends AbstractFeed {
         query['communityId'] = { $in: model.subscriptions.communityIds };
     }
 
-    _getSequenceKey(models, sortBy) {
+    _getSequenceKey(models, sortBy, meta) {
         const origin = super._getSequenceKey(models, sortBy);
 
         switch (sortBy) {
             case 'popular':
-                // TODO -
+                return meta.newSequenceKey;
+
             default:
                 return origin;
         }
