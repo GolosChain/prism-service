@@ -3,18 +3,15 @@ const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
 class Feed extends AbstractFeed {
+    constructor({ feedCache }) {
+        super();
+
+        this._feedCache = feedCache;
+    }
+
     async getFeed(params) {
-        const { fullQuery, currentUserId, type, sortBy, sequenceKey } = await this._prepareQuery(
-            params
-        );
-
-        let modelObjects;
-
-        if (this._isCachedQueryType(type, sortBy)) {
-            modelObjects = this._getModelObjectsFromCache(fullQuery, sequenceKey);
-        } else {
-            modelObjects = await PostModel.find(...Object.values(fullQuery));
-        }
+        const { fullQuery, currentUserId, sortBy } = await this._prepareQuery(params);
+        const modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
@@ -51,7 +48,7 @@ class Feed extends AbstractFeed {
             communityId,
         });
 
-        return { fullQuery, currentUserId, type, sortBy, sequenceKey };
+        return { fullQuery, currentUserId, sortBy };
     }
 
     _applySortingAndSequence(
@@ -62,6 +59,18 @@ class Feed extends AbstractFeed {
             { query, projection, options },
             { type, sortBy, sequenceKey, limit }
         );
+
+        switch (sortBy) {
+            case 'popular':
+                const ids = this._feedCache.getIds({ sortBy, timeframe, sequenceKey, limit });
+
+                delete query.communityId;
+                query._id = { $in: ids };
+                break;
+
+            default:
+            // do nothing
+        }
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {
@@ -81,9 +90,10 @@ class Feed extends AbstractFeed {
         currentUserId = null,
         requestedUserId = null,
         communityId = null,
+        sortBy,
         ...params
     }) {
-        params = super._normalizeParams(params);
+        params = super._normalizeParams({ sortBy, ...params });
 
         type = String(type);
 
@@ -97,6 +107,10 @@ class Feed extends AbstractFeed {
 
         if (communityId) {
             communityId = String(communityId);
+        }
+
+        if (sortBy === 'popular' && type !== 'community') {
+            throw { code: 400, message: `Invalid sorting for - ${type}` };
         }
 
         return { type, currentUserId, requestedUserId, communityId, ...params };
@@ -131,12 +145,15 @@ class Feed extends AbstractFeed {
         query['communityId'] = { $in: model.subscriptions.communityIds };
     }
 
-    _isCachedQueryType(type, sortBy) {
-        return type === 'community' && sortBy === 'popular';
-    }
+    _getSequenceKey(models, sortBy) {
+        const origin = super._getSequenceKey(models, sortBy);
 
-    _getModelObjectsFromCache({ query, projection, options }, sequenceKey) {
-        // TODO -
+        switch (sortBy) {
+            case 'popular':
+                // TODO -
+            default:
+                return origin;
+        }
     }
 }
 
