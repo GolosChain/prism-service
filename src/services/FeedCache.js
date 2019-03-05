@@ -1,7 +1,9 @@
+const uuid = require('uuid/v4');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BasicService = core.services.Basic;
 const env = require('../data/env');
+const Popular = require('../controllers/feedCache/Popular');
 
 const NEWEST = 'newest';
 
@@ -9,6 +11,8 @@ class FeedCache extends BasicService {
     async start() {
         this._cache = new Map();
         this._inActualization = false;
+
+        this._popularController = new Popular();
 
         await this._actualize(true);
         this.startLoop(env.GLS_FEED_CACHE_INTERVAL, env.GLS_FEED_CACHE_INTERVAL);
@@ -88,8 +92,21 @@ class FeedCache extends BasicService {
         }
     }
 
-    async _actualizeBy(community, sorting, timeframe) {
-        // TODO -
+    async _actualizeBy(communityId, sortBy, timeframe) {
+        const queueId = uuid();
+        const storageId = this._makeStorageId({ communityId, sortBy, timeframe, queueId });
+        let ids = [];
+
+        switch (sortBy) {
+            case 'popular':
+                ids = this._popularController.getFor(communityId, timeframe);
+                break;
+        }
+
+        this._cache.set(storageId, ids);
+
+        // TODO Add auto-destroy
+        // TODO Add and handle *all
     }
 
     async *_makeVariantsIterator() {
@@ -104,7 +121,7 @@ class FeedCache extends BasicService {
 
     async _getCommunities() {
         // TODO Change after blockchain implementation
-        return ['gls'];
+        return ['*all', 'gls'];
     }
 
     _getSortingVariants() {
@@ -112,7 +129,7 @@ class FeedCache extends BasicService {
     }
 
     _getTimeframeVariants() {
-        return ['day', 'week', 'month', 'year', 'all'];
+        return ['day', 'week', 'month', 'year', 'all', 'WilsonHot', 'WilsonTrending'];
     }
 }
 
