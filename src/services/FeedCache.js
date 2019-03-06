@@ -94,7 +94,10 @@ class FeedCache extends BasicService {
 
     async _actualizeBy(communityId, sortBy, timeframe) {
         const queueId = uuid();
-        const storageId = this._makeStorageId({ communityId, sortBy, timeframe, queueId });
+        const factors = { communityId, sortBy, timeframe, queueId };
+        const storageId = this._makeStorageId(factors);
+        const newestFactors = { communityId, sortBy, timeframe, queueId: NEWEST };
+        const newestStorageId = this._makeStorageId(newestFactors);
         let ids = [];
 
         switch (sortBy) {
@@ -104,9 +107,9 @@ class FeedCache extends BasicService {
         }
 
         this._cache.set(storageId, ids);
+        this._cache.set(newestStorageId, ids);
 
-        // TODO Add auto-destroy
-        // TODO Add and handle *all
+        setTimeout(() => this._cache.delete(storageId), env.GLS_FEED_CACHE_TTL);
     }
 
     async *_makeVariantsIterator() {
@@ -121,7 +124,7 @@ class FeedCache extends BasicService {
 
     async _getCommunities() {
         // TODO Change after blockchain implementation
-        return ['*all', 'gls'];
+        return ['~all', 'gls'];
     }
 
     _getSortingVariants() {
