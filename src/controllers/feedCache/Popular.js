@@ -45,10 +45,10 @@ class Popular {
                 this._applySortByRShares(options);
                 break;
             case 'WilsonHot':
-                // TODO -
+                this._applySortByWilson(options, 'hot');
                 break;
             case 'WilsonTrending':
-                // TODO -
+                this._applySortByWilson(options, 'trending');
                 break;
             default:
                 throw `Unknown timeframe - ${timeframe}`;
@@ -67,6 +67,10 @@ class Popular {
 
     _applySortByRShares(options) {
         Object.assign(options, { sort: { 'payout.rShares': -1 } });
+    }
+
+    _applySortByWilson(options, type) {
+        Object.assign(options, { sort: { [`stats.wilson.${type}`]: -1 } });
     }
 }
 
