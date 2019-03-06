@@ -102,7 +102,7 @@ class FeedCache extends BasicService {
 
         switch (sortBy) {
             case 'popular':
-                ids = this._popularController.getFor(communityId, timeframe);
+                ids = await this._popularController.getFor(communityId, timeframe);
                 break;
         }
 

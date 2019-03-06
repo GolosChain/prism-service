@@ -1,5 +1,6 @@
 const env = process.env;
 
+// TODO Add max feed cache items
 module.exports = {
     NODE_OPTIONS: env.NODE_OPTIONS,
     GLS_MAX_FEED_LIMIT: Number(env.GLS_MAX_FEED_LIMIT) || 100,
