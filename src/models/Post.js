@@ -53,9 +53,11 @@ module.exports = MongoDB.makeModel(
             wilson: {
                 hot: {
                     type: Number,
+                    default: 0,
                 },
                 trending: {
                     type: Number,
+                    default: 0,
                 },
             },
         },
