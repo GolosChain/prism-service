@@ -1,6 +1,7 @@
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
+const WilsonScoring = require('../../utils/WilsonScoring');
 
 class Vote extends AbstractContent {
     async handleUpVote({ args: content }) {
@@ -84,13 +85,15 @@ class Vote extends AbstractContent {
         },
         { args: content }
     ) {
-        const model = await this._getModel(content, { payout: true });
+        const model = await this._getModel(content, { payout: true, 'meta.time': true });
 
         if (!model) {
             return;
         }
 
         model.payout.rShares = rShares;
+        model.stats.wilson.hot = WilsonScoring.calcHot(rShares, model.meta.time);
+        model.stats.wilson.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
 
         await model.save();
     }
