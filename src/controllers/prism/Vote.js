@@ -96,6 +96,8 @@ class Vote extends AbstractContent {
         }
 
         model.payout.rShares = rShares;
+        model.stats = model.stats || {};
+        model.stats.wilson = model.stats.wilson || {};
         model.stats.wilson.hot = WilsonScoring.calcHot(rShares, model.meta.time);
         model.stats.wilson.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
 
