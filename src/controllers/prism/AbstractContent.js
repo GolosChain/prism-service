@@ -49,6 +49,14 @@ class AbstractContent extends Abstract {
             refBlockNum: id.ref_block_num,
         };
     }
+
+    _isContentIdEquals(left, right) {
+        return (
+            left.userId === right.userId &&
+            left.permlink === right.permlink &&
+            left.refBlockNum === right.refBlockNum
+        );
+    }
 }
 
 module.exports = AbstractContent;

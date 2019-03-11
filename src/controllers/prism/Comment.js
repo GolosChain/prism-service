@@ -32,6 +32,7 @@ class Comment extends AbstractContent {
         });
 
         await this._applyParent(model, content);
+        await this._applyOrdering(model);
         await model.save();
         await this._updatePostCommentsCount(model, 1);
     }
@@ -120,6 +121,67 @@ class Comment extends AbstractContent {
             { contentId: model.parent.post.contentId },
             { $inc: { 'stats.commentsCount': increment } }
         );
+    }
+
+    async _applyOrdering(model) {
+        const comments = await CommentModel.find(
+            { 'parent.post.contentId': model.parent.post.contentId },
+            { contentId: true, parent: true, ordering: true },
+            { 'ordering.root': 1, 'ordering.child': 1 }
+        );
+
+        if (!comments || !comments.length) {
+            this._applyFirstOrdering(model);
+            return;
+        }
+
+        if (!model.parent.comment.contentId.userId) {
+            this._applyRootOrdering(model, comments);
+            return;
+        }
+
+        this._applyChildOrdering(model, comments);
+
+        model.ordering.root = model.ordering.root || 0;
+        model.ordering.child = model.ordering.child || 0;
+    }
+
+    _applyFirstOrdering(model) {
+        model.ordering.root = 0;
+        model.ordering.child = 0;
+    }
+
+    _applyRootOrdering(model, comments) {
+        for (const comment of comments.reverse()) {
+            if (comment.ordering.child === 0) {
+                model.ordering.root = comment.ordering.root + 1;
+                break;
+            }
+        }
+
+        model.ordering.root = model.ordering.root || 0;
+        model.ordering.child = 0;
+    }
+
+    _applyChildOrdering(model, comments) {
+        const parentId = model.parent.comment.contentId;
+        let outside = true;
+        let currentChildNum = 0;
+
+        for (const comment of comments) {
+            if (outside) {
+                if (this._isContentIdEquals(parentId, comment.contentId)) {
+                    outside = false;
+                    model.ordering.root = comment.ordering.root;
+                }
+            } else {
+                if (comment.ordering.root !== model.ordering.root) {
+                    model.ordering.child = currentChildNum + 1;
+                }
+
+                currentChildNum = comment.ordering.child;
+            }
+        }
     }
 }
 
