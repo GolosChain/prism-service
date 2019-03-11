@@ -182,6 +182,8 @@ class Comment extends AbstractContent {
                 currentChildNum = comment.ordering.child;
             }
         }
+
+        model.ordering.child = model.ordering.child || 0;
     }
 }
 
