@@ -42,16 +42,16 @@ class Feed extends AbstractFeed {
         const fullQuery = { query, projection, options };
         const meta = {};
 
-        this._applySortingAndSequence(
-            fullQuery,
-            { type, sortBy, timeframe, sequenceKey, limit },
-            meta
-        );
         await this._applyFeedTypeConditions(fullQuery, {
             type,
             requestedUserId,
             communityId,
         });
+        this._applySortingAndSequence(
+            fullQuery,
+            { type, sortBy, timeframe, sequenceKey, limit },
+            meta
+        );
 
         return { fullQuery, currentUserId, sortBy, meta };
     }
@@ -106,7 +106,7 @@ class Feed extends AbstractFeed {
         sortBy,
         ...params
     }) {
-        params = super._normalizeParams({ sortBy, ...params });
+        params = Object.assign(params, super._normalizeParams({ sortBy, ...params }));
 
         type = String(type);
 

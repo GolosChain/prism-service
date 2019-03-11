@@ -85,7 +85,11 @@ class Vote extends AbstractContent {
         },
         { args: content }
     ) {
-        const model = await this._getModel(content, { payout: true, 'meta.time': true });
+        const model = await this._getModel(content, {
+            payout: true,
+            'meta.time': true,
+            stats: true,
+        });
 
         if (!model) {
             return;

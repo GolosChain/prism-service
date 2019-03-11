@@ -13,7 +13,7 @@ class Main extends BasicMain {
         super(stats, env);
 
         const feedCache = new FeedCache();
-        const connector = new Connector({ feedCache });
+        const connector = new Connector({ feedCache: feedCache });
         const cleaner = new Cleaner();
         const prism = new Prism();
 

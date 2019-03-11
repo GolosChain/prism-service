@@ -6,10 +6,12 @@ const env = require('../data/env');
 const Popular = require('../controllers/feedCache/Popular');
 
 const NEWEST = 'newest';
+const ID_DIVIDER = '|';
 
 class FeedCache extends BasicService {
     async start() {
         this._cache = new Map();
+        this._newestMap = new Map();
         this._inActualization = false;
 
         this._popularController = new Popular();
@@ -25,8 +27,17 @@ class FeedCache extends BasicService {
             const storage = this._cache.get(storageId);
 
             if (storage) {
-                const ids = storage.slice(index, index + limit);
-                const newSequenceKey = ids[ids.length - 1] || null;
+                const lastIndex = index + limit;
+                const ids = storage.slice(index, lastIndex);
+                let newSequenceKeyId;
+
+                if (this._newestMap.has(storageId)) {
+                    newSequenceKeyId = this._extractQueueId(this._newestMap.get(storageId));
+                } else {
+                    newSequenceKeyId = queueId;
+                }
+
+                const newSequenceKey = [newSequenceKeyId, lastIndex].join(ID_DIVIDER);
 
                 return { ids, newSequenceKey };
             } else {
@@ -34,7 +45,9 @@ class FeedCache extends BasicService {
             }
         } catch (error) {
             Logger.log(
-                `Unknown cache point - ${[communityId, sortBy, timeframe, sequenceKey].join('|')}`
+                `Unknown cache point - ${[communityId, sortBy, timeframe, sequenceKey].join(
+                    ID_DIVIDER
+                )}`
             );
             return { ids: [], newSequenceKey: null };
         }
@@ -42,14 +55,21 @@ class FeedCache extends BasicService {
 
     _unpackSequenceKey(sequenceKey) {
         if (sequenceKey) {
-            return sequenceKey.split('|');
+            const [queueId, indexString] = sequenceKey.split(ID_DIVIDER);
+            const index = Number(indexString);
+
+            return [queueId, index];
         } else {
             return [NEWEST, 0];
         }
     }
 
     _makeStorageId({ communityId, sortBy, timeframe, queueId }) {
-        return [communityId, sortBy, timeframe, queueId].join('|');
+        return [communityId, sortBy, timeframe, queueId].join(ID_DIVIDER);
+    }
+
+    _extractQueueId(storageId) {
+        return storageId.split(ID_DIVIDER)[3];
     }
 
     iteration() {
@@ -108,8 +128,11 @@ class FeedCache extends BasicService {
 
         this._cache.set(storageId, ids);
         this._cache.set(newestStorageId, ids);
+        this._newestMap.set(newestStorageId, storageId);
 
-        setTimeout(() => this._cache.delete(storageId), env.GLS_FEED_CACHE_TTL);
+        setTimeout(() => {
+            this._cache.delete(storageId);
+        }, env.GLS_FEED_CACHE_TTL);
     }
 
     async *_makeVariantsIterator() {
