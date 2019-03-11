@@ -94,20 +94,16 @@ class Comment extends AbstractContent {
         const post = await this._getParentPost(contentId);
 
         if (post) {
-            model.parent = {
-                contentId,
-                isPost: true,
-            };
+            model.parent.post.contentId = contentId;
+            model.parent.comment.contentId = null;
             return;
         }
 
         const comment = await this._getParentComment(contentId);
 
         if (comment) {
-            model.parent = {
-                contentId,
-                isPost: false,
-            };
+            model.parent.post.contentId = comment.parent.post.contentId;
+            model.parent.comment.contentId = contentId;
         }
     }
 
@@ -116,25 +112,14 @@ class Comment extends AbstractContent {
     }
 
     async _getParentComment(contentId) {
-        return await CommentModel.findOne({ contentId }, { contentId: true });
+        return await CommentModel.findOne({ contentId }, { contentId: true, parent: true });
     }
 
     async _updatePostCommentsCount(model, increment) {
-        let contentId;
-
-        if (model.parent.isPost) {
-            contentId = model.parent.contentId;
-        } else {
-            const parentComment = await CommentModel.findOne({ parentId: model.parent.contentId });
-
-            if (!parentComment) {
-                return;
-            }
-
-            contentId = parentComment.parent.contentId;
-        }
-
-        await PostModel.updateOne({ contentId }, { $inc: { 'stats.commentsCount': increment } });
+        await PostModel.updateOne(
+            { contentId: model.parent.post.contentId },
+            { $inc: { 'stats.commentsCount': increment } }
+        );
     }
 }
 

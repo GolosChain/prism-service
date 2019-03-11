@@ -19,19 +19,31 @@ module.exports = MongoDB.makeModel(
             },
         },
         parent: {
-            contentId: {
-                userId: {
-                    type: String,
-                },
-                permlink: {
-                    type: String,
-                },
-                refBlockNum: {
-                    type: Number,
+            post: {
+                contentId: {
+                    userId: {
+                        type: String,
+                    },
+                    permlink: {
+                        type: String,
+                    },
+                    refBlockNum: {
+                        type: Number,
+                    },
                 },
             },
-            isPost: {
-                type: Boolean,
+            comment: {
+                contentId: {
+                    userId: {
+                        type: String,
+                    },
+                    permlink: {
+                        type: String,
+                    },
+                    refBlockNum: {
+                        type: Number,
+                    },
+                },
             },
         },
         content: {
@@ -94,9 +106,9 @@ module.exports = MongoDB.makeModel(
             // Post comments, sorted by time
             {
                 fields: {
-                    'postId.userId': 1,
-                    'postId.permlink': 1,
-                    'postId.refBlockNum': 1,
+                    'parent.post.contentId.userId': 1,
+                    'parent.post.contentId.permlink': 1,
+                    'parent.post.contentId.refBlockNum': 1,
                     'ordering.root': 1,
                     'ordering.child': 1,
                 },
