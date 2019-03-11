@@ -112,11 +112,11 @@ class Comment extends AbstractContent {
     }
 
     async _getParentPost(contentId) {
-        return await PostModel(contentId, { contentId: true });
+        return await PostModel.findOne({ contentId }, { contentId: true });
     }
 
     async _getParentComment(contentId) {
-        return await CommentModel(contentId, { contentId: true });
+        return await CommentModel.findOne({ contentId }, { contentId: true });
     }
 
     async _updatePostCommentsCount(model, increment) {

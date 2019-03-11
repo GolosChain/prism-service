@@ -12,7 +12,7 @@ class WilsonScoring {
         return this._calcLikeAWilson({
             rSharesBaseConstant: HOT_RSHARES_BASE,
             timeDegradationConstant: HOT_TIME_DEGRADATION,
-            rShares,
+            rShares: new BigNum(rShares),
             date,
         });
     }
@@ -21,7 +21,7 @@ class WilsonScoring {
         return this._calcLikeAWilson({
             rSharesBaseConstant: TRENDING_RSHARES_BASE,
             timeDegradationConstant: TRENDING_TIME_DEGRADATION,
-            rShares,
+            rShares: new BigNum(rShares),
             date,
         });
     }

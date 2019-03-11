@@ -72,7 +72,7 @@ class FeedCache extends BasicService {
     }
 
     async _actualize(sync = false) {
-        for (const variant of await this._makeVariantsIterator()) {
+        for await (const variant of this._makeVariantsIterator()) {
             if (sync) {
                 await this._tryActualizeBy(...variant);
             } else {
