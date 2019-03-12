@@ -166,6 +166,7 @@ class Comment extends AbstractContent {
     _applyChildOrdering(model, comments) {
         const parentId = model.parent.comment.contentId;
         let outside = true;
+        let atStart = true;
         let currentChildNum = 0;
 
         for (const comment of comments) {
@@ -175,6 +176,8 @@ class Comment extends AbstractContent {
                     model.ordering.root = comment.ordering.root;
                 }
             } else {
+                atStart = false;
+
                 if (comment.ordering.root !== model.ordering.root) {
                     model.ordering.child = currentChildNum + 1;
                 }
@@ -183,7 +186,11 @@ class Comment extends AbstractContent {
             }
         }
 
-        model.ordering.child = model.ordering.child || 0;
+        if (!outside && atStart) {
+            model.ordering.child = model.ordering.child || 1;
+        } else {
+            model.ordering.child = model.ordering.child || 0;
+        }
     }
 }
 
