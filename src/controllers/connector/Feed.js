@@ -106,9 +106,11 @@ class Feed extends AbstractFeed {
         sortBy,
         ...params
     }) {
-        params = Object.assign(params, super._normalizeParams({ sortBy, ...params }));
-
         type = String(type);
+        params = {
+            ...params,
+            ...super._normalizeParams({ sortBy, ...params }),
+        };
 
         if (currentUserId) {
             currentUserId = String(currentUserId);
