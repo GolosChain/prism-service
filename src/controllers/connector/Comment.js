@@ -67,7 +67,7 @@ class Comment extends AbstractFeed {
     }
 
     async _populateUserPostMeta(modelObject) {
-        const id = modelObject.postId;
+        const id = modelObject.parent.post.contentId;
         const post = await PostModel.findOne(
             { contentId: id },
             { 'content.title': true, communityId: true }
@@ -78,16 +78,12 @@ class Comment extends AbstractFeed {
             return;
         }
 
-        modelObject.post = {
-            contentId: id,
+        modelObject.parent.post = {
             content: { title: post.content.title },
             communityId: post.communityId,
         };
 
-        await this._populateCommunities([modelObject.post]);
-
-        delete modelObject.postId;
-        delete modelObject.post.communityId;
+        await this._populateCommunities([modelObject.parent.post]);
     }
 
     async _populateUserParentCommentMeta(modelObject) {
@@ -152,9 +148,9 @@ class Comment extends AbstractFeed {
 
             case 'post':
             default:
-                query['parent.contentId.userId'] = requestedUserId;
-                query['parent.contentId.permlink'] = permlink;
-                query['parent.contentId.refBlockNum'] = refBlockNum;
+                query['parent.post.contentId.userId'] = requestedUserId;
+                query['parent.post.contentId.permlink'] = permlink;
+                query['parent.post.contentId.refBlockNum'] = refBlockNum;
                 break;
         }
     }

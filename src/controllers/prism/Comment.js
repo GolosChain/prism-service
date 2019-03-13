@@ -32,6 +32,7 @@ class Comment extends AbstractContent {
         });
 
         await this._applyParent(model, content);
+        await this._applyOrdering(model);
         await model.save();
         await this._updatePostCommentsCount(model, 1);
     }
@@ -94,47 +95,102 @@ class Comment extends AbstractContent {
         const post = await this._getParentPost(contentId);
 
         if (post) {
-            model.parent = {
-                contentId,
-                isPost: true,
-            };
+            model.parent.post.contentId = contentId;
+            model.parent.comment.contentId = null;
             return;
         }
 
         const comment = await this._getParentComment(contentId);
 
         if (comment) {
-            model.parent = {
-                contentId,
-                isPost: false,
-            };
+            model.parent.post.contentId = comment.parent.post.contentId;
+            model.parent.comment.contentId = contentId;
         }
     }
 
     async _getParentPost(contentId) {
-        return await PostModel(contentId, { contentId: true });
+        return await PostModel.findOne({ contentId }, { contentId: true });
     }
 
     async _getParentComment(contentId) {
-        return await CommentModel(contentId, { contentId: true });
+        return await CommentModel.findOne({ contentId }, { contentId: true, parent: true });
     }
 
     async _updatePostCommentsCount(model, increment) {
-        let contentId;
+        await PostModel.updateOne(
+            { contentId: model.parent.post.contentId },
+            { $inc: { 'stats.commentsCount': increment } }
+        );
+    }
 
-        if (model.parent.isPost) {
-            contentId = model.parent.contentId;
-        } else {
-            const parentComment = await CommentModel.findOne({ parentId: model.parent.contentId });
+    async _applyOrdering(model) {
+        const comments = await CommentModel.find(
+            { 'parent.post.contentId': model.parent.post.contentId },
+            { contentId: true, parent: true, ordering: true },
+            { 'ordering.root': 1, 'ordering.child': 1 }
+        );
 
-            if (!parentComment) {
-                return;
-            }
-
-            contentId = parentComment.parent.contentId;
+        if (!comments || !comments.length) {
+            this._applyFirstOrdering(model);
+            return;
         }
 
-        await PostModel.updateOne({ contentId }, { $inc: { 'stats.commentsCount': increment } });
+        if (!model.parent.comment.contentId.userId) {
+            this._applyRootOrdering(model, comments);
+            return;
+        }
+
+        this._applyChildOrdering(model, comments);
+
+        model.ordering.root = model.ordering.root || 0;
+        model.ordering.child = model.ordering.child || 0;
+    }
+
+    _applyFirstOrdering(model) {
+        model.ordering.root = 0;
+        model.ordering.child = 0;
+    }
+
+    _applyRootOrdering(model, comments) {
+        for (const comment of comments.slice().reverse()) {
+            if (comment.ordering.child === 0) {
+                model.ordering.root = comment.ordering.root + 1;
+                break;
+            }
+        }
+
+        model.ordering.root = model.ordering.root || 0;
+        model.ordering.child = 0;
+    }
+
+    _applyChildOrdering(model, comments) {
+        const parentId = model.parent.comment.contentId;
+        let outside = true;
+        let atStart = true;
+        let currentChildNum = 0;
+
+        for (const comment of comments) {
+            if (outside) {
+                if (this._isContentIdEquals(parentId, comment.contentId)) {
+                    outside = false;
+                    model.ordering.root = comment.ordering.root;
+                }
+            } else {
+                atStart = false;
+
+                if (comment.ordering.root !== model.ordering.root) {
+                    model.ordering.child = currentChildNum + 1;
+                }
+
+                currentChildNum = comment.ordering.child;
+            }
+        }
+
+        if (!outside && atStart) {
+            model.ordering.child = model.ordering.child || 1;
+        } else {
+            model.ordering.child = model.ordering.child || 0;
+        }
     }
 }
 

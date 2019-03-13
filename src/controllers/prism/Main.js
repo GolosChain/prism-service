@@ -4,6 +4,7 @@ const Post = require('./Post');
 const Comment = require('./Comment');
 const Profile = require('./Profile');
 const Vote = require('./Vote');
+const Subscribe = require('./Subscribe');
 
 // TODO Change after MVP
 const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'cyber'];
@@ -14,6 +15,7 @@ class Main {
         this._comment = new Comment();
         this._profile = new Profile();
         this._vote = new Vote();
+        this._subscribe = new Subscribe();
     }
 
     async disperse({ transactions, blockNum, blockTime }) {
@@ -78,6 +80,14 @@ class Main {
 
             case 'gls.publish->unvote':
                 await this._vote.handleUnVote(action);
+                break;
+
+            case 'gls.social->pin':
+                await this._subscribe.pin(action);
+                break;
+
+            case 'gls.social->unpin':
+                await this._subscribe.unpin(action);
                 break;
 
             default:

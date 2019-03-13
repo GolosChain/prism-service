@@ -50,6 +50,16 @@ module.exports = MongoDB.makeModel(
                 type: Number,
                 default: 0,
             },
+            wilson: {
+                hot: {
+                    type: Number,
+                    default: 0,
+                },
+                trending: {
+                    type: Number,
+                    default: 0,
+                },
+            },
         },
         payout: {
             rShares: {

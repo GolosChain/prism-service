@@ -6,11 +6,11 @@ const Post = require('../controllers/connector/Post');
 const Profile = require('../controllers/connector/Profile');
 
 class Connector extends BasicConnector {
-    constructor() {
+    constructor({ feedCache }) {
         super();
 
         this._comment = new Comment({ connector: this });
-        this._feed = new Feed({ connector: this });
+        this._feed = new Feed({ connector: this, feedCache });
         this._post = new Post({ connector: this });
         this._profile = new Profile({ connector: this });
     }
