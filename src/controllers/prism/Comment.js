@@ -152,7 +152,7 @@ class Comment extends AbstractContent {
     }
 
     _applyRootOrdering(model, comments) {
-        for (const comment of comments.reverse()) {
+        for (const comment of comments.slice().reverse()) {
             if (comment.ordering.child === 0) {
                 model.ordering.root = comment.ordering.root + 1;
                 break;

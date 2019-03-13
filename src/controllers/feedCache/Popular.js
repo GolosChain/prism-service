@@ -62,15 +62,18 @@ class Popular {
     }
 
     _applyQueryDaysAgo(query, days) {
-        Object.assign(query, { 'meta.time': { $gte: this._daysAgo(days) } });
+        query['meta.time'] = query['meta.time'] || {};
+        query['meta.time'].$gte = this._daysAgo(days);
     }
 
     _applySortByRShares(options) {
-        Object.assign(options, { sort: { 'payout.rShares': -1 } });
+        options.sort = options.sort || {};
+        options.sort['payout.rShares'] = -1;
     }
 
     _applySortByWilson(options, type) {
-        Object.assign(options, { sort: { [`stats.wilson.${type}`]: -1 } });
+        options.sort = options.sort || {};
+        options.sort[`stats.wilson.${type}`] = -1;
     }
 }
 

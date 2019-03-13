@@ -41,7 +41,7 @@ class FeedCache extends BasicService {
 
                 return { ids, newSequenceKey };
             } else {
-                return { ids: [], newSequenceKey: null };
+                throw 'Unknown cache point';
             }
         } catch (error) {
             Logger.log(
@@ -49,7 +49,7 @@ class FeedCache extends BasicService {
                     ID_DIVIDER
                 )}`
             );
-            return { ids: [], newSequenceKey: null };
+            throw { code: 410, message: 'Unknown or outdated sequence key' };
         }
     }
 
