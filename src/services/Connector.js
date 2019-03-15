@@ -4,15 +4,19 @@ const Comment = require('../controllers/connector/Comment');
 const Feed = require('../controllers/connector/Feed');
 const Post = require('../controllers/connector/Post');
 const Profile = require('../controllers/connector/Profile');
+const Notify = require('../controllers/connector/Notify');
 
 class Connector extends BasicConnector {
     constructor({ feedCache }) {
         super();
 
-        this._comment = new Comment({ connector: this });
-        this._feed = new Feed({ connector: this, feedCache });
-        this._post = new Post({ connector: this });
-        this._profile = new Profile({ connector: this });
+        const linking = { connector: this };
+
+        this._feed = new Feed({ feedCache, ...linking });
+        this._comment = new Comment(linking);
+        this._post = new Post(linking);
+        this._profile = new Profile(linking);
+        this._notify = new Notify(linking);
     }
 
     async start() {
@@ -22,6 +26,7 @@ class Connector extends BasicConnector {
                 getPost: this._post.getPost.bind(this._post),
                 getFeed: this._feed.getFeed.bind(this._feed),
                 getProfile: this._profile.getProfile.bind(this._profile),
+                getNotifyMeta: this._notify.getMeta.bind(this._notify),
             },
         });
     }
