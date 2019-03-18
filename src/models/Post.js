@@ -41,8 +41,16 @@ module.exports = MongoDB.makeModel(
             upUserIds: {
                 type: [String],
             },
+            upCount: {
+                type: Number,
+                default: 0,
+            },
             downUserIds: {
                 type: [String],
+            },
+            downCount: {
+                type: Number,
+                default: 0,
             },
         },
         stats: {
