@@ -50,12 +50,12 @@ class AbstractContent extends BasicController {
                 { username: true, _id: false }
             );
 
-            if (!profile) {
+            if (profile) {
+                modelObject.author = { userId: id, username: profile.username };
+            } else {
                 Logger.error(`Feed - unknown user - ${id}`);
-                return;
+                modelObject.author = { userId: id, username: id };
             }
-
-            modelObject.author = { userId: id, username: profile.username };
         }
     }
 

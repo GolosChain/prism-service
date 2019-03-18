@@ -4,6 +4,8 @@ const AbstractFeed = require('./AbstractFeed');
 const CommentModel = require('../../models/Comment');
 const PostModel = require('../../models/Post');
 
+const UNKNOWN_PLACEHOLDER = '-';
+
 class Comment extends AbstractFeed {
     async getComments(params) {
         const { type, fullQuery, currentUserId, sortBy } = await this._prepareQuery(params);
@@ -73,15 +75,19 @@ class Comment extends AbstractFeed {
             { 'content.title': true, communityId: true }
         );
 
-        if (!post) {
-            Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
-            return;
-        }
+        if (post) {
+            modelObject.parent.post = {
+                content: { title: post.content.title },
+                communityId: post.communityId,
+            };
+        } else {
+            modelObject.parent.post = {
+                content: { title: UNKNOWN_PLACEHOLDER },
+                communityId: UNKNOWN_PLACEHOLDER,
+            };
 
-        modelObject.parent.post = {
-            content: { title: post.content.title },
-            communityId: post.communityId,
-        };
+            Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
+        }
 
         await this._populateCommunities([modelObject.parent.post]);
     }
@@ -93,15 +99,19 @@ class Comment extends AbstractFeed {
             { 'content.body.preview': true, 'parent.contentId': true }
         );
 
-        if (!comment) {
-            Logger.error(`Comments - unknown parent comment - ${JSON.stringify(id)}`);
-            return;
-        }
+        if (comment) {
+            modelObject.parentComment = {
+                contentId: id,
+                content: { body: { preview: comment.content.body.preview } },
+            };
+        } else {
+            modelObject.parentComment = {
+                contentId: id,
+                content: { body: { preview: UNKNOWN_PLACEHOLDER } },
+            };
 
-        modelObject.parentComment = {
-            contentId: id,
-            content: { body: { preview: comment.content.body.preview } },
-        };
+            Logger.error(`Comments - unknown parent comment - ${JSON.stringify(id)}`);
+        }
 
         await this._populateAuthors([modelObject.parentComment]);
 

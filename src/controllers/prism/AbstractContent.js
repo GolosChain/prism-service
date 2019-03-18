@@ -27,8 +27,7 @@ class AbstractContent extends Abstract {
             const result = JSON.parse(raw);
 
             if (result === null || typeof result !== 'object' || Array.isArray(result)) {
-                Logger.log('Invalid content metadata.');
-                return {};
+                throw 'Invalid';
             } else {
                 return result;
             }
