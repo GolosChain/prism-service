@@ -27,7 +27,7 @@ class Post extends AbstractContent {
                     preview: this._extractBodyPreview(content),
                     full: this._extractBodyFull(content),
                 },
-                metadata: this._extractMetadata(content),
+                metadata: await this._extractMetadata(content),
             },
             meta: {
                 time: blockTime,
@@ -52,7 +52,7 @@ class Post extends AbstractContent {
                         preview: this._extractBodyPreview(content),
                         full: this._extractBodyFull(content),
                     },
-                    metadata: this._extractMetadata(content),
+                    metadata: await this._extractMetadata(content),
                 },
             }
         );

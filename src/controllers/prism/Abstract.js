@@ -1,6 +1,8 @@
+const core = require('gls-core-service');
+const BasicController = core.controllers.Basic;
 const RevertTrace = require('../../models/RevertTrace');
 
-class Abstract {
+class Abstract extends BasicController {
     async _getOrCreateModelWithTrace(modelClass, queryForCheck, initData) {
         let model = await this._getModelWithoutTrace(modelClass, queryForCheck);
 

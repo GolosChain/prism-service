@@ -15,7 +15,7 @@ class Main extends BasicMain {
         const feedCache = new FeedCache();
         const connector = new Connector({ feedCache });
         const cleaner = new Cleaner();
-        const prism = new Prism();
+        const prism = new Prism({ connector });
 
         this.startMongoBeforeBoot();
         this.addNested(cleaner, prism, feedCache, connector);

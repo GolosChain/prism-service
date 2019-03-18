@@ -7,10 +7,10 @@ const ServiceMetaModel = require('../models/ServiceMeta');
 const RevertTraceModel = require('../models/RevertTrace');
 
 class Prism extends BasicService {
-    constructor() {
+    constructor({ connector }) {
         super();
 
-        this._mainPrismController = new MainPrismController();
+        this._mainPrismController = new MainPrismController({ connector });
     }
 
     async start() {

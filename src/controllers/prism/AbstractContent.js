@@ -1,3 +1,5 @@
+const urlValidator = require('valid-url');
+const uuid = require('uuid');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
@@ -16,7 +18,7 @@ class AbstractContent extends Abstract {
         return this._contentUtil.sanitizePreview(content.bodymssg, env.GLS_CONTENT_PREVIEW_LENGTH);
     }
 
-    _extractMetadata(content) {
+    async _extractMetadata(content) {
         const raw = content.jsonmetadata;
 
         if (raw === '') {
@@ -24,16 +26,34 @@ class AbstractContent extends Abstract {
         }
 
         try {
-            const result = JSON.parse(raw);
+            const metadata = JSON.parse(raw);
 
-            if (result === null || typeof result !== 'object' || Array.isArray(result)) {
+            if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) {
                 throw 'Invalid';
-            } else {
-                return result;
             }
+
+            await this._applyEmbeds(metadata);
+
+            return metadata;
         } catch (error) {
             Logger.log('Invalid content metadata.');
             return {};
+        }
+    }
+
+    async _applyEmbeds(metadata) {
+        if (!Array.isArray(metadata.embeds)) {
+            return;
+        }
+
+        for (const item of metadata.embeds) {
+            if (urlValidator.isUri(item.url)) {
+                item.result = await this.callService('facade', 'frame.getEmbed', {
+                    type: 'oembed',
+                    url: item.url,
+                });
+                item.id = uuid.v4();
+            }
         }
     }
 
