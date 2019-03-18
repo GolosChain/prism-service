@@ -49,8 +49,11 @@ class AbstractContent extends Abstract {
         for (const item of metadata.embeds) {
             if (urlValidator.isUri(item.url)) {
                 item.result = await this.callService('facade', 'frame.getEmbed', {
-                    type: 'oembed',
-                    url: item.url,
+                    auth: {},
+                    params: {
+                        type: 'oembed',
+                        url: item.url,
+                    },
                 });
                 item.id = uuid.v4();
             }
