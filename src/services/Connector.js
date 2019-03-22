@@ -23,8 +23,9 @@ class Connector extends BasicConnector {
     async start() {
         await super.start({
             serverRoutes: {
-                getComments: this._comment.getComments.bind(this._comment),
                 getPost: this._post.getPost.bind(this._post),
+                getComment: this._comment.getComment.bind(this._comment),
+                getComments: this._comment.getComments.bind(this._comment),
                 getFeed: this._feed.getFeed.bind(this._feed),
                 getProfile: this._profile.getProfile.bind(this._profile),
                 getNotifyMeta: this._notify.getMeta.bind(this._notify),

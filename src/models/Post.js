@@ -32,6 +32,9 @@ module.exports = MongoDB.makeModel(
                 full: {
                     type: String,
                 },
+                raw: {
+                    type: String,
+                },
             },
             metadata: {
                 type: Object,
