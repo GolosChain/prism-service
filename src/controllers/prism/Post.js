@@ -26,6 +26,7 @@ class Post extends AbstractContent {
                 body: {
                     preview: this._extractBodyPreview(content),
                     full: this._extractBodyFull(content),
+                    raw: this._extractBodyRaw(content),
                 },
                 metadata: await this._extractMetadata(content),
             },
@@ -51,6 +52,7 @@ class Post extends AbstractContent {
                     body: {
                         preview: this._extractBodyPreview(content),
                         full: this._extractBodyFull(content),
+                        raw: this._extractBodyRaw(content),
                     },
                     metadata: await this._extractMetadata(content),
                 },

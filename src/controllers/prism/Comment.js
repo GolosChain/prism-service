@@ -23,6 +23,7 @@ class Comment extends AbstractContent {
                 body: {
                     preview: this._extractBodyPreview(content),
                     full: this._extractBodyFull(content),
+                    raw: this._extractBodyRaw(content),
                 },
                 metadata: await this._extractMetadata(content),
             },
@@ -52,6 +53,7 @@ class Comment extends AbstractContent {
                     body: {
                         preview: this._extractBodyPreview(content),
                         full: this._extractBodyFull(content),
+                        raw: this._extractBodyRaw(content),
                     },
                     metadata: await this._extractMetadata(content),
                 },

@@ -10,12 +10,20 @@ class AbstractContent extends Abstract {
         return this._contentUtil.sanitize(content.headermssg);
     }
 
+    _extractBodyRaw(content) {
+        return content.bodymssg;
+    }
+
     _extractBodyFull(content) {
-        return this._contentUtil.sanitize(content.bodymssg);
+        const raw = this._extractBodyRaw(content);
+
+        return this._contentUtil.sanitize(raw);
     }
 
     _extractBodyPreview(content) {
-        return this._contentUtil.sanitizePreview(content.bodymssg, env.GLS_CONTENT_PREVIEW_LENGTH);
+        const raw = this._extractBodyRaw(content);
+
+        return this._contentUtil.sanitizePreview(raw, env.GLS_CONTENT_PREVIEW_LENGTH);
     }
 
     async _extractMetadata(content) {
