@@ -8,13 +8,17 @@ const UNKNOWN_PLACEHOLDER = '-';
 
 class Comment extends AbstractFeed {
     async getComment({ currentUserId, requestedUserId, permlink, refBlockNum, raw }) {
-        return await this._getContent(CommentModel, {
+        const modelObject = await this._getContent(CommentModel, {
             currentUserId,
             requestedUserId,
             permlink,
             refBlockNum,
             raw,
         });
+
+        this._removeEmptyParents(modelObject);
+
+        return modelObject;
     }
 
     async getComments(params) {
