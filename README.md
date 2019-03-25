@@ -22,7 +22,7 @@ getPost:                           // Получение конкретного 
     refBlockNum <number>           // Привязанный блок поста
     raw <boolean>(false)           // Получить данные в оригинальном виде и без санитайзинга
 
-content.getComment:                // Получение конкретного коммента
+content.getComment:                // Получение конкретного комментария
     currentUserId <string/null>    // Идентификатор текущего пользователя
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
     permlink <string>              // Пермлинк поста
