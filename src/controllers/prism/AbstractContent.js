@@ -1,3 +1,5 @@
+const urlValidator = require('valid-url');
+const uuid = require('uuid');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
@@ -8,15 +10,23 @@ class AbstractContent extends Abstract {
         return this._contentUtil.sanitize(content.headermssg);
     }
 
+    _extractBodyRaw(content) {
+        return content.bodymssg;
+    }
+
     _extractBodyFull(content) {
-        return this._contentUtil.sanitize(content.bodymssg);
+        const raw = this._extractBodyRaw(content);
+
+        return this._contentUtil.sanitize(raw);
     }
 
     _extractBodyPreview(content) {
-        return this._contentUtil.sanitizePreview(content.bodymssg, env.GLS_CONTENT_PREVIEW_LENGTH);
+        const raw = this._extractBodyRaw(content);
+
+        return this._contentUtil.sanitizePreview(raw, env.GLS_CONTENT_PREVIEW_LENGTH);
     }
 
-    _extractMetadata(content) {
+    async _extractMetadata(content) {
         const raw = content.jsonmetadata;
 
         if (raw === '') {
@@ -24,17 +34,37 @@ class AbstractContent extends Abstract {
         }
 
         try {
-            const result = JSON.parse(raw);
+            const metadata = JSON.parse(raw);
 
-            if (result === null || typeof result !== 'object' || Array.isArray(result)) {
-                Logger.log('Invalid content metadata.');
-                return {};
-            } else {
-                return result;
+            if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) {
+                throw 'Invalid';
             }
+
+            await this._applyEmbeds(metadata);
+
+            return metadata;
         } catch (error) {
             Logger.log('Invalid content metadata.');
             return {};
+        }
+    }
+
+    async _applyEmbeds(metadata) {
+        if (!Array.isArray(metadata.embeds)) {
+            return;
+        }
+
+        for (const item of metadata.embeds) {
+            if (urlValidator.isUri(item.url)) {
+                item.result = await this.callService('facade', 'frame.getEmbed', {
+                    auth: {},
+                    params: {
+                        type: 'oembed',
+                        url: item.url,
+                    },
+                });
+                item.id = uuid.v4();
+            }
         }
     }
 

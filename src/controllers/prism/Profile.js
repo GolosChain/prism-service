@@ -29,9 +29,6 @@ class Profile extends Abstract {
             return;
         }
 
-        profile.personal = profile.personal || {};
-        profile.personal.contacts = profile.personal.contacts || {};
-
         const personal = profile.personal;
         const contacts = personal.contacts;
         const or = this._currentOrNew.bind(this);

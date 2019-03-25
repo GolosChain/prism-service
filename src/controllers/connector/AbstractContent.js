@@ -4,6 +4,63 @@ const BasicController = core.controllers.Basic;
 const ProfileModel = require('../../models/Profile');
 
 class AbstractContent extends BasicController {
+    async _getContent(
+        Model,
+        { currentUserId, requestedUserId, permlink, refBlockNum, raw: onlyRawRequired }
+    ) {
+        currentUserId = String(currentUserId);
+        requestedUserId = String(requestedUserId);
+        permlink = String(permlink);
+        refBlockNum = Number(refBlockNum);
+
+        const modelObject = await Model.findOne(
+            {
+                contentId: {
+                    userId: requestedUserId,
+                    permlink,
+                    refBlockNum,
+                },
+            },
+            this._makeContentProjection(onlyRawRequired),
+            { lean: true }
+        );
+
+        if (!modelObject) {
+            throw { code: 404, message: 'Not found' };
+        }
+
+        await this._tryApplyVotes({ Model, modelObject, currentUserId });
+        await this._populateAuthors([modelObject]);
+        this._removeEmptyParents(modelObject);
+
+        return modelObject;
+    }
+
+    _makeContentProjection(onlyRawRequired) {
+        let excludeContentVariant;
+
+        if (onlyRawRequired) {
+            excludeContentVariant = {
+                'content.body.full': false,
+            };
+        } else {
+            excludeContentVariant = {
+                'content.body.raw': false,
+            };
+        }
+
+        return {
+            'content.body.preview': false,
+            'votes.upUserIds': false,
+            'votes.downUserIds': false,
+            _id: false,
+            __v: false,
+            createdAt: false,
+            updatedAt: false,
+            ...excludeContentVariant,
+        };
+    }
+
     async _tryApplyVotesForModels({ Model, modelObjects, currentUserId }) {
         for (const modelObject of modelObjects) {
             await this._tryApplyVotes({ Model, modelObject, currentUserId });
@@ -50,12 +107,12 @@ class AbstractContent extends BasicController {
                 { username: true, _id: false }
             );
 
-            if (!profile) {
+            if (profile) {
+                modelObject.author = { userId: id, username: profile.username };
+            } else {
                 Logger.error(`Feed - unknown user - ${id}`);
-                return;
+                modelObject.author = { userId: id, username: id };
             }
-
-            modelObject.author = { userId: id, username: profile.username };
         }
     }
 
@@ -87,6 +144,18 @@ class AbstractContent extends BasicController {
 
         for (const modelObject of modelObjects) {
             await method.call(this, modelObject, cacheMap);
+        }
+    }
+
+    _removeEmptyParentsForAll(modelObjects) {
+        for (const modelObject of modelObjects) {
+            this._removeEmptyParents(modelObject);
+        }
+    }
+
+    _removeEmptyParents(modelObject) {
+        if (!modelObject.parent.comment.contentId) {
+            delete modelObject.parent.comment;
         }
     }
 }

@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const BasicConnector = core.services.Connector;
+const env = require('../data/env');
 const Comment = require('../controllers/connector/Comment');
 const Feed = require('../controllers/connector/Feed');
 const Post = require('../controllers/connector/Post');
@@ -22,11 +23,15 @@ class Connector extends BasicConnector {
     async start() {
         await super.start({
             serverRoutes: {
-                getComments: this._comment.getComments.bind(this._comment),
                 getPost: this._post.getPost.bind(this._post),
+                getComment: this._comment.getComment.bind(this._comment),
+                getComments: this._comment.getComments.bind(this._comment),
                 getFeed: this._feed.getFeed.bind(this._feed),
                 getProfile: this._profile.getProfile.bind(this._profile),
                 getNotifyMeta: this._notify.getMeta.bind(this._notify),
+            },
+            requiredClients: {
+                facade: env.GLS_FACADE_CONNECT,
             },
         });
     }

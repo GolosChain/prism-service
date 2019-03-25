@@ -23,8 +23,9 @@ class Comment extends AbstractContent {
                 body: {
                     preview: this._extractBodyPreview(content),
                     full: this._extractBodyFull(content),
+                    raw: this._extractBodyRaw(content),
                 },
-                metadata: this._extractMetadata(content),
+                metadata: await this._extractMetadata(content),
             },
             meta: {
                 time: blockTime,
@@ -52,8 +53,9 @@ class Comment extends AbstractContent {
                     body: {
                         preview: this._extractBodyPreview(content),
                         full: this._extractBodyFull(content),
+                        raw: this._extractBodyRaw(content),
                     },
-                    metadata: this._extractMetadata(content),
+                    metadata: await this._extractMetadata(content),
                 },
             }
         );

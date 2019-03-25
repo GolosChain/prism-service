@@ -10,12 +10,12 @@ const Subscribe = require('./Subscribe');
 const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'cyber'];
 
 class Main {
-    constructor() {
-        this._post = new Post();
-        this._comment = new Comment();
-        this._profile = new Profile();
-        this._vote = new Vote();
-        this._subscribe = new Subscribe();
+    constructor({ connector }) {
+        this._post = new Post({ connector });
+        this._comment = new Comment({ connector });
+        this._profile = new Profile({ connector });
+        this._vote = new Vote({ connector });
+        this._subscribe = new Subscribe({ connector });
     }
 
     async disperse({ transactions, blockNum, blockTime }) {

@@ -49,6 +49,7 @@ class Vote extends AbstractContent {
         if (!pack.includes(userId)) {
             pack.push(userId);
             model.markModified('votes.upUserIds');
+            model.votes.upCount++;
         }
     }
 
@@ -58,6 +59,7 @@ class Vote extends AbstractContent {
         if (!pack.includes(userId)) {
             pack.push(userId);
             model.markModified('votes.downUserIds');
+            model.votes.downCount++;
         }
     }
 
@@ -67,6 +69,7 @@ class Vote extends AbstractContent {
         if (pack.includes(userId)) {
             pack.splice(pack.indexOf(userId));
             model.markModified('votes.upUserIds');
+            model.votes.upCount--;
         }
     }
 
@@ -76,6 +79,7 @@ class Vote extends AbstractContent {
         if (pack.includes(userId)) {
             pack.splice(pack.indexOf(userId));
             model.markModified('votes.downUserIds');
+            model.votes.downCount--;
         }
     }
 
