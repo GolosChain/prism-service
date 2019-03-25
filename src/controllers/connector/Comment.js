@@ -26,6 +26,7 @@ class Comment extends AbstractFeed {
         }
 
         await this._populate(modelObjects, currentUserId, type);
+        this._removeEmptyParentsForAll(modelObjects);
 
         return this._makeFeedResult(modelObjects, sortBy);
     }

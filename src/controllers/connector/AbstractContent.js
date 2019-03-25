@@ -31,6 +31,7 @@ class AbstractContent extends BasicController {
 
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
         await this._populateAuthors([modelObject]);
+        this._removeEmptyParents(modelObject);
 
         return modelObject;
     }
@@ -143,6 +144,18 @@ class AbstractContent extends BasicController {
 
         for (const modelObject of modelObjects) {
             await method.call(this, modelObject, cacheMap);
+        }
+    }
+
+    _removeEmptyParentsForAll(modelObjects) {
+        for (const modelObject of modelObjects) {
+            this._removeEmptyParents(modelObject);
+        }
+    }
+
+    _removeEmptyParents(modelObject) {
+        if (!modelObject.parent.comment.contentId) {
+            delete modelObject.parent.comment;
         }
     }
 }
