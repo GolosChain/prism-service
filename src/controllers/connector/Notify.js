@@ -5,7 +5,7 @@ const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
 
 class Notify extends BasicController {
-    async getMeta({ userId, communityId, postId, commentId }) {
+    async getMeta({ userId, communityId, postId, commentId, contentId }) {
         const result = {};
 
         if (userId) {
@@ -22,6 +22,16 @@ class Notify extends BasicController {
 
         if (commentId) {
             result.comment = await this._getCommentData(commentId);
+        }
+
+        if (contentId) {
+            const { post, comment } = await this._getContentData(contentId);
+
+            if (post) {
+                result.post = post;
+            } else {
+                result.comment = comment;
+            }
         }
 
         return result;
@@ -84,6 +94,26 @@ class Notify extends BasicController {
             contentId,
             body: data.content.body.preview,
         };
+    }
+
+    async _getContentData(contentId) {
+        try {
+            return { post: await this._getPostData(contentId) };
+        } catch (error) {
+            if (error.code !== 404) {
+                throw error;
+            }
+        }
+
+        try {
+            return { comment: await this._getCommentData(contentId) };
+        } catch (error) {
+            if (error.code !== 404) {
+                throw error;
+            }
+        }
+
+        throw { code: 404, message: 'Content not found' };
     }
 }
 
