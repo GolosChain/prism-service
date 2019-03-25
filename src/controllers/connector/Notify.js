@@ -30,8 +30,7 @@ class Notify extends BasicController {
     async _getUserData(userId) {
         const data = await Profile.findOne(
             { userId },
-            { _id: false, username: true, 'personal.avatarUrl': true },
-            { lean: true }
+            { _id: false, username: true, 'personal.avatarUrl': true }
         );
 
         if (!data) {
