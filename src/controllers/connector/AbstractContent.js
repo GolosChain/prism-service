@@ -31,7 +31,6 @@ class AbstractContent extends BasicController {
 
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
         await this._populateAuthors([modelObject]);
-        this._removeEmptyParents(modelObject);
 
         return modelObject;
     }
