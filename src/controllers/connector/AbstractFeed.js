@@ -1,3 +1,5 @@
+const core = require('gls-core-service');
+const MongoDB = core.services.MongoDB;
 const AbstractContent = require('./AbstractContent');
 const env = require('../../data/env');
 
@@ -32,16 +34,20 @@ class AbstractFeed extends AbstractContent {
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {
-        if (sequenceKey) {
-            if (typeof sequenceKey !== 'string') {
-                this._throwBadSequence();
-            }
+        if (!sequenceKey) {
+            return;
+        }
 
-            if (direction > 0) {
-                query._id = { $gt: sequenceKey };
-            } else {
-                query._id = { $lt: sequenceKey };
-            }
+        try {
+            MongoDB.mongoTypes.ObjectId(sequenceKey);
+        } catch (error) {
+            this._throwBadSequence();
+        }
+
+        if (direction > 0) {
+            query._id = { $gt: sequenceKey };
+        } else {
+            query._id = { $lt: sequenceKey };
         }
     }
 
