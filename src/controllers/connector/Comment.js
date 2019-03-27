@@ -22,7 +22,7 @@ class Comment extends AbstractFeed {
     }
 
     async getComments(params) {
-        const { type, fullQuery, currentUserId, sortBy } = await this._prepareQuery(params);
+        const { type, fullQuery, currentUserId, sortBy, limit } = await this._prepareQuery(params);
         const modelObjects = await CommentModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -32,7 +32,7 @@ class Comment extends AbstractFeed {
         await this._populate(modelObjects, currentUserId, type);
         this._removeEmptyParentsForAll(modelObjects);
 
-        return this._makeFeedResult(modelObjects, sortBy);
+        return this._makeFeedResult(modelObjects, { sortBy, limit });
     }
 
     async _prepareQuery(params) {
@@ -55,7 +55,7 @@ class Comment extends AbstractFeed {
         this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit });
         this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink, refBlockNum });
 
-        return { type, fullQuery, currentUserId, sortBy };
+        return { type, fullQuery, currentUserId, sortBy, limit };
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {

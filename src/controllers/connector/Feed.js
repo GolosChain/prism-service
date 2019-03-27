@@ -10,7 +10,7 @@ class Feed extends AbstractFeed {
     }
 
     async getFeed(params) {
-        const { fullQuery, currentUserId, sortBy, meta } = await this._prepareQuery(params);
+        const { fullQuery, currentUserId, sortBy, meta, limit } = await this._prepareQuery(params);
         const modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -19,7 +19,7 @@ class Feed extends AbstractFeed {
 
         await this._populate(modelObjects, currentUserId);
 
-        return this._makeFeedResult(modelObjects, sortBy, meta);
+        return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
     }
 
     async _prepareQuery(params) {
@@ -53,7 +53,7 @@ class Feed extends AbstractFeed {
             meta
         );
 
-        return { fullQuery, currentUserId, sortBy, meta };
+        return { fullQuery, currentUserId, sortBy, meta, limit };
     }
 
     _applySortingAndSequence(
@@ -112,6 +112,8 @@ class Feed extends AbstractFeed {
             ...super._normalizeParams({ sortBy, ...params }),
         };
 
+        sortBy = params.sortBy;
+
         if (currentUserId) {
             currentUserId = String(currentUserId);
         }
@@ -160,11 +162,15 @@ class Feed extends AbstractFeed {
         query['communityId'] = { $in: model.subscriptions.communityIds };
     }
 
-    _getSequenceKey(models, sortBy, meta) {
+    _getSequenceKey(models, { sortBy, limit }, meta) {
         const origin = super._getSequenceKey(models, sortBy);
 
         switch (sortBy) {
             case 'popular':
+                if (models.length < limit) {
+                    return null;
+                }
+
                 const key = meta.newSequenceKey.toString();
 
                 return Buffer.from(key).toString('base64');
