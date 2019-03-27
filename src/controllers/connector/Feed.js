@@ -165,7 +165,9 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                return meta.newSequenceKey;
+                const key = meta.newSequenceKey.toString();
+
+                return Buffer.from(key).toString('base64');
 
             default:
                 return origin;

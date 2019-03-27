@@ -12,6 +12,10 @@ class AbstractFeed extends AbstractContent {
             limit = env.GLS_MAX_FEED_LIMIT;
         }
 
+        if (sequenceKey) {
+            sequenceKey = Buffer.from(String(sequenceKey), 'base64').toString();
+        }
+
         return { sortBy, sequenceKey, limit };
     }
 
@@ -28,12 +32,11 @@ class AbstractFeed extends AbstractContent {
                 this._applySortByTime({ query, options, sequenceKey, direction: -1 });
                 break;
             case 'time':
-            default:
                 this._applySortByTime({ query, options, sequenceKey, direction: 1 });
         }
     }
 
-    _applySortByTime({ query, options, sequenceKey, direction }) {
+    _applySortByTime({ query, sequenceKey, direction }) {
         if (!sequenceKey) {
             return;
         }
@@ -88,7 +91,9 @@ class AbstractFeed extends AbstractContent {
         if (models.length === 0) {
             return null;
         } else {
-            return models[models.length - 1]._id;
+            const id = models[models.length - 1]._id.toString();
+
+            return Buffer.from(id).toString('base64');
         }
     }
 }
