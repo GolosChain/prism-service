@@ -71,20 +71,6 @@ class Post extends AbstractContent {
         await this._updateUserPostCount(contentId.userId, -1);
     }
 
-    async _isPost(content) {
-        const id = content.parent_id;
-
-        if (id) {
-            return !Boolean(id.author);
-        }
-
-        const postCount = await PostModel.countDocuments({
-            contentId: this._extractContentId(content),
-        });
-
-        return Boolean(postCount);
-    }
-
     async _updateUserPostCount(userId, increment) {
         await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
     }

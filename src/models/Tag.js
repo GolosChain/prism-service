@@ -4,6 +4,9 @@ const MongoDB = core.services.MongoDB;
 module.exports = MongoDB.makeModel(
     'Tag',
     {
+        communityId: {
+            type: String,
+        },
         name: {
             type: String,
         },
