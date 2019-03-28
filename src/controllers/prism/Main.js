@@ -5,7 +5,7 @@ const Comment = require('./Comment');
 const Profile = require('./Profile');
 const Vote = require('./Vote');
 const Subscribe = require('./Subscribe');
-const Tag = require('./Tag');
+const HashTag = require('./HashTag');
 
 // TODO Change after MVP
 const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'cyber'];
@@ -17,7 +17,7 @@ class Main {
         this._profile = new Profile({ connector });
         this._vote = new Vote({ connector });
         this._subscribe = new Subscribe({ connector });
-        this._tag = new Tag({ connector });
+        this._hashTag = new HashTag({ connector });
     }
 
     async disperse({ transactions, blockNum, blockTime }) {
@@ -47,21 +47,21 @@ class Main {
         switch (pathName) {
             case 'gls.publish->createmssg':
                 // Warning - do not change ordering
-                await this._tag.handleCreate(action, { communityId });
+                await this._hashTag.handleCreate(action, { communityId });
                 await this._post.handleCreate(action, { communityId, blockTime });
                 await this._comment.handleCreate(action, { communityId, blockTime });
                 break;
 
             case 'gls.publish->updatemssg':
                 // Warning - do not change ordering
-                await this._tag.handleUpdate(action, { communityId });
+                await this._hashTag.handleUpdate(action, { communityId });
                 await this._post.handleUpdate(action);
                 await this._comment.handleUpdate(action);
                 break;
 
             case 'gls.publish->deletemssg':
                 // Warning - do not change ordering
-                await this._tag.handleDelete(action, { communityId });
+                await this._hashTag.handleDelete(action, { communityId });
                 await this._post.handleDelete(action);
                 await this._comment.handleDelete(action);
                 break;

@@ -3,8 +3,9 @@ const Content = core.utils.Content;
 const env = require('../../data/env');
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
+const HashTagModel = require('../../models/HashTag');
 
-class Tag extends AbstractContent {
+class HashTag extends AbstractContent {
     constructor(...args) {
         super(...args);
 
@@ -16,6 +17,8 @@ class Tag extends AbstractContent {
             return;
         }
 
+        const tags = this._extractTags(content);
+
         // TODO -
     }
 
@@ -23,6 +26,8 @@ class Tag extends AbstractContent {
         if (!(await this._isPost(content))) {
             return;
         }
+
+        const tags = this._extractTags(content);
 
         // TODO -
     }
@@ -32,8 +37,29 @@ class Tag extends AbstractContent {
             return;
         }
 
+        const tags = this._extractTags(content);
+
         // TODO -
+    }
+
+    _extractTags(content) {
+        const tagsFromMetadata = this._extractTagsFromMetadata(content);
+        const tagsFromText = this._extractTagsFromText(content);
+
+        return [...new Set([...tagsFromMetadata, ...tagsFromText])];
+    }
+
+    _extractTagsFromMetadata(content) {
+        const metadata = this._extractMetadata(content);
+
+        return Array.from(metadata.tags || []);
+    }
+
+    _extractTagsFromText(content) {
+        const text = this._extractBodyRaw(content);
+
+        return this._contentUtil.extractHashTags(text);
     }
 }
 
-module.exports = Tag;
+module.exports = HashTag;

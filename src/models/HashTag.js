@@ -10,6 +10,9 @@ module.exports = MongoDB.makeModel(
         name: {
             type: String,
         },
+        count: {
+            type: Number,
+        },
         score: {
             type: Number,
         },
@@ -18,6 +21,13 @@ module.exports = MongoDB.makeModel(
         index: [
             {
                 // Search
+                fields: {
+                    communityId: 1,
+                    name: 1,
+                },
+            },
+            {
+                // Ordering
                 fields: {
                     score: -1,
                 },
