@@ -10,31 +10,31 @@ const TRENDING_TIME_DEGRADATION = 480000;
 class WilsonScoring {
     static calcHot(rShares, date) {
         return this._calcLikeAWilson({
-            rSharesBaseConstant: HOT_RSHARES_BASE,
+            baseConstant: HOT_RSHARES_BASE,
             timeDegradationConstant: HOT_TIME_DEGRADATION,
-            rShares: new BigNum(rShares),
+            value: new BigNum(rShares),
             date,
         });
     }
 
     static calcTrending(rShares, date) {
         return this._calcLikeAWilson({
-            rSharesBaseConstant: TRENDING_RSHARES_BASE,
+            baseConstant: TRENDING_RSHARES_BASE,
             timeDegradationConstant: TRENDING_TIME_DEGRADATION,
-            rShares: new BigNum(rShares),
+            value: new BigNum(rShares),
             date,
         });
     }
 
-    static _calcLikeAWilson({ rSharesBaseConstant, timeDegradationConstant, rShares, date }) {
+    static _calcLikeAWilson({ baseConstant, timeDegradationConstant, value, date }) {
         const seconds = Number(date) / 1000;
-        const modRShares = rShares.div(rSharesBaseConstant);
-        const order = Math.log10(BigNumUtils.max(modRShares.abs(), 1));
+        const modValue = value.div(baseConstant);
+        const order = Math.log10(BigNumUtils.max(modValue.abs(), 1));
         let sign;
 
-        if (modRShares.gt(0)) {
+        if (modValue.gt(0)) {
             sign = 1;
-        } else if (modRShares.lt(0)) {
+        } else if (modValue.lt(0)) {
             sign = -1;
         } else {
             sign = 0;
