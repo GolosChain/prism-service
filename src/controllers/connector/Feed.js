@@ -182,9 +182,7 @@ class Feed extends AbstractFeed {
                     return null;
                 }
 
-                const key = meta.newSequenceKey.toString();
-
-                return Buffer.from(key).toString('base64');
+                return this._packSequenceKey(meta.newSequenceKey);
 
             default:
                 return origin;
