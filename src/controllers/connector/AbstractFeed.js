@@ -13,10 +13,18 @@ class AbstractFeed extends AbstractContent {
         }
 
         if (sequenceKey) {
-            sequenceKey = Buffer.from(String(sequenceKey), 'base64').toString();
+            sequenceKey = this._unpackSequenceKey(sequenceKey);
         }
 
         return { sortBy, sequenceKey, limit };
+    }
+
+    _packSequenceKey(sequenceKey) {
+        return Buffer.from(String(sequenceKey)).toString('base64');
+    }
+
+    _unpackSequenceKey(sequenceKey) {
+        return Buffer.from(String(sequenceKey), 'base64').toString();
     }
 
     _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit }) {
@@ -93,7 +101,7 @@ class AbstractFeed extends AbstractContent {
         } else {
             const id = models[models.length - 1]._id.toString();
 
-            return Buffer.from(id).toString('base64');
+            return this._packSequenceKey(id);
         }
     }
 }
