@@ -2,7 +2,7 @@ const core = require('gls-core-service');
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
-    'Tag',
+    'HashTag',
     {
         communityId: {
             type: String,
@@ -12,6 +12,7 @@ module.exports = MongoDB.makeModel(
         },
         count: {
             type: Number,
+            default: 0,
         },
     },
     {

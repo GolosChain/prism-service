@@ -29,7 +29,7 @@ class HashTag extends AbstractContent {
         model.content.tags = newTags;
         await model.save();
 
-        // TODO Add to top tags
+        await this._incrementTagsScore(newTags, communityId);
     }
 
     async handleUpdate({ args: content }, { communityId }) {
@@ -49,7 +49,8 @@ class HashTag extends AbstractContent {
         model.content.tags = newTags;
         await model.save();
 
-        // TODO Change top tags
+        await this._decrementTagsScore(recentTags, communityId);
+        await this._incrementTagsScore(newTags, communityId);
     }
 
     async handleDelete({ args: content }, { communityId }) {
@@ -65,7 +66,7 @@ class HashTag extends AbstractContent {
 
         const recentTags = model.content.tags;
 
-        // TODO Decrement top tags
+        await this._decrementTagsScore(recentTags, communityId);
     }
 
     _extractTags(content) {
@@ -99,6 +100,32 @@ class HashTag extends AbstractContent {
         }
 
         return model;
+    }
+
+    async _incrementTagsScore(tags, communityId) {
+        await this._changeTagsScore(tags, communityId, true);
+    }
+
+    async _decrementTagsScore(tags, communityId) {
+        await this._changeTagsScore(tags, communityId, false);
+    }
+
+    async _changeTagsScore(tags, communityId, isIncrement) {
+        for (const name of tags) {
+            let countIncrement;
+
+            if (isIncrement) {
+                countIncrement = 1;
+            } else {
+                countIncrement = -1;
+            }
+
+            await HashTagModel.updateOne(
+                { communityId, name },
+                { $inc: { count: countIncrement } },
+                { upsert: true }
+            );
+        }
     }
 }
 
