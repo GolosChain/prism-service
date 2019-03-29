@@ -39,14 +39,18 @@ class Connector extends BasicConnector {
                         additionalProperties: false,
                         required: ['communityId'],
                         properties: {
-                            communityId: { type: 'string' },
+                            communityId: {
+                                type: 'string',
+                            },
                             limit: {
                                 type: 'number',
                                 default: 10,
                                 minValue: 0,
                                 maxValue: env.GLS_MAX_FEED_LIMIT,
                             },
-                            sequenceKey: { type: 'string' },
+                            sequenceKey: {
+                                type: 'string',
+                            },
                         },
                     },
                 },
