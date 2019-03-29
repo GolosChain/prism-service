@@ -35,7 +35,7 @@
   },
   "homepage": "https://github.com/GolosChain/prism-service#readme",
   "dependencies": {
-    "gls-core-service": "^3.16.0",
+    "gls-core-service": "^3.16.1",
     "golos-js": "^0.7.7",
     "moment": "^2.24.0",
     "then-sleep": "^1.0.1",

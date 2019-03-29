@@ -19,6 +19,8 @@ class HashTag extends AbstractContent {
 
         const tags = this._extractTags(content);
 
+        await this._saveTags(content, tags);
+
         // TODO -
     }
 
@@ -28,6 +30,8 @@ class HashTag extends AbstractContent {
         }
 
         const tags = this._extractTags(content);
+
+        await this._saveTags(content, tags);
 
         // TODO -
     }
@@ -51,14 +55,23 @@ class HashTag extends AbstractContent {
 
     _extractTagsFromMetadata(content) {
         const metadata = this._extractMetadata(content);
+        const rawTags = Array.from(metadata.tags || []);
 
-        return Array.from(metadata.tags || []);
+        return rawTags.filter(
+            tag => typeof tag === 'string' && tag.length <= env.GLS_MAX_HASH_TAG_SIZE
+        );
     }
 
     _extractTagsFromText(content) {
         const text = this._extractBodyRaw(content);
 
         return this._contentUtil.extractHashTags(text);
+    }
+
+    async _saveTags(content, tags) {
+        const contentId = this._extractContentId(content);
+
+        await PostModel.update({ contentId }, { $set: { 'content.tags': tags } });
     }
 }
 
