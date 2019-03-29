@@ -5,7 +5,7 @@ const env = require('../../data/env');
 
 class AbstractFeed extends AbstractContent {
     _normalizeParams({ sortBy, sequenceKey, limit = 10 }) {
-        sortBy = String(sortBy) || 'time';
+        sortBy = String(sortBy || 'time');
         limit = Number(limit);
 
         if (Number.isNaN(limit) || limit > env.GLS_MAX_FEED_LIMIT || limit < 1) {
@@ -98,11 +98,11 @@ class AbstractFeed extends AbstractContent {
     _getSequenceKeyByTime(models, limit) {
         if (models.length < limit) {
             return null;
-        } else {
-            const id = models[models.length - 1]._id.toString();
-
-            return this._packSequenceKey(id);
         }
+
+        const id = models[models.length - 1]._id.toString();
+
+        return this._packSequenceKey(id);
     }
 }
 

@@ -94,7 +94,7 @@ class AbstractContent extends Abstract {
         const id = content.parent_id;
 
         if (id) {
-            return !Boolean(id.author);
+            return !id.author;
         }
 
         const postCount = await PostModel.countDocuments({
