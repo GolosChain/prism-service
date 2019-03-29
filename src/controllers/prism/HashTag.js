@@ -1,4 +1,5 @@
 const core = require('gls-core-service');
+const Logger = core.utils.Logger;
 const Content = core.utils.Content;
 const env = require('../../data/env');
 const AbstractContent = require('./AbstractContent');
@@ -17,11 +18,18 @@ class HashTag extends AbstractContent {
             return;
         }
 
-        const tags = this._extractTags(content);
+        const model = await this._tryGetModel(content, { 'content.tags': true });
 
-        await this._saveTags(content, tags);
+        if (!model) {
+            return;
+        }
 
-        // TODO -
+        const newTags = this._extractTags(content);
+
+        model.content.tags = newTags;
+        await model.save();
+
+        // TODO Add to top tags
     }
 
     async handleUpdate({ args: content }, { communityId }) {
@@ -29,11 +37,19 @@ class HashTag extends AbstractContent {
             return;
         }
 
-        const tags = this._extractTags(content);
+        const model = await this._tryGetModel(content, { 'content.tags': true });
 
-        await this._saveTags(content, tags);
+        if (!model) {
+            return;
+        }
 
-        // TODO -
+        const newTags = this._extractTags(content);
+        const recentTags = model.content.tags;
+
+        model.content.tags = newTags;
+        await model.save();
+
+        // TODO Change top tags
     }
 
     async handleDelete({ args: content }, { communityId }) {
@@ -41,9 +57,15 @@ class HashTag extends AbstractContent {
             return;
         }
 
-        const tags = this._extractTags(content);
+        const model = await this._tryGetModel(content, { 'content.tags': true });
 
-        // TODO -
+        if (!model) {
+            return;
+        }
+
+        const recentTags = model.content.tags;
+
+        // TODO Decrement top tags
     }
 
     _extractTags(content) {
@@ -68,10 +90,15 @@ class HashTag extends AbstractContent {
         return this._contentUtil.extractHashTags(text);
     }
 
-    async _saveTags(content, tags) {
+    async _tryGetModel(content, projection) {
         const contentId = this._extractContentId(content);
+        const model = await PostModel.findOne({ contentId }, projection);
 
-        await PostModel.update({ contentId }, { $set: { 'content.tags': tags } });
+        if (!model) {
+            Logger.warn(`Unknown post - ${JSON.stringify(contentId)}`);
+        }
+
+        return model;
     }
 }
 

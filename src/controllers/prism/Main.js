@@ -47,8 +47,8 @@ class Main {
         switch (pathName) {
             case 'gls.publish->createmssg':
                 // Warning - do not change ordering
-                await this._hashTag.handleCreate(action, { communityId });
                 await this._post.handleCreate(action, { communityId, blockTime });
+                await this._hashTag.handleCreate(action, { communityId });
                 await this._comment.handleCreate(action, { communityId, blockTime });
                 break;
 

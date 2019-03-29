@@ -13,9 +13,6 @@ module.exports = MongoDB.makeModel(
         count: {
             type: Number,
         },
-        score: {
-            type: Number,
-        },
     },
     {
         index: [
@@ -29,7 +26,7 @@ module.exports = MongoDB.makeModel(
             {
                 // Ordering
                 fields: {
-                    score: -1,
+                    count: -1,
                 },
             },
         ],
