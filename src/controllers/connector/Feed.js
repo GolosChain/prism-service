@@ -32,6 +32,7 @@ class Feed extends AbstractFeed {
             currentUserId,
             requestedUserId,
             communityId,
+            tags,
         } = this._normalizeParams(params);
 
         const query = {};
@@ -46,6 +47,7 @@ class Feed extends AbstractFeed {
             type,
             requestedUserId,
             communityId,
+            tags,
         });
         this._applySortingAndSequence(
             fullQuery,
@@ -104,6 +106,7 @@ class Feed extends AbstractFeed {
         requestedUserId = null,
         communityId = null,
         sortBy,
+        tags,
         ...params
     }) {
         type = String(type);
@@ -126,14 +129,18 @@ class Feed extends AbstractFeed {
             communityId = String(communityId);
         }
 
-        if (sortBy === 'popular' && type !== 'community') {
+        if (sortBy === 'popular' && (type !== 'community' || tags)) {
             throw { code: 400, message: `Invalid sorting for - ${type}` };
         }
 
-        return { type, currentUserId, requestedUserId, communityId, ...params };
+        if (tags && !Array.isArray(tags)) {
+            throw { code: 400, message: 'Invalid tags param' };
+        }
+
+        return { type, currentUserId, requestedUserId, communityId, tags, ...params };
     }
 
-    async _applyFeedTypeConditions({ query }, { type, requestedUserId, communityId }) {
+    async _applyFeedTypeConditions({ query }, { type, requestedUserId, communityId, tags }) {
         switch (type) {
             case 'subscriptions':
                 await this._applyUserSubscriptions(query, requestedUserId);
@@ -144,6 +151,10 @@ class Feed extends AbstractFeed {
                 break;
 
             case 'community':
+                if (tags) {
+                    query['content.tags'] = { $in: tags };
+                }
+
             default:
                 query.communityId = communityId;
         }
