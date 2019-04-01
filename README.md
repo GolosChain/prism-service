@@ -69,8 +69,9 @@ getComments:                       // Получение ленты коммен
     limit <number>(10)             // Количество элементов
     type <string>('post')          // Тип ленты
         [
-          'user'                   // Получить комментарии пользователя, требует requestedUserId
-        | 'post'                   // Получить комментарии для поста, требует requestedUserId, permlink, refBlockNum
+          user                     // Получить комментарии пользователя, требует requestedUserId
+        | post                     // Получить комментарии для поста, требует requestedUserId, permlink, refBlockNum
+        | replies                  // Получить комментарии, которые были оставлены пользователю, требует userId
         ]
     currentUserId <string/null>    // Идентификатор текущего пользователя
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
