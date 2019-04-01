@@ -4,6 +4,8 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
 const env = require('../../data/env');
+const PostModel = require('../../models/Post');
+const CommentModel = require('../../models/Comment');
 
 class AbstractContent extends Abstract {
     _extractTitle(content) {
@@ -86,6 +88,34 @@ class AbstractContent extends Abstract {
             left.permlink === right.permlink &&
             left.refBlockNum === right.refBlockNum
         );
+    }
+
+    async _isPost(content) {
+        const id = content.parent_id;
+
+        if (id) {
+            return !id.author;
+        }
+
+        const postCount = await PostModel.countDocuments({
+            contentId: this._extractContentId(content),
+        });
+
+        return Boolean(postCount);
+    }
+
+    async _isComment(content) {
+        const id = content.parent_id;
+
+        if (id) {
+            return Boolean(id.author);
+        }
+
+        const postCount = await CommentModel.countDocuments({
+            contentId: this._extractContentId(content),
+        });
+
+        return Boolean(postCount);
     }
 }
 

@@ -39,6 +39,9 @@ module.exports = MongoDB.makeModel(
             metadata: {
                 type: Object,
             },
+            tags: {
+                type: [String],
+            },
         },
         votes: {
             upUserIds: {

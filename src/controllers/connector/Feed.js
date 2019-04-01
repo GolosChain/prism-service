@@ -10,7 +10,7 @@ class Feed extends AbstractFeed {
     }
 
     async getFeed(params) {
-        const { fullQuery, currentUserId, sortBy, meta } = await this._prepareQuery(params);
+        const { fullQuery, currentUserId, sortBy, meta, limit } = await this._prepareQuery(params);
         const modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -19,7 +19,7 @@ class Feed extends AbstractFeed {
 
         await this._populate(modelObjects, currentUserId);
 
-        return this._makeFeedResult(modelObjects, sortBy, meta);
+        return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
     }
 
     async _prepareQuery(params) {
@@ -32,6 +32,7 @@ class Feed extends AbstractFeed {
             currentUserId,
             requestedUserId,
             communityId,
+            tags,
         } = this._normalizeParams(params);
 
         const query = {};
@@ -46,6 +47,7 @@ class Feed extends AbstractFeed {
             type,
             requestedUserId,
             communityId,
+            tags,
         });
         this._applySortingAndSequence(
             fullQuery,
@@ -53,7 +55,7 @@ class Feed extends AbstractFeed {
             meta
         );
 
-        return { fullQuery, currentUserId, sortBy, meta };
+        return { fullQuery, currentUserId, sortBy, meta, limit };
     }
 
     _applySortingAndSequence(
@@ -104,6 +106,7 @@ class Feed extends AbstractFeed {
         requestedUserId = null,
         communityId = null,
         sortBy,
+        tags,
         ...params
     }) {
         type = String(type);
@@ -111,6 +114,8 @@ class Feed extends AbstractFeed {
             ...params,
             ...super._normalizeParams({ sortBy, ...params }),
         };
+
+        sortBy = params.sortBy;
 
         if (currentUserId) {
             currentUserId = String(currentUserId);
@@ -124,14 +129,18 @@ class Feed extends AbstractFeed {
             communityId = String(communityId);
         }
 
-        if (sortBy === 'popular' && type !== 'community') {
+        if (sortBy === 'popular' && (type !== 'community' || tags)) {
             throw { code: 400, message: `Invalid sorting for - ${type}` };
         }
 
-        return { type, currentUserId, requestedUserId, communityId, ...params };
+        if (tags && !Array.isArray(tags)) {
+            throw { code: 400, message: 'Invalid tags param' };
+        }
+
+        return { type, currentUserId, requestedUserId, communityId, tags, ...params };
     }
 
-    async _applyFeedTypeConditions({ query }, { type, requestedUserId, communityId }) {
+    async _applyFeedTypeConditions({ query }, { type, requestedUserId, communityId, tags }) {
         switch (type) {
             case 'subscriptions':
                 await this._applyUserSubscriptions(query, requestedUserId);
@@ -142,6 +151,10 @@ class Feed extends AbstractFeed {
                 break;
 
             case 'community':
+                if (tags) {
+                    query['content.tags'] = { $in: tags };
+                }
+
             default:
                 query.communityId = communityId;
         }
@@ -160,12 +173,16 @@ class Feed extends AbstractFeed {
         query['communityId'] = { $in: model.subscriptions.communityIds };
     }
 
-    _getSequenceKey(models, sortBy, meta) {
+    _getSequenceKey(models, { sortBy, limit }, meta) {
         const origin = super._getSequenceKey(models, sortBy);
 
         switch (sortBy) {
             case 'popular':
-                return meta.newSequenceKey;
+                if (models.length < limit) {
+                    return null;
+                }
+
+                return this._packSequenceKey(meta.newSequenceKey);
 
             default:
                 return origin;

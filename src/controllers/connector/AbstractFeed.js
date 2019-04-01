@@ -4,15 +4,27 @@ const AbstractContent = require('./AbstractContent');
 const env = require('../../data/env');
 
 class AbstractFeed extends AbstractContent {
-    _normalizeParams({ sortBy = 'time', sequenceKey, limit = 10 }) {
-        sortBy = String(sortBy);
+    _normalizeParams({ sortBy, sequenceKey, limit = 10 }) {
+        sortBy = String(sortBy || 'time');
         limit = Number(limit);
 
         if (Number.isNaN(limit) || limit > env.GLS_MAX_FEED_LIMIT || limit < 1) {
             limit = env.GLS_MAX_FEED_LIMIT;
         }
 
+        if (sequenceKey) {
+            sequenceKey = this._unpackSequenceKey(sequenceKey);
+        }
+
         return { sortBy, sequenceKey, limit };
+    }
+
+    _packSequenceKey(sequenceKey) {
+        return Buffer.from(String(sequenceKey)).toString('base64');
+    }
+
+    _unpackSequenceKey(sequenceKey) {
+        return Buffer.from(String(sequenceKey), 'base64').toString();
     }
 
     _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit }) {
@@ -28,12 +40,11 @@ class AbstractFeed extends AbstractContent {
                 this._applySortByTime({ query, options, sequenceKey, direction: -1 });
                 break;
             case 'time':
-            default:
                 this._applySortByTime({ query, options, sequenceKey, direction: 1 });
         }
     }
 
-    _applySortByTime({ query, options, sequenceKey, direction }) {
+    _applySortByTime({ query, sequenceKey, direction }) {
         if (!sequenceKey) {
             return;
         }
@@ -55,8 +66,8 @@ class AbstractFeed extends AbstractContent {
         throw { code: 400, message: 'Bad sequence params' };
     }
 
-    _makeFeedResult(modelObjects, sortBy, meta) {
-        const sequenceKey = this._getSequenceKey(modelObjects, sortBy, meta);
+    _makeFeedResult(modelObjects, { sortBy, limit }, meta) {
+        const sequenceKey = this._getSequenceKey(modelObjects, { sortBy, limit }, meta);
 
         for (const modelObject of modelObjects) {
             delete modelObject._id;
@@ -75,21 +86,23 @@ class AbstractFeed extends AbstractContent {
         };
     }
 
-    _getSequenceKey(models, sortBy) {
+    _getSequenceKey(models, { sortBy, limit }) {
         switch (sortBy) {
             case 'timeDesc':
             case 'time':
             default:
-                return this._getSequenceKeyByTime(models);
+                return this._getSequenceKeyByTime(models, limit);
         }
     }
 
-    _getSequenceKeyByTime(models) {
-        if (models.length === 0) {
+    _getSequenceKeyByTime(models, limit) {
+        if (models.length < limit) {
             return null;
-        } else {
-            return models[models.length - 1]._id;
         }
+
+        const id = models[models.length - 1]._id.toString();
+
+        return this._packSequenceKey(id);
     }
 }
 

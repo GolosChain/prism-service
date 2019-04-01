@@ -20,7 +20,7 @@ class FeedCache extends BasicService {
         this.startLoop(env.GLS_FEED_CACHE_INTERVAL, env.GLS_FEED_CACHE_INTERVAL);
     }
 
-    getIdsWithSequenceKey({ communityId = '~all', sortBy, timeframe, sequenceKey, limit }) {
+    getIdsWithSequenceKey({ communityId = '~all', sortBy, timeframe = 'day', sequenceKey, limit }) {
         try {
             const [queueId, index] = this._unpackSequenceKey(sequenceKey);
             const storageId = this._makeStorageId({ communityId, sortBy, timeframe, queueId });

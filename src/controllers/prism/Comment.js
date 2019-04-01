@@ -78,20 +78,6 @@ class Comment extends AbstractContent {
         await model.remove();
     }
 
-    async _isComment(content) {
-        const id = content.parent_id;
-
-        if (id) {
-            return Boolean(id.author);
-        }
-
-        const postCount = await CommentModel.countDocuments({
-            contentId: this._extractContentId(content),
-        });
-
-        return Boolean(postCount);
-    }
-
     async _applyParent(model, content) {
         const contentId = this._extractContentIdFromId(content.parent_id);
         const post = await this._getParentPost(contentId);
