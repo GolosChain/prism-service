@@ -53,7 +53,7 @@ class Connector extends BasicConnector {
                                 default: 10,
                             },
                             currentUserId: {
-                                type: 'string',
+                                type: ['string', 'null'],
                             },
                             requestedUserId: {
                                 type: 'string',
@@ -109,7 +109,7 @@ class Connector extends BasicConnector {
                                 default: 10,
                             },
                             currentUserId: {
-                                type: 'string',
+                                type: ['string', 'null'],
                             },
                             requestedUserId: {
                                 type: 'string',
