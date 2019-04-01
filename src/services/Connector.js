@@ -27,8 +27,105 @@ class Connector extends BasicConnector {
             serverRoutes: {
                 getPost: this._post.getPost.bind(this._post),
                 getComment: this._comment.getComment.bind(this._comment),
-                getComments: this._comment.getComments.bind(this._comment),
-                getFeed: this._feed.getFeed.bind(this._feed),
+                getComments: {
+                    handler: this._comment.getComments,
+                    scope: this._comment,
+                    validation: {
+                        type: 'object',
+                        additionalProperties: false,
+                        required: [],
+                        properties: {
+                            type: {
+                                type: 'string',
+                                enum: ['post', 'user', 'replies'],
+                                default: 'post',
+                            },
+                            sortBy: {
+                                type: 'string',
+                                enum: ['time', 'timeDesc'],
+                                default: 'time',
+                            },
+                            sequenceKey: {
+                                type: 'string',
+                            },
+                            limit: {
+                                type: 'number',
+                                default: 10,
+                            },
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
+                            },
+                            raw: {
+                                type: 'boolean',
+                            },
+                        },
+                    },
+                },
+                getFeed: {
+                    handler: this._feed.getFeed,
+                    scope: this._feed,
+                    validation: {
+                        type: 'object',
+                        additionalProperties: false,
+                        required: [],
+                        properties: {
+                            type: {
+                                type: 'string',
+                                enum: ['community', 'subscriptions', 'byUser'],
+                                default: 'community',
+                            },
+                            sortBy: {
+                                type: 'string',
+                                enum: ['time', 'timeDesc', 'popular'],
+                                default: 'time',
+                            },
+                            timeframe: {
+                                type: 'string',
+                                enum: [
+                                    'day',
+                                    'week',
+                                    'month',
+                                    'year',
+                                    'all',
+                                    'WilsonHot',
+                                    'WilsonTrending',
+                                ],
+                                default: 'day',
+                            },
+                            sequenceKey: {
+                                type: 'string',
+                            },
+                            limit: {
+                                type: 'number',
+                                default: 10,
+                            },
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            communityId: {
+                                type: 'string',
+                            },
+                            tags: {
+                                type: 'array',
+                            },
+                            raw: {
+                                type: 'boolean',
+                            },
+                        },
+                    },
+                },
                 getProfile: this._profile.getProfile.bind(this._profile),
                 getNotifyMeta: this._notify.getMeta.bind(this._notify),
                 getHashTagTop: {
