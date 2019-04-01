@@ -4,7 +4,7 @@ const AbstractContent = require('./AbstractContent');
 const env = require('../../data/env');
 
 class AbstractFeed extends AbstractContent {
-    _normalizeParams({ sortBy, sequenceKey, limit = 10 }) {
+    _normalizeParams({ sortBy, sequenceKey, limit = 10, raw }) {
         sortBy = String(sortBy || 'time');
         limit = Number(limit);
 
@@ -16,7 +16,7 @@ class AbstractFeed extends AbstractContent {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
         }
 
-        return { sortBy, sequenceKey, limit };
+        return { sortBy, sequenceKey, limit, raw };
     }
 
     _packSequenceKey(sequenceKey) {
@@ -27,13 +27,20 @@ class AbstractFeed extends AbstractContent {
         return Buffer.from(String(sequenceKey), 'base64').toString();
     }
 
-    _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit }) {
+    _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit, raw }) {
         options.limit = limit;
         projection.__v = false;
         projection.createdAt = false;
         projection.updatedAt = false;
         projection['votes.upUserIds'] = false;
         projection['votes.downUserIds'] = false;
+
+        if (raw) {
+            projection['content.body.full'] = false;
+            projection['content.body.preview'] = false;
+        } else {
+            projection['content.body.raw'] = false;
+        }
 
         switch (sortBy) {
             case 'timeDesc':

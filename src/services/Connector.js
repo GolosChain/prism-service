@@ -46,7 +46,7 @@ class Connector extends BasicConnector {
                                 default: 'time',
                             },
                             sequenceKey: {
-                                type: 'string',
+                                type: ['string', 'null'],
                             },
                             limit: {
                                 type: 'number',
@@ -102,7 +102,7 @@ class Connector extends BasicConnector {
                                 default: 'day',
                             },
                             sequenceKey: {
-                                type: 'string',
+                                type: ['string', 'null'],
                             },
                             limit: {
                                 type: 'number',

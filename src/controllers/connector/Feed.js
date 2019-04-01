@@ -11,6 +11,7 @@ class Feed extends AbstractFeed {
 
     async getFeed(params) {
         const { fullQuery, currentUserId, sortBy, meta, limit } = await this._prepareQuery(params);
+
         const modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -33,6 +34,7 @@ class Feed extends AbstractFeed {
             requestedUserId,
             communityId,
             tags,
+            raw,
         } = this._normalizeParams(params);
 
         const query = {};
@@ -51,7 +53,7 @@ class Feed extends AbstractFeed {
         });
         this._applySortingAndSequence(
             fullQuery,
-            { type, sortBy, timeframe, sequenceKey, limit },
+            { type, sortBy, timeframe, sequenceKey, limit, raw },
             meta
         );
 
@@ -60,12 +62,12 @@ class Feed extends AbstractFeed {
 
     _applySortingAndSequence(
         { query, projection, options },
-        { type, sortBy, timeframe, sequenceKey, limit },
+        { type, sortBy, timeframe, sequenceKey, limit, raw },
         meta
     ) {
         super._applySortingAndSequence(
             { query, projection, options },
-            { type, sortBy, sequenceKey, limit }
+            { type, sortBy, sequenceKey, limit, raw }
         );
 
         switch (sortBy) {

@@ -45,14 +45,15 @@ class Comment extends AbstractFeed {
             permlink,
             refBlockNum,
             type,
+            raw,
         } = this._normalizeParams(params);
 
         const query = {};
-        const projection = { 'content.title': false, ordering: false };
+        const projection = { 'content.title': false, 'content.body.preview': false, ordering: false };
         const options = { lean: true };
         const fullQuery = { query, projection, options };
 
-        this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit });
+        this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit, raw });
         this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink, refBlockNum });
 
         return { type, fullQuery, currentUserId, sortBy, limit };
