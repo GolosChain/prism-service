@@ -171,6 +171,13 @@ class Comment extends AbstractFeed {
                 query['contentId.userId'] = requestedUserId;
                 break;
 
+            case 'replies':
+                query.$or = [
+                    { 'parent.post.contentId.userId': requestedUserId },
+                    { 'parent.comment.contentId.userId': requestedUserId },
+                ];
+                break;
+
             case 'post':
             default:
                 query['parent.post.contentId.userId'] = requestedUserId;
