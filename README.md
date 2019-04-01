@@ -58,6 +58,7 @@ getFeed:                           // Получение ленты постов
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
     communityId <string/null>      // Идентификатор комьюнити
     tags <string[]/null>           // Теги для фильтрации (только для community и сортировкой по времени)
+    raw <boolean>(false)           // Получить данные в оригинальном виде и без санитайзинга
 
 getComments:                       // Получение ленты комментариев
     sortBy <string>('time')        // Способ сортировки
@@ -77,6 +78,7 @@ getComments:                       // Получение ленты коммен
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
     permlink <string/null>         // Пермлинк поста
     refBlockNum <number/null>      // Привязанный блок поста
+    raw <boolean>(false)           // Получить данные в оригинальном виде и без санитайзинга
 
 getNotifyMeta:                     // Получение мета-данных для отображения нотификации
     userId <string>                // Получить данные пользователя по идентификатору
