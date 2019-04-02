@@ -46,6 +46,7 @@ module.exports = MongoDB.makeModel(
                 },
             },
             embeds: {
+                default: [],
                 type: [
                     {
                         id: {
