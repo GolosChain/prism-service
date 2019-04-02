@@ -51,8 +51,8 @@ module.exports = MongoDB.makeModel(
                         type: {
                             type: String,
                         },
-                        url: {
-                            type: String,
+                        result: {
+                            type: Object,
                         },
                     },
                 ],
