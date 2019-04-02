@@ -45,6 +45,21 @@ module.exports = MongoDB.makeModel(
                     },
                 },
             },
+            embeds: {
+                type: [
+                    {
+                        id: {
+                            type: String,
+                        },
+                        type: {
+                            type: String,
+                        },
+                        url: {
+                            type: String,
+                        },
+                    },
+                ],
+            },
         },
         content: {
             title: {

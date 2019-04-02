@@ -117,6 +117,24 @@ class AbstractContent extends Abstract {
 
         return Boolean(postCount);
     }
+
+    async _extractContentObject(rawContent) {
+        const metadata = await this._extractMetadata(rawContent);
+        const embeds = metadata.embeds;
+
+        delete metadata.embeds;
+
+        return {
+            title: this._extractTitle(rawContent),
+            body: {
+                preview: this._extractBodyPreview(rawContent),
+                full: this._extractBodyFull(rawContent),
+                raw: this._extractBodyRaw(rawContent),
+            },
+            metadata,
+            embeds,
+        };
+    }
 }
 
 module.exports = AbstractContent;

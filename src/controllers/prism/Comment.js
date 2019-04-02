@@ -18,15 +18,7 @@ class Comment extends AbstractContent {
 
         const model = new CommentModel({
             contentId: this._extractContentId(content),
-            content: {
-                title: this._extractTitle(content),
-                body: {
-                    preview: this._extractBodyPreview(content),
-                    full: this._extractBodyFull(content),
-                    raw: this._extractBodyRaw(content),
-                },
-                metadata: await this._extractMetadata(content),
-            },
+            content: await this._extractContentObject(content),
             meta: {
                 time: blockTime,
             },
@@ -48,14 +40,8 @@ class Comment extends AbstractContent {
                 contentId: this._extractContentId(content),
             },
             {
-                content: {
-                    title: this._extractTitle(content),
-                    body: {
-                        preview: this._extractBodyPreview(content),
-                        full: this._extractBodyFull(content),
-                        raw: this._extractBodyRaw(content),
-                    },
-                    metadata: await this._extractMetadata(content),
+                $set: {
+                    content: await this._extractContentObject(content),
                 },
             }
         );
