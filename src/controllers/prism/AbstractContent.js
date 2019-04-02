@@ -120,7 +120,7 @@ class AbstractContent extends Abstract {
 
     async _extractContentObject(rawContent) {
         const metadata = await this._extractMetadata(rawContent);
-        const embeds = metadata.embeds;
+        const embeds = metadata.embeds || [];
 
         delete metadata.embeds;
 
