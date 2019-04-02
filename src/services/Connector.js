@@ -30,9 +30,8 @@ class Connector extends BasicConnector {
                 getComments: {
                     handler: this._comment.getComments,
                     scope: this._comment,
+                    inherits: ['feedPagination'],
                     validation: {
-                        type: 'object',
-                        additionalProperties: false,
                         required: [],
                         properties: {
                             type: {
@@ -44,13 +43,6 @@ class Connector extends BasicConnector {
                                 type: 'string',
                                 enum: ['time', 'timeDesc'],
                                 default: 'time',
-                            },
-                            sequenceKey: {
-                                type: ['string', 'null'],
-                            },
-                            limit: {
-                                type: 'number',
-                                default: 10,
                             },
                             currentUserId: {
                                 type: ['string', 'null'],
@@ -73,9 +65,8 @@ class Connector extends BasicConnector {
                 getFeed: {
                     handler: this._feed.getFeed,
                     scope: this._feed,
+                    inherits: ['feedPagination'],
                     validation: {
-                        type: 'object',
-                        additionalProperties: false,
                         required: [],
                         properties: {
                             type: {
@@ -101,13 +92,6 @@ class Connector extends BasicConnector {
                                 ],
                                 default: 'day',
                             },
-                            sequenceKey: {
-                                type: ['string', 'null'],
-                            },
-                            limit: {
-                                type: 'number',
-                                default: 10,
-                            },
                             currentUserId: {
                                 type: ['string', 'null'],
                             },
@@ -131,14 +115,21 @@ class Connector extends BasicConnector {
                 getHashTagTop: {
                     handler: this._hashTagTop.getTop,
                     scope: this._hashTagTop,
+                    inherits: ['feedPagination'],
                     validation: {
-                        type: 'object',
-                        additionalProperties: false,
                         required: ['communityId'],
                         properties: {
                             communityId: {
                                 type: 'string',
                             },
+                        },
+                    },
+                },
+            },
+            serverDefaults: {
+                parents: {
+                    feedPagination: {
+                        validation: {
                             limit: {
                                 type: 'number',
                                 default: 10,
@@ -146,7 +137,7 @@ class Connector extends BasicConnector {
                                 maxValue: env.GLS_MAX_FEED_LIMIT,
                             },
                             sequenceKey: {
-                                type: 'string',
+                                type: ['string', 'null'],
                             },
                         },
                     },
