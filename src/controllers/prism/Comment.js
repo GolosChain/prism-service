@@ -115,7 +115,7 @@ class Comment extends AbstractContent {
             return;
         }
 
-        model.ordering.byTime = `${parentComment.ordering.byTime}-${Date.now().toString()}`;
+        model.ordering.byTime = `${parentComment.ordering.byTime}-${Date.now()}`;
     }
 }
 
