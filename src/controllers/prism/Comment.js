@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const Content = core.utils.Content;
+const Logger = core.utils.Logger;
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
@@ -98,73 +99,23 @@ class Comment extends AbstractContent {
     }
 
     async _applyOrdering(model) {
-        const comments = await CommentModel.find(
-            { 'parent.post.contentId': model.parent.post.contentId },
-            { contentId: true, parent: true, ordering: true },
-            { 'ordering.root': 1, 'ordering.child': 1 }
+        if (!model.parent.comment.contentId.userId) {
+            model.ordering.byTime = Date.now().toString();
+            return;
+        }
+
+        const parentCommentId = model.parent.comment.contentId;
+        const parentComment = await CommentModel.findOne(
+            { contentId: parentCommentId },
+            { 'ordering.byTime': true }
         );
 
-        if (!comments || !comments.length) {
-            this._applyFirstOrdering(model);
+        if (!parentComment) {
+            Logger.warn(`Unknown parent comment for ordering - ${parentCommentId}`);
             return;
         }
 
-        if (!model.parent.comment.contentId.userId) {
-            this._applyRootOrdering(model, comments);
-            return;
-        }
-
-        this._applyChildOrdering(model, comments);
-
-        model.ordering.root = model.ordering.root || 0;
-        model.ordering.child = model.ordering.child || 0;
-    }
-
-    _applyFirstOrdering(model) {
-        model.ordering.root = 0;
-        model.ordering.child = 0;
-    }
-
-    _applyRootOrdering(model, comments) {
-        for (const comment of comments.slice().reverse()) {
-            if (comment.ordering.child === 0) {
-                model.ordering.root = comment.ordering.root + 1;
-                break;
-            }
-        }
-
-        model.ordering.root = model.ordering.root || 0;
-        model.ordering.child = 0;
-    }
-
-    _applyChildOrdering(model, comments) {
-        const parentId = model.parent.comment.contentId;
-        let outside = true;
-        let atStart = true;
-        let currentChildNum = 0;
-
-        for (const comment of comments) {
-            if (outside) {
-                if (this._isContentIdEquals(parentId, comment.contentId)) {
-                    outside = false;
-                    model.ordering.root = comment.ordering.root;
-                }
-            } else {
-                atStart = false;
-
-                if (comment.ordering.root !== model.ordering.root) {
-                    model.ordering.child = currentChildNum + 1;
-                }
-
-                currentChildNum = comment.ordering.child;
-            }
-        }
-
-        if (!outside && atStart) {
-            model.ordering.child = model.ordering.child || 1;
-        } else {
-            model.ordering.child = model.ordering.child || 0;
-        }
+        model.ordering.byTime = `${parentComment.ordering.byTime}-${Date.now().toString()}`;
     }
 }
 

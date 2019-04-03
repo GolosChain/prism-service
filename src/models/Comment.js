@@ -108,11 +108,8 @@ module.exports = MongoDB.makeModel(
             },
         },
         ordering: {
-            root: {
-                type: Number,
-            },
-            child: {
-                type: Number,
+            byTime: {
+                type: String,
             },
         },
     },
@@ -135,8 +132,7 @@ module.exports = MongoDB.makeModel(
                     'parent.post.contentId.userId': 1,
                     'parent.post.contentId.permlink': 1,
                     'parent.post.contentId.refBlockNum': 1,
-                    'ordering.root': 1,
-                    'ordering.child': 1,
+                    'ordering.byTime': 1,
                 },
                 options: {
                     unique: true,
