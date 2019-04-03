@@ -111,25 +111,12 @@ class Feed extends AbstractFeed {
         tags,
         ...params
     }) {
-        type = String(type);
         params = {
             ...params,
             ...super._normalizeParams({ sortBy, ...params }),
         };
 
         sortBy = params.sortBy;
-
-        if (currentUserId) {
-            currentUserId = String(currentUserId);
-        }
-
-        if (requestedUserId) {
-            requestedUserId = String(requestedUserId);
-        }
-
-        if (communityId) {
-            communityId = String(communityId);
-        }
 
         if (sortBy === 'popular' && (type !== 'community' || tags)) {
             throw { code: 400, message: `Invalid sorting for - ${type}` };

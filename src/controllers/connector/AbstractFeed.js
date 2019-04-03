@@ -4,14 +4,7 @@ const AbstractContent = require('./AbstractContent');
 const env = require('../../data/env');
 
 class AbstractFeed extends AbstractContent {
-    _normalizeParams({ sortBy, sequenceKey, limit = 10, raw }) {
-        sortBy = String(sortBy || 'time');
-        limit = Number(limit);
-
-        if (Number.isNaN(limit) || limit > env.GLS_MAX_FEED_LIMIT || limit < 1) {
-            limit = env.GLS_MAX_FEED_LIMIT;
-        }
-
+    _normalizeParams({ sortBy, sequenceKey, limit, raw }) {
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
         }
