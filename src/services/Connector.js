@@ -130,14 +130,16 @@ class Connector extends BasicConnector {
                 parents: {
                     feedPagination: {
                         validation: {
-                            limit: {
-                                type: 'number',
-                                default: 10,
-                                minValue: 0,
-                                maxValue: env.GLS_MAX_FEED_LIMIT,
-                            },
-                            sequenceKey: {
-                                type: ['string', 'null'],
+                            properties: {
+                                limit: {
+                                    type: 'number',
+                                    default: 10,
+                                    minValue: 1,
+                                    maxValue: env.GLS_MAX_FEED_LIMIT,
+                                },
+                                sequenceKey: {
+                                    type: ['string', 'null'],
+                                },
                             },
                         },
                     },
