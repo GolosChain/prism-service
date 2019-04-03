@@ -4,8 +4,6 @@ const Model = require('../../models/Profile');
 
 class Profile extends BasicController {
     async getProfile({ requestedUserId }) {
-        requestedUserId = String(requestedUserId);
-
         const modelObject = await Model.findOne(
             { userId: requestedUserId },
             { _id: false, __v: false, createdAt: false, updatedAt: false },

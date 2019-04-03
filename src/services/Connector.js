@@ -25,8 +25,56 @@ class Connector extends BasicConnector {
     async start() {
         await super.start({
             serverRoutes: {
-                getPost: this._post.getPost.bind(this._post),
-                getComment: this._comment.getComment.bind(this._comment),
+                getPost: {
+                    handler: this._post.getPost,
+                    scope: this._post,
+                    validation: {
+                        required: ['requestedUserId', 'permlink', 'refBlockNum'],
+                        properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
+                            },
+                            raw: {
+                                type: 'boolean',
+                                default: false,
+                            },
+                        },
+                    },
+                },
+                getComment: {
+                    handler: this._comment.getComment,
+                    scope: this._comment,
+                    validation: {
+                        required: ['requestedUserId', 'permlink', 'refBlockNum'],
+                        properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
+                            },
+                            raw: {
+                                type: 'boolean',
+                                default: false,
+                            },
+                        },
+                    },
+                },
                 getComments: {
                     handler: this._comment.getComments,
                     scope: this._comment,
@@ -110,8 +158,41 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
-                getProfile: this._profile.getProfile.bind(this._profile),
-                getNotifyMeta: this._notify.getMeta.bind(this._notify),
+                getProfile: {
+                    handler: this._profile.getProfile,
+                    scope: this._profile,
+                    validation: {
+                        required: ['requestedUserId'],
+                        properties: {
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
+                getNotifyMeta: {
+                    handler: this._notify.getMeta,
+                    scope: this._notify,
+                    validation: {
+                        properties: {
+                            userId: {
+                                type: 'string',
+                            },
+                            communityId: {
+                                type: 'string',
+                            },
+                            postId: {
+                                type: 'object',
+                            },
+                            commentId: {
+                                type: 'object',
+                            },
+                            contentId: {
+                                type: 'object',
+                            },
+                        },
+                    },
+                },
                 getHashTagTop: {
                     handler: this._hashTagTop.getTop,
                     scope: this._hashTagTop,
