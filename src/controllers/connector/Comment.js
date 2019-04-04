@@ -45,14 +45,19 @@ class Comment extends AbstractFeed {
             permlink,
             refBlockNum,
             type,
+            raw,
         } = this._normalizeParams(params);
 
         const query = {};
-        const projection = { 'content.title': false, ordering: false };
+        const projection = {
+            'content.title': false,
+            'content.body.preview': false,
+            ordering: false,
+        };
         const options = { lean: true };
         const fullQuery = { query, projection, options };
 
-        this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit });
+        this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit, raw });
         this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink, refBlockNum });
 
         return { type, fullQuery, currentUserId, sortBy, limit };
@@ -61,7 +66,7 @@ class Comment extends AbstractFeed {
     _applySortByTime({ query, options, sequenceKey, direction }) {
         super._applySortByTime({ query, options, sequenceKey, direction });
 
-        options.sort = { 'ordering.root': direction, 'ordering.child': direction };
+        options.sort = { 'ordering.byTime': direction };
     }
 
     async _populate(modelObjects, currentUserId, type) {
@@ -133,35 +138,14 @@ class Comment extends AbstractFeed {
         delete modelObject.parentCommentId;
     }
 
-    _normalizeParams({
-        type = 'post',
-        currentUserId = null,
-        requestedUserId = null,
-        permlink,
-        refBlockNum,
-        ...params
-    }) {
-        params = super._normalizeParams(params);
-
-        type = String(type);
-        permlink = String(permlink);
-        refBlockNum = Number(refBlockNum);
-
-        if (currentUserId) {
-            currentUserId = String(currentUserId);
-        }
-
-        if (requestedUserId) {
-            requestedUserId = String(requestedUserId);
-        }
-
+    _normalizeParams({ type, currentUserId, requestedUserId, permlink, refBlockNum, ...params }) {
         return {
             type,
             currentUserId,
             requestedUserId,
             permlink,
             refBlockNum,
-            ...params,
+            ...super._normalizeParams(params),
         };
     }
 
@@ -169,6 +153,13 @@ class Comment extends AbstractFeed {
         switch (type) {
             case 'user':
                 query['contentId.userId'] = requestedUserId;
+                break;
+
+            case 'replies':
+                query.$or = [
+                    { 'parent.post.contentId.userId': requestedUserId },
+                    { 'parent.comment.contentId.userId': requestedUserId },
+                ];
                 break;
 
             case 'post':

@@ -21,15 +21,7 @@ class Post extends AbstractContent {
         await PostModel.create({
             communityId,
             contentId,
-            content: {
-                title: this._extractTitle(content),
-                body: {
-                    preview: this._extractBodyPreview(content),
-                    full: this._extractBodyFull(content),
-                    raw: this._extractBodyRaw(content),
-                },
-                metadata: await this._extractMetadata(content),
-            },
+            content: await this._extractContentObject(content),
             meta: {
                 time: blockTime,
             },
@@ -42,19 +34,13 @@ class Post extends AbstractContent {
             return;
         }
 
-        const contentId = this._extractContentId(content);
-
         await PostModel.updateOne(
-            { contentId },
             {
-                content: {
-                    title: this._extractTitle(content),
-                    body: {
-                        preview: this._extractBodyPreview(content),
-                        full: this._extractBodyFull(content),
-                        raw: this._extractBodyRaw(content),
-                    },
-                    metadata: await this._extractMetadata(content),
+                contentId: this._extractContentId(content),
+            },
+            {
+                $set: {
+                    content: await this._extractContentObject(content),
                 },
             }
         );

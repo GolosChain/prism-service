@@ -4,19 +4,12 @@ const AbstractContent = require('./AbstractContent');
 const env = require('../../data/env');
 
 class AbstractFeed extends AbstractContent {
-    _normalizeParams({ sortBy, sequenceKey, limit = 10 }) {
-        sortBy = String(sortBy || 'time');
-        limit = Number(limit);
-
-        if (Number.isNaN(limit) || limit > env.GLS_MAX_FEED_LIMIT || limit < 1) {
-            limit = env.GLS_MAX_FEED_LIMIT;
-        }
-
+    _normalizeParams({ sortBy, sequenceKey, limit, raw }) {
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
         }
 
-        return { sortBy, sequenceKey, limit };
+        return { sortBy, sequenceKey, limit, raw };
     }
 
     _packSequenceKey(sequenceKey) {
@@ -27,13 +20,20 @@ class AbstractFeed extends AbstractContent {
         return Buffer.from(String(sequenceKey), 'base64').toString();
     }
 
-    _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit }) {
+    _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit, raw }) {
         options.limit = limit;
         projection.__v = false;
         projection.createdAt = false;
         projection.updatedAt = false;
         projection['votes.upUserIds'] = false;
         projection['votes.downUserIds'] = false;
+
+        if (raw) {
+            projection['content.body.full'] = false;
+            projection['content.body.preview'] = false;
+        } else {
+            projection['content.body.raw'] = false;
+        }
 
         switch (sortBy) {
             case 'timeDesc':

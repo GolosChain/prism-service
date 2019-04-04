@@ -8,11 +8,6 @@ class AbstractContent extends BasicController {
         Model,
         { currentUserId, requestedUserId, permlink, refBlockNum, raw: onlyRawRequired }
     ) {
-        currentUserId = String(currentUserId);
-        requestedUserId = String(requestedUserId);
-        permlink = String(permlink);
-        refBlockNum = Number(refBlockNum);
-
         const modelObject = await Model.findOne(
             {
                 contentId: {

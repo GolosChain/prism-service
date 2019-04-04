@@ -57,17 +57,29 @@ class AbstractContent extends Abstract {
         }
 
         for (const item of metadata.embeds) {
-            if (urlValidator.isUri(item.url)) {
-                item.result = await this.callService('facade', 'frame.getEmbed', {
-                    auth: {},
-                    params: {
-                        type: 'oembed',
-                        url: item.url,
-                    },
-                });
-                item.id = uuid.v4();
+            if (!urlValidator.isUri(item.url)) {
+                continue;
             }
+
+            await this._applyEmbedFor(item);
         }
+    }
+
+    async _applyEmbedFor(item) {
+        const embedType = 'oembed';
+        const embedData = await this.callService('facade', 'frame.getEmbed', {
+            auth: {},
+            params: {
+                type: embedType,
+                url: item.url,
+            },
+        });
+
+        delete item.url;
+
+        item.id = uuid.v4();
+        item.type = embedType;
+        item.result = embedData;
     }
 
     _extractContentId(content) {
@@ -116,6 +128,24 @@ class AbstractContent extends Abstract {
         });
 
         return Boolean(postCount);
+    }
+
+    async _extractContentObject(rawContent) {
+        const metadata = await this._extractMetadata(rawContent);
+        const embeds = metadata.embeds || [];
+
+        delete metadata.embeds;
+
+        return {
+            title: this._extractTitle(rawContent),
+            body: {
+                preview: this._extractBodyPreview(rawContent),
+                full: this._extractBodyFull(rawContent),
+                raw: this._extractBodyRaw(rawContent),
+            },
+            metadata,
+            embeds,
+        };
     }
 }
 

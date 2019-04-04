@@ -42,6 +42,21 @@ module.exports = MongoDB.makeModel(
             tags: {
                 type: [String],
             },
+            embeds: {
+                type: [
+                    {
+                        id: {
+                            type: String,
+                        },
+                        type: {
+                            type: String,
+                        },
+                        result: {
+                            type: Object,
+                        },
+                    },
+                ],
+            },
         },
         votes: {
             upUserIds: {

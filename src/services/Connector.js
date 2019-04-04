@@ -25,31 +25,202 @@ class Connector extends BasicConnector {
     async start() {
         await super.start({
             serverRoutes: {
-                getPost: this._post.getPost.bind(this._post),
-                getComment: this._comment.getComment.bind(this._comment),
-                getComments: this._comment.getComments.bind(this._comment),
-                getFeed: this._feed.getFeed.bind(this._feed),
-                getProfile: this._profile.getProfile.bind(this._profile),
-                getNotifyMeta: this._notify.getMeta.bind(this._notify),
+                getPost: {
+                    handler: this._post.getPost,
+                    scope: this._post,
+                    validation: {
+                        required: ['requestedUserId', 'permlink', 'refBlockNum'],
+                        properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
+                            },
+                            raw: {
+                                type: 'boolean',
+                                default: false,
+                            },
+                        },
+                    },
+                },
+                getComment: {
+                    handler: this._comment.getComment,
+                    scope: this._comment,
+                    validation: {
+                        required: ['requestedUserId', 'permlink', 'refBlockNum'],
+                        properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
+                            },
+                            raw: {
+                                type: 'boolean',
+                                default: false,
+                            },
+                        },
+                    },
+                },
+                getComments: {
+                    handler: this._comment.getComments,
+                    scope: this._comment,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: [],
+                        properties: {
+                            type: {
+                                type: 'string',
+                                enum: ['post', 'user', 'replies'],
+                                default: 'post',
+                            },
+                            sortBy: {
+                                type: 'string',
+                                enum: ['time', 'timeDesc'],
+                                default: 'time',
+                            },
+                            currentUserId: {
+                                type: ['string', 'null'],
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
+                            },
+                            raw: {
+                                type: 'boolean',
+                            },
+                        },
+                    },
+                },
+                getFeed: {
+                    handler: this._feed.getFeed,
+                    scope: this._feed,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: [],
+                        properties: {
+                            type: {
+                                type: 'string',
+                                enum: ['community', 'subscriptions', 'byUser'],
+                                default: 'community',
+                            },
+                            sortBy: {
+                                type: 'string',
+                                enum: ['time', 'timeDesc', 'popular'],
+                                default: 'time',
+                            },
+                            timeframe: {
+                                type: 'string',
+                                enum: [
+                                    'day',
+                                    'week',
+                                    'month',
+                                    'year',
+                                    'all',
+                                    'WilsonHot',
+                                    'WilsonTrending',
+                                ],
+                                default: 'day',
+                            },
+                            currentUserId: {
+                                type: ['string', 'null'],
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            communityId: {
+                                type: 'string',
+                            },
+                            tags: {
+                                type: 'array',
+                            },
+                            raw: {
+                                type: 'boolean',
+                            },
+                        },
+                    },
+                },
+                getProfile: {
+                    handler: this._profile.getProfile,
+                    scope: this._profile,
+                    validation: {
+                        required: ['requestedUserId'],
+                        properties: {
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
+                getNotifyMeta: {
+                    handler: this._notify.getMeta,
+                    scope: this._notify,
+                    validation: {
+                        properties: {
+                            userId: {
+                                type: 'string',
+                            },
+                            communityId: {
+                                type: 'string',
+                            },
+                            postId: {
+                                type: 'object',
+                            },
+                            commentId: {
+                                type: 'object',
+                            },
+                            contentId: {
+                                type: 'object',
+                            },
+                        },
+                    },
+                },
                 getHashTagTop: {
                     handler: this._hashTagTop.getTop,
                     scope: this._hashTagTop,
+                    inherits: ['feedPagination'],
                     validation: {
-                        type: 'object',
-                        additionalProperties: false,
                         required: ['communityId'],
                         properties: {
                             communityId: {
                                 type: 'string',
                             },
-                            limit: {
-                                type: 'number',
-                                default: 10,
-                                minValue: 0,
-                                maxValue: env.GLS_MAX_FEED_LIMIT,
-                            },
-                            sequenceKey: {
-                                type: 'string',
+                        },
+                    },
+                },
+            },
+            serverDefaults: {
+                parents: {
+                    feedPagination: {
+                        validation: {
+                            properties: {
+                                limit: {
+                                    type: 'number',
+                                    default: 10,
+                                    minValue: 1,
+                                    maxValue: env.GLS_MAX_FEED_LIMIT,
+                                },
+                                sequenceKey: {
+                                    type: ['string', 'null'],
+                                },
                             },
                         },
                     },
