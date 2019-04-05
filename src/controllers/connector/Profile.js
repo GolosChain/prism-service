@@ -3,7 +3,7 @@ const BasicController = core.controllers.Basic;
 const Model = require('../../models/Profile');
 
 class Profile extends BasicController {
-    async getProfile({ requestedUserId }) {
+    async getProfile({ requestedUserId, type }) {
         const modelObject = await Model.findOne(
             { userId: requestedUserId },
             { _id: false, __v: false, createdAt: false, updatedAt: false },
@@ -15,6 +15,8 @@ class Profile extends BasicController {
         }
 
         await this._populateSubscriptions(modelObject.subscriptions);
+        modelObject.personal = modelObject.personal || {};
+        modelObject.personal = modelObject.personal[type] || {};
 
         return modelObject;
     }

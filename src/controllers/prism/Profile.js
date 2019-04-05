@@ -29,7 +29,14 @@ class Profile extends Abstract {
             return;
         }
 
-        const personal = profile.personal;
+        profile.personal.gls = {
+            ...profile.personal.gls,
+            ...meta,
+            profileImage: meta.profile_image,
+            coverImage: meta.cover_image,
+        };
+
+        const personal = profile.personal.cyber;
         const contacts = personal.contacts;
         const or = this._currentOrNew.bind(this);
 
