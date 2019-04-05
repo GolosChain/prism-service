@@ -169,7 +169,7 @@ class Connector extends BasicConnector {
                             },
                             type: {
                                 type: 'string',
-                                default: 'gls',
+                                default: 'cyber',
                                 enum: ['gls', 'cyber'],
                             },
                         },
