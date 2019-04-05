@@ -23,6 +23,7 @@ class AbstractFeed extends AbstractContent {
         projection.updatedAt = false;
         projection['votes.upUserIds'] = false;
         projection['votes.downUserIds'] = false;
+        projection['stats.wilson'] = false;
 
         if (raw) {
             projection['content.body.full'] = false;
