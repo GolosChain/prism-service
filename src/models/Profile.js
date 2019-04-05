@@ -12,28 +12,40 @@ module.exports = MongoDB.makeModel(
             type: String,
         },
         personal: {
-            avatarUrl: {
-                type: String,
+            cyber: {
+                avatarUrl: {
+                    type: String,
+                },
+                coverUrl: {
+                    type: String,
+                },
+                biography: {
+                    type: String,
+                },
+                contacts: {
+                    facebook: {
+                        type: String,
+                    },
+                    telegram: {
+                        type: String,
+                    },
+                    whatsApp: {
+                        type: String,
+                    },
+                    weChat: {
+                        type: String,
+                    },
+                },
             },
-            coverUrl: {
-                type: String,
-            },
-            biography: {
-                type: String,
-            },
-            contacts: {
-                facebook: {
-                    type: String,
-                },
-                telegram: {
-                    type: String,
-                },
-                whatsApp: {
-                    type: String,
-                },
-                weChat: {
-                    type: String,
-                },
+            gls: {
+                name: String,
+                gender: String,
+                about: String,
+                location: String,
+                website: String,
+                profile_image: String,
+                cover_image: String,
+                social: String,
             },
         },
         subscriptions: {

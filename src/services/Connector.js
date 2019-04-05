@@ -167,6 +167,11 @@ class Connector extends BasicConnector {
                             requestedUserId: {
                                 type: 'string',
                             },
+                            type: {
+                                type: 'string',
+                                default: 'gls',
+                                enum: ['gls', 'cyber'],
+                            },
                         },
                     },
                 },

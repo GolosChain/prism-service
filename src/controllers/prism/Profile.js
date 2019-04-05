@@ -18,6 +18,7 @@ class Profile extends Abstract {
             registration: {
                 time: blockTime,
             },
+            personal: {},
             subscriptions: ['gls'], // TODO Change after MVP
         });
     }
@@ -29,7 +30,12 @@ class Profile extends Abstract {
             return;
         }
 
-        const personal = profile.personal;
+        profile.personal.gls = {
+            ...profile.personal.gls,
+            ...meta,
+        };
+
+        const personal = profile.personal.cyber;
         const contacts = personal.contacts;
         const or = this._currentOrNew.bind(this);
 
