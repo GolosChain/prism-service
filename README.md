@@ -14,7 +14,7 @@ API JSON-RPC:
 ```
 getProfile:                        // Получение профиля пользователя
     requestedUserId <string>       // Идентификатор пользователя
-    type <string> ('gls')          // Тип профиля
+    type <string> ('cyber')        // Тип профиля
 
 getPost:                           // Получение конкретного поста
     currentUserId <string/null>    // Идентификатор текущего пользователя

@@ -18,7 +18,6 @@ class Profile extends Abstract {
             registration: {
                 time: blockTime,
             },
-            personal: {},
             subscriptions: ['gls'], // TODO Change after MVP
         });
     }
@@ -33,6 +32,8 @@ class Profile extends Abstract {
         profile.personal.gls = {
             ...profile.personal.gls,
             ...meta,
+            profileImage: meta.profile_image,
+            coverImage: meta.cover_image,
         };
 
         const personal = profile.personal.cyber;
