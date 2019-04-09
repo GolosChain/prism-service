@@ -1,6 +1,6 @@
 {
   "name": "prism-service",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "",
   "main": "./src/index.js",
   "scripts": {
@@ -36,9 +36,7 @@
   "homepage": "https://github.com/GolosChain/prism-service#readme",
   "dependencies": {
     "gls-core-service": "^3.17.7",
-    "golos-js": "^0.7.7",
     "moment": "^2.24.0",
-    "then-sleep": "^1.0.1",
     "uuid": "^3.3.2",
     "valid-url": "^1.0.9"
   }
