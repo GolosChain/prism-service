@@ -179,6 +179,8 @@ class Feed extends AbstractFeed {
         switch (sortBy) {
             case 'popular':
                 return this._finalizePopularSorting(modelObjects, fullQuery);
+            default:
+                return modelObjects;
         }
     }
 
