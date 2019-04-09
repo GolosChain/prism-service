@@ -2,7 +2,6 @@ const core = require('gls-core-service');
 const Content = core.utils.Content;
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
-const ProfileModel = require('../../models/Profile');
 
 class Post extends AbstractContent {
     constructor(...args) {
@@ -26,7 +25,7 @@ class Post extends AbstractContent {
                 time: blockTime,
             },
         });
-        await this._updateUserPostCount(contentId.userId, 1);
+        await this._updateUserPostsCount(contentId.userId, 1);
     }
 
     async handleUpdate({ args: content }) {
@@ -54,11 +53,7 @@ class Post extends AbstractContent {
         const contentId = this._extractContentId(content);
 
         await PostModel.deleteOne({ contentId });
-        await this._updateUserPostCount(contentId.userId, -1);
-    }
-
-    async _updateUserPostCount(userId, increment) {
-        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
+        await this._updateUserPostsCount(contentId.userId, -1);
     }
 }
 

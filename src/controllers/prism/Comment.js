@@ -4,6 +4,7 @@ const Logger = core.utils.Logger;
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
+const ProfileModel = require('../../models/Profile');
 
 class Comment extends AbstractContent {
     constructor(...args) {
@@ -29,6 +30,7 @@ class Comment extends AbstractContent {
         await this._applyOrdering(model);
         await model.save();
         await this._updatePostCommentsCount(model, 1);
+        await this._updateUserCommentsCount(model.contentId.userId, 1);
     }
 
     async handleUpdate({ args: content }) {
@@ -62,6 +64,7 @@ class Comment extends AbstractContent {
         }
 
         await this._updatePostCommentsCount(model, -1);
+        await this._updateUserPostsCount(model.contentId.userId, -1);
         await model.remove();
     }
 
@@ -116,6 +119,10 @@ class Comment extends AbstractContent {
         }
 
         model.ordering.byTime = `${parentComment.ordering.byTime}-${Date.now()}`;
+    }
+
+    async _updateUserCommentsCount(userId, increment) {
+        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.commentsCount': increment } });
     }
 }
 
