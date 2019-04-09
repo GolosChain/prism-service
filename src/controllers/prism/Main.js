@@ -1,232 +1,112 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
-const BlockUtil = core.utils.Block;
-const Content = require('./Content');
+const Post = require('./Post');
+const Comment = require('./Comment');
+const Profile = require('./Profile');
 const Vote = require('./Vote');
-const User = require('./User');
-const RevertTrace = require('../../models/RevertTrace');
+const Subscribe = require('./Subscribe');
+const HashTag = require('./HashTag');
+
+// TODO Change after MVP
+const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'cyber'];
 
 class Main {
-    constructor(sevices) {
-        this._content = new Content(sevices);
-        this._vote = new Vote(sevices);
-        this._user = new User(sevices);
+    constructor({ connector }) {
+        this._post = new Post({ connector });
+        this._comment = new Comment({ connector });
+        this._profile = new Profile({ connector });
+        this._vote = new Vote({ connector });
+        this._subscribe = new Subscribe({ connector });
+        this._hashTag = new HashTag({ connector });
     }
 
-    async disperse([block, blockNum]) {
-        const tracer = new RevertTrace({ blockNum });
+    async disperse({ transactions, blockNum, blockTime }) {
+        for (const transaction of transactions) {
+            let previous = null;
 
-        this._blockMeta = {
-            blockNum,
-            blockTime: new Date(block.timestamp),
-        };
-
-        await tracer.save();
-
-        for (let [type, data] of BlockUtil.eachRealOperation(block)) {
-            await this._disperseReal(type, data);
-        }
-
-        for (let [type, data] of BlockUtil.eachVirtualOperation(block)) {
-            await this._disperseVirtual(type, data);
+            for (const action of transaction.actions) {
+                await this._disperseAction(action, previous, { blockNum, blockTime });
+                previous = action;
+            }
         }
     }
 
-    async _disperseReal(type, data) {
-        switch (type) {
-            case 'vote':
-                await this._vote.handle(data, this._blockMeta);
+    async _disperseAction(action, previous, { blockNum, blockTime }) {
+        if (!action) {
+            Logger.error('Empty transaction! But continue.');
+            return;
+        }
+
+        if (!communityRegistry.includes(action.receiver)) {
+            return;
+        }
+
+        const pathName = [action.code, action.action].join('->');
+        const communityId = this._extractCommunityId(action);
+
+        switch (pathName) {
+            case 'gls.publish->createmssg':
+                // Warning - do not change ordering
+                await this._post.handleCreate(action, { communityId, blockTime });
+                await this._hashTag.handleCreate(action, { communityId });
+                await this._comment.handleCreate(action, { communityId, blockTime });
                 break;
-            case 'comment':
-                await this._content.handleMakeOrModify(data, this._blockMeta);
+
+            case 'gls.publish->updatemssg':
+                // Warning - do not change ordering
+                await this._hashTag.handleUpdate(action, { communityId });
+                await this._post.handleUpdate(action);
+                await this._comment.handleUpdate(action);
                 break;
-            case 'transfer':
-                await this._content.handlePromoteTransfer(data);
+
+            case 'gls.publish->deletemssg':
+                // Warning - do not change ordering
+                await this._hashTag.handleDelete(action, { communityId });
+                await this._post.handleDelete(action);
+                await this._comment.handleDelete(action);
                 break;
-            case 'transfer_to_vesting':
-                await this._user.handleTransferToVesting(data);
+
+            case 'cyber->newaccount':
+                await this._profile.handleCreate(action, { blockTime });
                 break;
-            case 'withdraw_vesting':
-                await this._user.handleWithdrawVesting(data);
+
+            case 'gls.social->updatemeta':
+                await this._profile.handleMeta(action);
                 break;
-            case 'limit_order_create':
-                // Do noting for now
+
+            case 'gls.social->changereput':
+                await this._vote.handleReputation(action, previous);
                 break;
-            case 'limit_order_cancel':
-                // Do noting for now
+
+            case 'gls.publish->upvote':
+                await this._vote.handleUpVote(action);
                 break;
-            case 'feed_publish':
-                // Do noting for now
+
+            case 'gls.publish->downvote':
+                await this._vote.handleDownVote(action);
                 break;
-            case 'convert':
-                // Do noting for now
+
+            case 'gls.publish->unvote':
+                await this._vote.handleUnVote(action);
                 break;
-            case 'account_create':
-                await this._user.handleAccountCreate(data, this._blockMeta);
+
+            case 'gls.social->pin':
+                await this._subscribe.pin(action);
                 break;
-            case 'account_update':
-                // Do noting for now
+
+            case 'gls.social->unpin':
+                await this._subscribe.unpin(action);
                 break;
-            case 'witness_update':
-                // Do noting for now
-                break;
-            case 'account_witness_vote':
-                // Do noting for now
-                break;
-            case 'account_witness_proxy':
-                // Do noting for now
-                break;
-            case 'pow':
-                // Do noting for now
-                break;
-            case 'custom':
-                // Do noting for now
-                break;
-            case 'report_over_production':
-                // Do noting for now
-                break;
-            case 'delete_comment':
-                await this._content.handleDelete(data);
-                break;
-            case 'custom_json':
-                await this._user.handleCustom(data);
-                break;
-            case 'comment_options':
-                await this._content.handleOptions(data);
-                break;
-            case 'set_withdraw_vesting_route':
-                // Do noting for now
-                break;
-            case 'limit_order_create2':
-                // Do noting for now
-                break;
-            case 'challenge_authority':
-                // Do noting for now
-                break;
-            case 'prove_authority':
-                // Do noting for now
-                break;
-            case 'request_account_recovery':
-                // Do noting for now
-                break;
-            case 'recover_account':
-                // Do noting for now
-                break;
-            case 'change_recovery_account':
-                // Do noting for now
-                break;
-            case 'escrow_transfer':
-                // Do noting for now
-                break;
-            case 'escrow_dispute':
-                // Do noting for now
-                break;
-            case 'escrow_release':
-                // Do noting for now
-                break;
-            case 'pow2':
-                // Do noting for now
-                break;
-            case 'escrow_approve':
-                // Do noting for now
-                break;
-            case 'transfer_to_savings':
-                // Do noting for now
-                break;
-            case 'transfer_from_savings':
-                // Do noting for now
-                break;
-            case 'cancel_transfer_from_savings':
-                // Do noting for now
-                break;
-            case 'custom_binary':
-                // Do noting for now
-                break;
-            case 'decline_voting_rights':
-                // Do noting for now
-                break;
-            case 'reset_account':
-                // Do noting for now
-                break;
-            case 'set_reset_account':
-                // Do noting for now
-                break;
-            case 'delegate_vesting_shares':
-                await this._user.handleDelegateVesting(data);
-                break;
-            case 'account_create_with_delegation':
-                await this._user.handleAccountCreateWithDelegation(data);
-                break;
-            case 'account_metadata':
-                await this._user.handleAccount(data);
-                break;
-            case 'proposal_create':
-                // Do noting for now
-                break;
-            case 'proposal_update':
-                // Do noting for now
-                break;
-            case 'proposal_delete':
-                // Do noting for now
-                break;
-            case 'chain_properties_update':
-                // Do noting for now
-                break;
+
             default:
-                Logger.error(`Unknown real operation type - ${type} - skip.`);
+            // unknown transaction, do nothing
         }
     }
 
-    async _disperseVirtual(type, data) {
-        switch (type) {
-            case 'fill_convert_request':
-                // Do noting for now
-                break;
-            case 'author_reward':
-                await this._user.handleAuthorReward(data);
-                break;
-            case 'curation_reward':
-                await this._user.handleCuratorReward(data);
-                break;
-            case 'comment_reward':
-                // Do noting for now
-                break;
-            case 'liquidity_reward':
-                // Do noting for now
-                break;
-            case 'interest':
-                // Do noting for now
-                break;
-            case 'fill_vesting_withdraw':
-                // Do noting for now
-                break;
-            case 'fill_order':
-                // Do noting for now
-                break;
-            case 'shutdown_witness':
-                // Do noting for now
-                break;
-            case 'fill_transfer_from_savings':
-                // Do noting for now
-                break;
-            case 'hardfork':
-                // Do noting for now
-                break;
-            case 'comment_payout_update':
-                // Do noting for now
-                break;
-            case 'comment_benefactor_reward':
-                await this._user.handleBenefactorReward(data);
-                break;
-            case 'return_vesting_delegation':
-                // Do noting for now
-                break;
-            case 'producer_reward':
-                await this._user.handleProducerReward(data);
-                break;
-            default:
-                Logger.error(`Unknown virtual operation type - ${type} - skip.`);
-        }
+    _extractCommunityId(transaction) {
+        const calledCodeName = transaction.code;
+
+        return calledCodeName.split('.')[0];
     }
 }
 

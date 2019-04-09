@@ -1,125 +1,209 @@
-const env = require('../../data/env');
-const Abstract = require('./Abstract');
-const Post = require('../../models/Post');
-const User = require('../../models/User');
+const AbstractFeed = require('./AbstractFeed');
+const PostModel = require('../../models/Post');
+const ProfileModel = require('../../models/Profile');
 
-class Feed extends Abstract {
-    async handleNatural({ tags = [], afterId = null, limit = 20 }) {
-        [limit, tags] = this._normalizeRequestParams(limit, tags);
+class Feed extends AbstractFeed {
+    constructor({ feedCache }) {
+        super();
 
-        return await this._getNaturalFeed({ afterId, limit, tags });
+        this._feedCache = feedCache;
     }
 
-    async handlePopular({ tags = [], afterId = null, limit = 20 }) {
-        [limit, tags] = this._normalizeRequestParams(limit, tags);
+    async getFeed(params) {
+        const { fullQuery, currentUserId, sortBy, meta, limit } = await this._prepareQuery(params);
+        let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
-        return await this._getPopularFeed({ afterId, limit, tags });
-    }
-
-    async handleActual({ tags = [], afterId = null, limit = 20 }) {
-        [limit, tags] = this._normalizeRequestParams(limit, tags);
-
-        return await this._getActualFeed({ afterId, limit, tags });
-    }
-
-    async handlePromo({ tags = [], afterId = null, limit = 20 }) {
-        [limit, tags] = this._normalizeRequestParams(limit, tags);
-
-        return await this._getPromoFeed({ afterId, limit, tags });
-    }
-
-    async handlePersonal({ user, tags = [], afterId = null, limit = 20 }) {
-        [limit, tags] = this._normalizeRequestParams(limit, tags);
-
-        return await this._getPersonalFeed({ afterId, limit, tags, user });
-    }
-
-    _normalizeRequestParams(limit, tags) {
-        limit = Number(limit);
-
-        if (!limit || limit <= 0 || limit > env.GLS_MAX_FEED_LIMIT) {
-            limit = 20;
+        if (!modelObjects || modelObjects.length === 0) {
+            return this._makeEmptyFeedResult();
         }
 
-        if (!Array.isArray(tags)) {
-            tags = [];
-        }
+        modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
+        await this._populate(modelObjects, currentUserId);
 
-        return [limit, tags];
+        return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
     }
 
-    async _getNaturalFeed({ afterId, limit, tags }) {
+    async _prepareQuery(params) {
+        const {
+            type,
+            sortBy,
+            timeframe,
+            sequenceKey,
+            limit,
+            currentUserId,
+            requestedUserId,
+            communityId,
+            tags,
+            raw,
+        } = this._normalizeParams(params);
+
         const query = {};
-
-        this._injectQueryParams(query, { afterId, tags });
-
-        return await this._queryFeedWithAnnotate(query, { _id: -1 }, limit);
-    }
-
-    async _getPopularFeed({ afterId, limit, tags }) {
-        const query = {};
-
-        this._injectQueryParams(query, { afterId, tags });
-
-        return await this._queryFeedWithAnnotate(query, { 'scoring.popular': -1 }, limit);
-    }
-
-    async _getActualFeed({ afterId, limit, tags }) {
-        const query = {};
-
-        this._injectQueryParams(query, { afterId, tags });
-
-        return await this._queryFeedWithAnnotate(query, { 'scoring.actual': -1 }, limit);
-    }
-
-    async _getPromoFeed({ afterId, limit, tags }) {
-        const payoutDate = new Date(Date.now() - env.GLS_PAYOUT_RANGE);
-        const query = { createdInBlockchain: { $gt: payoutDate } };
-
-        this._injectQueryParams(query, { afterId, tags });
-
-        return await this._queryFeedWithAnnotate(query, { 'promote.balance': -1 }, limit);
-    }
-
-    async _getPersonalFeed({ afterId, limit, user, tags }) {
-        const query = {};
-
-        this._injectQueryParams(query, { afterId, tags });
-
-        const userModel = await User.findOne({ name: user }, { following: true });
-
-        if (!userModel || !userModel.following || !userModel.following.length) {
-            return this._annotate([]);
-        }
-
-        query.author = { $in: userModel.following };
-
-        return await this._queryFeedWithAnnotate(query, { _id: -1 }, limit);
-    }
-
-    _injectQueryParams(query, { afterId, tags }) {
-        if (afterId) {
-            query._id = { $lt: afterId };
-        }
-
-        if (tags.length) {
-            query['metadata.tags'] = { $in: tags };
-        }
-    }
-
-    async _queryFeedWithAnnotate(query, sort, limit) {
-        return this._annotate(await this._queryFeed(query, sort, limit));
-    }
-
-    async _queryFeed(query, sort, limit) {
-        return await Post.find(query, { __v: false }, { limit, lean: true, sort });
-    }
-
-    _annotate(responseDate = []) {
-        return {
-            total: responseDate.length,
-            data: responseDate,
+        const projection = {
+            'content.body.full': false,
         };
+        const options = { lean: true };
+        const fullQuery = { query, projection, options };
+        const meta = {};
+
+        await this._applyFeedTypeConditions(fullQuery, {
+            type,
+            requestedUserId,
+            communityId,
+            tags,
+        });
+        this._applySortingAndSequence(
+            fullQuery,
+            { type, sortBy, timeframe, sequenceKey, limit, raw },
+            meta
+        );
+
+        return { fullQuery, currentUserId, sortBy, meta, limit };
+    }
+
+    _applySortingAndSequence(
+        { query, projection, options },
+        { type, sortBy, timeframe, sequenceKey, limit, raw },
+        meta
+    ) {
+        super._applySortingAndSequence(
+            { query, projection, options },
+            { type, sortBy, sequenceKey, limit, raw }
+        );
+
+        switch (sortBy) {
+            case 'popular':
+                const { ids, newSequenceKey } = this._feedCache.getIdsWithSequenceKey({
+                    communityId: query.communityId,
+                    sortBy,
+                    timeframe,
+                    sequenceKey,
+                    limit,
+                });
+
+                delete query.communityId;
+                meta.newSequenceKey = newSequenceKey;
+                query._id = { $in: ids };
+                break;
+        }
+    }
+
+    _applySortByTime({ query, options, sequenceKey, direction }) {
+        super._applySortByTime({ query, options, sequenceKey, direction });
+
+        options.sort = { _id: direction };
+    }
+
+    async _populate(modelObjects, currentUserId) {
+        await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
+        await this._populateAuthors(modelObjects);
+        await this._populateCommunities(modelObjects);
+    }
+
+    _normalizeParams({
+        type = 'community',
+        currentUserId = null,
+        requestedUserId = null,
+        communityId = null,
+        sortBy,
+        tags,
+        ...params
+    }) {
+        params = {
+            ...params,
+            ...super._normalizeParams({ sortBy, ...params }),
+        };
+
+        sortBy = params.sortBy;
+
+        if (sortBy === 'popular' && (type !== 'community' || tags)) {
+            throw { code: 400, message: `Invalid sorting for - ${type}` };
+        }
+
+        if (tags && !Array.isArray(tags)) {
+            throw { code: 400, message: 'Invalid tags param' };
+        }
+
+        return { type, currentUserId, requestedUserId, communityId, tags, ...params };
+    }
+
+    async _applyFeedTypeConditions({ query }, { type, requestedUserId, communityId, tags }) {
+        switch (type) {
+            case 'subscriptions':
+                await this._applyUserSubscriptions(query, requestedUserId);
+                break;
+
+            case 'byUser':
+                query['contentId.userId'] = requestedUserId;
+                break;
+
+            case 'community':
+                if (tags) {
+                    query['content.tags'] = { $in: tags };
+                }
+
+            default:
+                query.communityId = communityId;
+        }
+    }
+
+    async _applyUserSubscriptions(query, requestedUserId) {
+        const model = await ProfileModel.findOne(
+            { userId: requestedUserId },
+            { subscriptions: true, _id: false }
+        );
+
+        if (!model) {
+            throw { code: 400, message: 'Bad user id' };
+        }
+
+        query['communityId'] = { $in: model.subscriptions.communityIds };
+    }
+
+    _getSequenceKey(models, { sortBy, limit }, meta) {
+        const origin = super._getSequenceKey(models, sortBy);
+
+        switch (sortBy) {
+            case 'popular':
+                if (models.length < limit) {
+                    return null;
+                }
+
+                return this._packSequenceKey(meta.newSequenceKey);
+
+            default:
+                return origin;
+        }
+    }
+
+    _finalizeSorting(modelObjects, sortBy, fullQuery) {
+        switch (sortBy) {
+            case 'popular':
+                return this._finalizePopularSorting(modelObjects, fullQuery);
+            default:
+                return modelObjects;
+        }
+    }
+
+    _finalizePopularSorting(
+        modelObjects,
+        {
+            query: {
+                _id: { $in: ids },
+            },
+        }
+    ) {
+        const idMapping = new Map();
+        const result = [];
+
+        for (const modelObject of modelObjects) {
+            idMapping.set(String(modelObject._id), modelObject);
+        }
+
+        for (const id of ids) {
+            result.push(idMapping.get(String(id)));
+        }
+
+        return result;
     }
 }
 

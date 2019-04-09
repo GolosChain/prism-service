@@ -2,35 +2,35 @@ const core = require('gls-core-service');
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
-    'RawBlockTransaction',
+    'HashTag',
     {
-        blockNum: {
-            type: Number,
-            required: true,
+        communityId: {
+            type: String,
         },
-        orderingNum: {
+        name: {
+            type: String,
+        },
+        count: {
             type: Number,
-            required: true,
+            default: 0,
         },
     },
     {
         index: [
-            // Search
             {
+                // Search one
                 fields: {
-                    blockNum: -1,
+                    communityId: 1,
+                    name: 1,
                 },
             },
-            // Compose
             {
+                // Ordering
                 fields: {
-                    blockNum: 1,
-                    orderingNum: 1,
+                    communityId: 1,
+                    count: -1,
                 },
             },
         ],
-        schema: {
-            strict: false,
-        },
     }
 );

@@ -1,134 +1,132 @@
-const Abstract = require('./Abstract');
-const VoteModel = require('../../models/Vote');
+const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
-const UserModel = require('../../models/User');
-const VotePendingPayout = require('../../utils/VotePendingPayout');
-const ContentPendingPayout = require('../../utils/ContentPendingPayout');
-const ContentScoring = require('../../utils/ContentScoring');
+const WilsonScoring = require('../../utils/WilsonScoring');
 
-class Vote extends Abstract {
-    constructor(...args) {
-        super(...args);
+class Vote extends AbstractContent {
+    async handleUpVote({ args: content }) {
+        const model = await this._getModelWithVotes(content);
 
-        this._contentScoring = new ContentScoring();
-    }
-
-    async handle({ voter: fromUser, author: toUser, permlink, weight }, { blockTime }) {
-        let model = await VoteModel.findOne({ fromUser, toUser, permlink });
-        let isNewVote;
-
-        if (model) {
-            isNewVote = false;
-
-            await this._updateRevertTrace({
-                command: 'swap',
-                modelBody: model.toObject(),
-                modelClassName: VoteModel.modelName,
-            });
-        } else {
-            isNewVote = true;
-            model = new VoteModel({ fromUser, toUser, permlink, weight });
-
-            await this._updateRevertTrace({
-                command: 'create',
-                modelBody: model.toObject(),
-                modelClassName: VoteModel.modelName,
-            });
-
-            await model.save();
-        }
-
-        const postModel = await PostModel.findOne({ author: toUser, permlink });
-
-        if (postModel) {
-            await this._updatePostByVote({
-                isNewVote,
-                voteModel: model,
-                contentModel: postModel,
-                blockTime,
-            });
-        } else {
-            const commentModel = await CommentModel.findOne({ author: toUser, permlink });
-
-            if (commentModel) {
-                await this._updateCommentByVote();
-            }
-        }
-    }
-
-    async _updatePostByVote({ voteModel, isNewVote, contentModel, blockTime }) {
-        await this._applyPostVotes(voteModel, contentModel);
-        await this._applyPostPayouts({ voteModel, isNewVote, contentModel, blockTime });
-        await this._applyPostScoring(contentModel);
-    }
-
-    async _applyPostVotes(voteModel, contentModel) {
-        const { fromUser, weight } = voteModel;
-
-        contentModel.vote.likes = contentModel.vote.likes || {};
-        contentModel.vote.dislikes = contentModel.vote.dislikes || {};
-
-        if (weight.gt(0)) {
-            contentModel.vote.likes[fromUser] = weight;
-            delete contentModel.vote.dislikes[fromUser];
-        } else if (weight.lt(0)) {
-            contentModel.vote.dislikes[fromUser] = weight;
-            delete contentModel.vote.likes[fromUser];
-        } else {
-            delete contentModel.vote.likes[fromUser];
-            delete contentModel.vote.dislikes[fromUser];
-        }
-
-        contentModel.markModified('vote.likes');
-        contentModel.markModified('vote.dislikes');
-    }
-
-    async _applyPostPayouts({ voteModel, isNewVote, contentModel, blockTime }) {
-        const userModel = await UserModel.findOne({
-            name: voteModel.toUser,
-        });
-        let recentVoteModel;
-
-        if (!userModel) {
+        if (!model) {
             return;
         }
 
-        if (isNewVote) {
-            recentVoteModel = null;
-        } else {
-            recentVoteModel = voteModel.toObject();
-        }
-
-        const chainProps = await this._chainPropsService.getCurrentValues();
-        const feedPrice = await this._feedPriceService.getCurrentValues();
-        const voteContext = { voteModel, recentVoteModel, contentModel, userModel };
-        const voteCalculation = new VotePendingPayout(voteContext, chainProps, blockTime);
-        const contentCalculation = new ContentPendingPayout(contentModel, true, {
-            chainProps,
-            gbgRate: feedPrice.gbgRate,
-        });
-
-        await voteCalculation.calcAndApply();
-        contentCalculation.calc();
-        await contentModel.save();
-    }
-
-    async _applyPostScoring(model) {
-        model.scoring.actual = this._contentScoring.calcActual(
-            model.payout.netRshares,
-            model.createdInBlockchain
-        );
-        model.scoring.popular = this._contentScoring.calcPopular(
-            model.payout.netRshares,
-            model.createdInBlockchain
-        );
+        this._includeUpVote(model, content.voter);
+        this._excludeDownVote(model, content.voter);
 
         await model.save();
     }
 
-    async _updateCommentByVote() {
-        // TODO Next version (not in MVP)
+    async handleDownVote({ args: content }) {
+        const model = await this._getModelWithVotes(content);
+
+        if (!model) {
+            return;
+        }
+
+        this._includeDownVote(model, content.voter);
+        this._excludeUpVote(model, content.voter);
+
+        await model.save();
+    }
+
+    async handleUnVote({ args: content }) {
+        const model = await this._getModelWithVotes(content);
+
+        if (!model) {
+            return;
+        }
+
+        this._excludeUpVote(model, content.voter);
+        this._excludeDownVote(model, content.voter);
+
+        await model.save();
+    }
+
+    _includeUpVote(model, userId) {
+        const pack = model.votes.upUserIds;
+
+        if (!pack.includes(userId)) {
+            pack.push(userId);
+            model.markModified('votes.upUserIds');
+            model.votes.upCount++;
+        }
+    }
+
+    _includeDownVote(model, userId) {
+        const pack = model.votes.downUserIds;
+
+        if (!pack.includes(userId)) {
+            pack.push(userId);
+            model.markModified('votes.downUserIds');
+            model.votes.downCount++;
+        }
+    }
+
+    _excludeUpVote(model, userId) {
+        const pack = model.votes.upUserIds;
+
+        if (pack.includes(userId)) {
+            pack.splice(pack.indexOf(userId));
+            model.markModified('votes.upUserIds');
+            model.votes.upCount--;
+        }
+    }
+
+    _excludeDownVote(model, userId) {
+        const pack = model.votes.downUserIds;
+
+        if (pack.includes(userId)) {
+            pack.splice(pack.indexOf(userId));
+            model.markModified('votes.downUserIds');
+            model.votes.downCount--;
+        }
+    }
+
+    async handleReputation(
+        {
+            args: { rshares: rShares },
+        },
+        { args: content }
+    ) {
+        const model = await this._getModel(content, {
+            payout: true,
+            'meta.time': true,
+            stats: true,
+        });
+
+        if (!model) {
+            return;
+        }
+
+        model.payout.rShares = rShares;
+        model.stats = model.stats || {};
+        model.stats.wilson = model.stats.wilson || {};
+        model.stats.wilson.hot = WilsonScoring.calcHot(rShares, model.meta.time);
+        model.stats.wilson.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
+
+        await model.save();
+    }
+
+    async _getModelWithVotes(content) {
+        return await this._getModel(content, { votes: true });
+    }
+
+    async _getModel(content, projection) {
+        const contentId = this._extractContentId(content);
+        const post = await PostModel.findOne({ contentId }, projection);
+
+        if (post) {
+            return post;
+        }
+
+        const comment = await CommentModel.findOne({ contentId }, projection);
+
+        if (comment) {
+            return comment;
+        }
+
+        return null;
     }
 }
 
