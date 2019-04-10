@@ -34,7 +34,7 @@ class Feed extends AbstractFeed {
             requestedUserId,
             communityId,
             tags,
-            raw,
+            contentType,
         } = this._normalizeParams(params);
 
         const query = {};
@@ -53,7 +53,7 @@ class Feed extends AbstractFeed {
         });
         this._applySortingAndSequence(
             fullQuery,
-            { type, sortBy, timeframe, sequenceKey, limit, raw },
+            { type, sortBy, timeframe, sequenceKey, limit, contentType },
             meta
         );
 
@@ -62,12 +62,12 @@ class Feed extends AbstractFeed {
 
     _applySortingAndSequence(
         { query, projection, options },
-        { type, sortBy, timeframe, sequenceKey, limit, raw },
+        { type, sortBy, timeframe, sequenceKey, limit, contentType },
         meta
     ) {
         super._applySortingAndSequence(
             { query, projection, options },
-            { type, sortBy, sequenceKey, limit, raw }
+            { type, sortBy, sequenceKey, limit, contentType }
         );
 
         switch (sortBy) {

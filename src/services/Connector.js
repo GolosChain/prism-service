@@ -43,9 +43,10 @@ class Connector extends BasicConnector {
                             refBlockNum: {
                                 type: 'number',
                             },
-                            raw: {
-                                type: 'boolean',
-                                default: false,
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
                             },
                         },
                     },
@@ -68,9 +69,10 @@ class Connector extends BasicConnector {
                             refBlockNum: {
                                 type: 'number',
                             },
-                            raw: {
-                                type: 'boolean',
-                                default: false,
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
                             },
                         },
                     },
@@ -104,8 +106,10 @@ class Connector extends BasicConnector {
                             refBlockNum: {
                                 type: 'number',
                             },
-                            raw: {
-                                type: 'boolean',
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
                             },
                         },
                     },
@@ -152,8 +156,10 @@ class Connector extends BasicConnector {
                             tags: {
                                 type: 'array',
                             },
-                            raw: {
-                                type: 'boolean',
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
                             },
                         },
                     },

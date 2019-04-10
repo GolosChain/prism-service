@@ -1,12 +1,12 @@
 const AbstractContent = require('./AbstractContent');
 
 class AbstractFeed extends AbstractContent {
-    _normalizeParams({ sortBy, sequenceKey, limit, raw }) {
+    _normalizeParams({ sortBy, sequenceKey, limit, contentType }) {
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
         }
 
-        return { sortBy, sequenceKey, limit, raw };
+        return { sortBy, sequenceKey, limit, contentType };
     }
 
     _packSequenceKey(sequenceKey) {
@@ -17,7 +17,10 @@ class AbstractFeed extends AbstractContent {
         return Buffer.from(String(sequenceKey), 'base64').toString();
     }
 
-    _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit, raw }) {
+    _applySortingAndSequence(
+        { query, projection, options },
+        { sortBy, sequenceKey, limit, contentType }
+    ) {
         options.limit = limit;
         projection.__v = false;
         projection.updatedAt = false;
@@ -25,11 +28,15 @@ class AbstractFeed extends AbstractContent {
         projection['votes.downUserIds'] = false;
         projection['stats.wilson'] = false;
 
-        if (raw) {
-            projection['content.body.full'] = false;
-            projection['content.body.preview'] = false;
-        } else {
-            projection['content.body.raw'] = false;
+        switch (contentType) {
+            case 'web':
+            case 'mobile':
+                projection['content.body.raw'] = false;
+                break;
+            case 'raw':
+                projection['content.body.full'] = false;
+                projection['content.body.preview'] = false;
+                break;
         }
 
         switch (sortBy) {
