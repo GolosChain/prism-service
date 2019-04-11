@@ -40,6 +40,7 @@ class Feed extends AbstractFeed {
         const query = {};
         const projection = {
             'content.body.full': false,
+            'content.body.mobile': false,
         };
         const options = { lean: true };
         const fullQuery = { query, projection, options };

@@ -43,6 +43,7 @@ class AbstractContent extends BasicController {
             case 'mobile':
                 excludeContentVariant = {
                     'content.body.full': false,
+                    'content.body.mobile._id': false,
                     'content.body.raw': false,
                 };
                 break;
