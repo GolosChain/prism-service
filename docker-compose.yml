@@ -1,5 +1,6 @@
 version: '2.1'
 services:
+
   prism-mongo:
     container_name: prism-mongo
     image: mongo
@@ -30,6 +31,15 @@ services:
       - $GLS_CONNECTOR_HOST:$GLS_CONNECTOR_PORT:$GLS_CONNECTOR_PORT
     env_file:
       - .env
+
+  ealasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.7.1
+    networks:
+      - services-tier
+    ports:
+      - 127.0.0.1:9200:9200
+    environment:
+      "discovery.type": "single-node"
 
   mongodb-exporter:
     container_name: mongodb-exporter
