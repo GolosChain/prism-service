@@ -7,6 +7,7 @@ const Post = require('../controllers/connector/Post');
 const Profile = require('../controllers/connector/Profile');
 const Notify = require('../controllers/connector/Notify');
 const HashTag = require('../controllers/connector/HashTag');
+const Leaders = require('../controllers/connector/Leaders');
 
 class Connector extends BasicConnector {
     constructor({ feedCache }) {
@@ -19,7 +20,8 @@ class Connector extends BasicConnector {
         this._post = new Post(linking);
         this._profile = new Profile(linking);
         this._notify = new Notify(linking);
-        this._hashTagTop = new HashTag(linking);
+        this._hashTag = new HashTag(linking);
+        this._leaders = new Leaders(linking);
     }
 
     async start() {
@@ -205,12 +207,28 @@ class Connector extends BasicConnector {
                     },
                 },
                 getHashTagTop: {
-                    handler: this._hashTagTop.getTop,
-                    scope: this._hashTagTop,
+                    handler: this._hashTag.getTop,
+                    scope: this._hashTag,
                     inherits: ['feedPagination'],
                     validation: {
                         required: ['communityId'],
                         properties: {
+                            communityId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
+                getLeadersTop: {
+                    handler: this._leaders.getTop,
+                    scope: this._leaders,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: ['currentUserId', 'communityId'],
+                        properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
                             communityId: {
                                 type: 'string',
                             },
