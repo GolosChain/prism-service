@@ -13,7 +13,7 @@ class HashTag extends AbstractContent {
         this._contentUtil = new Content({ maxHashTagSize: env.GLS_MAX_HASH_TAG_SIZE });
     }
 
-    async handleCreate({ args: content }, { communityId }) {
+    async handleCreate(content, { communityId }) {
         if (!(await this._isPost(content))) {
             return;
         }
@@ -32,7 +32,7 @@ class HashTag extends AbstractContent {
         await this._incrementTagsScore(newTags, communityId);
     }
 
-    async handleUpdate({ args: content }, { communityId }) {
+    async handleUpdate(content, { communityId }) {
         if (!(await this._isPost(content))) {
             return;
         }
@@ -53,7 +53,7 @@ class HashTag extends AbstractContent {
         await this._incrementTagsScore(newTags, communityId);
     }
 
-    async handleDelete({ args: content }, { communityId }) {
+    async handleDelete(content, { communityId }) {
         if (!(await this._isPost(content))) {
             return;
         }

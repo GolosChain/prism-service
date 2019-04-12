@@ -22,7 +22,7 @@ class Profile extends Abstract {
         });
     }
 
-    async handleMeta({ args: { account: userId, meta } }) {
+    async handleMeta({ account: userId, meta }) {
         let profile = await ProfileModel.findOne({ userId });
 
         if (!profile) {

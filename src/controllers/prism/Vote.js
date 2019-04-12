@@ -4,7 +4,7 @@ const CommentModel = require('../../models/Comment');
 const WilsonScoring = require('../../utils/WilsonScoring');
 
 class Vote extends AbstractContent {
-    async handleUpVote({ args: content }) {
+    async handleUpVote(content) {
         const model = await this._getModelWithVotes(content);
 
         if (!model) {
@@ -17,7 +17,7 @@ class Vote extends AbstractContent {
         await model.save();
     }
 
-    async handleDownVote({ args: content }) {
+    async handleDownVote(content) {
         const model = await this._getModelWithVotes(content);
 
         if (!model) {
@@ -30,7 +30,7 @@ class Vote extends AbstractContent {
         await model.save();
     }
 
-    async handleUnVote({ args: content }) {
+    async handleUnVote(content) {
         const model = await this._getModelWithVotes(content);
 
         if (!model) {
@@ -83,12 +83,7 @@ class Vote extends AbstractContent {
         }
     }
 
-    async handleReputation(
-        {
-            args: { rshares: rShares },
-        },
-        { args: content }
-    ) {
+    async handleReputation({ rshares: rShares }, { args: content }) {
         const model = await this._getModel(content, {
             payout: true,
             'meta.time': true,
