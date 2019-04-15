@@ -6,6 +6,7 @@ const Abstract = require('./Abstract');
 const env = require('../../data/env');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
+const ProfileModel = require('../../models/Profile');
 
 class AbstractContent extends Abstract {
     _extractTitle(content) {
@@ -146,6 +147,10 @@ class AbstractContent extends Abstract {
             metadata,
             embeds,
         };
+    }
+
+    async _updateUserPostsCount(userId, increment) {
+        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
     }
 }
 

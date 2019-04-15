@@ -45,21 +45,6 @@ module.exports = MongoDB.makeModel(
                     },
                 },
             },
-            embeds: {
-                type: [
-                    {
-                        id: {
-                            type: String,
-                        },
-                        type: {
-                            type: String,
-                        },
-                        result: {
-                            type: Object,
-                        },
-                    },
-                ],
-            },
         },
         content: {
             title: {
@@ -78,6 +63,21 @@ module.exports = MongoDB.makeModel(
             },
             metadata: {
                 type: Object,
+            },
+            embeds: {
+                type: [
+                    {
+                        id: {
+                            type: String,
+                        },
+                        type: {
+                            type: String,
+                        },
+                        result: {
+                            type: Object,
+                        },
+                    },
+                ],
             },
         },
         payout: {

@@ -11,13 +11,13 @@ class Feed extends AbstractFeed {
 
     async getFeed(params) {
         const { fullQuery, currentUserId, sortBy, meta, limit } = await this._prepareQuery(params);
-
-        const modelObjects = await PostModel.find(...Object.values(fullQuery));
+        let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
         }
 
+        modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
         await this._populate(modelObjects, currentUserId);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
@@ -84,9 +84,6 @@ class Feed extends AbstractFeed {
                 meta.newSequenceKey = newSequenceKey;
                 query._id = { $in: ids };
                 break;
-
-            default:
-            // do nothing
         }
     }
 
@@ -176,6 +173,37 @@ class Feed extends AbstractFeed {
             default:
                 return origin;
         }
+    }
+
+    _finalizeSorting(modelObjects, sortBy, fullQuery) {
+        switch (sortBy) {
+            case 'popular':
+                return this._finalizePopularSorting(modelObjects, fullQuery);
+            default:
+                return modelObjects;
+        }
+    }
+
+    _finalizePopularSorting(
+        modelObjects,
+        {
+            query: {
+                _id: { $in: ids },
+            },
+        }
+    ) {
+        const idMapping = new Map();
+        const result = [];
+
+        for (const modelObject of modelObjects) {
+            idMapping.set(String(modelObject._id), modelObject);
+        }
+
+        for (const id of ids) {
+            result.push(idMapping.get(String(id)));
+        }
+
+        return result;
     }
 }
 
