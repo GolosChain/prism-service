@@ -10,7 +10,7 @@ module.exports = MongoDB.makeModel(
         },
         lastSynced: {
             type: Date,
-            default: new Date(null),
+            default: new Date(0),
         },
     },
     {

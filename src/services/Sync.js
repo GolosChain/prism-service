@@ -18,12 +18,13 @@ class SyncService extends BasicService {
 
     async start() {
         await this._waitForElasticSearch();
-        for (let model of this.modelsToWatch) {
+        for (const model of this.modelsToWatch) {
             const exists = await esclient.indices.exists({ index: model.modelName.toLowerCase() });
-            if (!exists)
+            if (!exists) {
                 await esclient.indices.create({
                     index: model.modelName.toLowerCase(),
                 });
+            }
         }
         await this.startLoop(0, env.GLS_SEARCH_SYNC_TIMEOUT);
         await this.startDeleteLoop(env.GLS_SEARCH_SYNC_TIMEOUT, 10000);
@@ -106,7 +107,7 @@ class SyncService extends BasicService {
     _mapBody(data, modelType) {
         try {
             return this.modelsMappers[modelType]({ ...data });
-        } catch (e) {
+        } catch (error) {
             return data;
         }
     }
@@ -187,7 +188,7 @@ class SyncService extends BasicService {
                     const docToDelete = this._prepareIndexBody({ data: doc, model });
                     try {
                         await this._deleteIndex(docToDelete);
-                    } catch (e) {
+                    } catch (error) {
                         // do nothing
                     }
                 }

@@ -31,10 +31,12 @@ class Search extends BasicController {
 
             if (result.hits.total > 0) {
                 return this._prepareResponse(result.hits.hits);
-            } else return [];
-        } catch (e) {
-            Logger.error(e);
-            throw e;
+            } else {
+                return [];
+            }
+        } catch (error) {
+            Logger.error(error);
+            throw error;
         }
     }
 
@@ -47,7 +49,9 @@ class Search extends BasicController {
                 }
             }
             return [...uniqueResults.values()];
-        } else return arrays[0];
+        } else {
+            return arrays[0];
+        }
     }
 
     _differByTypes(results) {
