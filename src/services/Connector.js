@@ -8,6 +8,7 @@ const Profile = require('../controllers/connector/Profile');
 const Notify = require('../controllers/connector/Notify');
 const HashTag = require('../controllers/connector/HashTag');
 const Leaders = require('../controllers/connector/Leaders');
+const Block = require('../controllers/connector/Block');
 
 class Connector extends BasicConnector {
     constructor({ feedCache }) {
@@ -22,6 +23,7 @@ class Connector extends BasicConnector {
         this._notify = new Notify(linking);
         this._hashTag = new HashTag(linking);
         this._leaders = new Leaders(linking);
+        this._block = new Block(linking);
     }
 
     async start() {
@@ -231,6 +233,19 @@ class Connector extends BasicConnector {
                             },
                             communityId: {
                                 type: 'string',
+                            },
+                        },
+                    },
+                },
+                waitForBlock: {
+                    handler: this._block.waitForBlock,
+                    scope: this._block,
+                    validation: {
+                        required: ['blockNum'],
+                        properties: {
+                            blockNum: {
+                                type: 'number',
+                                minValue: 0,
                             },
                         },
                     },
