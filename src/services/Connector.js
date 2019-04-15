@@ -11,7 +11,7 @@ const Leaders = require('../controllers/connector/Leaders');
 const Block = require('../controllers/connector/Block');
 
 class Connector extends BasicConnector {
-    constructor({ feedCache }) {
+    constructor({ feedCache, prism }) {
         super();
 
         const linking = { connector: this };
@@ -23,7 +23,7 @@ class Connector extends BasicConnector {
         this._notify = new Notify(linking);
         this._hashTag = new HashTag(linking);
         this._leaders = new Leaders(linking);
-        this._block = new Block(linking);
+        this._block = new Block({ prismService: prism, ...linking });
     }
 
     async start() {

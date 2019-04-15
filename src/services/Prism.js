@@ -7,13 +7,14 @@ const ServiceMetaModel = require('../models/ServiceMeta');
 const RevertTraceModel = require('../models/RevertTrace');
 
 class Prism extends BasicService {
-    constructor({ connector }) {
-        super();
-
-        this._mainPrismController = new MainPrismController({ connector });
+    setConnector(connector) {
+        this._connector = connector;
     }
 
     async start() {
+        this._currentBlockNum = 0;
+        this._mainPrismController = new MainPrismController({ connector: this._connector });
+
         const lastBlock = await this._getLastBlockNum();
         const subscriber = new BlockSubscribe(lastBlock + 1);
 
@@ -27,6 +28,10 @@ class Prism extends BasicService {
         }
     }
 
+    getCurrentBlockNum() {
+        return this._currentBlockNum;
+    }
+
     async _handleBlock(block) {
         try {
             const blockNum = block.blockNum;
@@ -34,6 +39,10 @@ class Prism extends BasicService {
             await this._openNewRevertZone(blockNum);
             await this._setLastBlockNum(blockNum);
             await this._mainPrismController.disperse(block);
+
+            this._currentBlockNum = blockNum;
+
+            this.emit('blockDone', blockNum);
         } catch (error) {
             Logger.error(`Cant disperse block - ${error.stack}`);
             process.exit(1);
