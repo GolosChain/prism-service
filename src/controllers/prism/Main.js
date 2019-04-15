@@ -24,7 +24,7 @@ class Main {
 
     async disperse({ transactions, blockNum, blockTime }) {
         for (const transaction of transactions) {
-            let previous = null;
+            let previous;
 
             for (const action of transaction.actions) {
                 await this._disperseAction(action, previous, { blockNum, blockTime });
@@ -33,7 +33,7 @@ class Main {
         }
     }
 
-    async _disperseAction(action, previous, { blockNum, blockTime }) {
+    async _disperseAction(action, previous = { args: {} }, { blockNum, blockTime }) {
         if (!action) {
             Logger.error('Empty transaction! But continue.');
             return;
@@ -46,6 +46,7 @@ class Main {
         const pathName = [action.code, action.action].join('->');
         const communityId = this._extractCommunityId(action);
         const actionArgs = action.args;
+        const previousArgs = previous.args;
 
         switch (pathName) {
             case `${communityId}.publish->createmssg`:
@@ -78,7 +79,7 @@ class Main {
                 break;
 
             case `${communityId}.social->changereput`:
-                await this._vote.handleReputation(actionArgs, previous);
+                await this._vote.handleReputation(actionArgs, previousArgs);
                 break;
 
             case `${communityId}.publish->upvote`:

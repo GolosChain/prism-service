@@ -83,7 +83,7 @@ class Vote extends AbstractContent {
         }
     }
 
-    async handleReputation({ rshares: rShares }, { args: content }) {
+    async handleReputation({ rshares: rShares }, content) {
         const model = await this._getModel(content, {
             payout: true,
             'meta.time': true,
