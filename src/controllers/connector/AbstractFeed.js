@@ -1,7 +1,4 @@
-const core = require('gls-core-service');
-const MongoDB = core.services.MongoDB;
 const AbstractContent = require('./AbstractContent');
-const env = require('../../data/env');
 
 class AbstractFeed extends AbstractContent {
     _normalizeParams({ sortBy, sequenceKey, limit, raw }) {
@@ -23,10 +20,10 @@ class AbstractFeed extends AbstractContent {
     _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit, raw }) {
         options.limit = limit;
         projection.__v = false;
-        projection.createdAt = false;
         projection.updatedAt = false;
         projection['votes.upUserIds'] = false;
         projection['votes.downUserIds'] = false;
+        projection['stats.wilson'] = false;
 
         if (raw) {
             projection['content.body.full'] = false;
@@ -49,16 +46,16 @@ class AbstractFeed extends AbstractContent {
             return;
         }
 
-        try {
-            MongoDB.mongoTypes.ObjectId(sequenceKey);
-        } catch (error) {
+        const keyDate = new Date(sequenceKey);
+
+        if (isNaN(keyDate.valueOf())) {
             this._throwBadSequence();
         }
 
         if (direction > 0) {
-            query._id = { $gt: sequenceKey };
+            query.createdAt = { $gt: new Date(sequenceKey) };
         } else {
-            query._id = { $lt: sequenceKey };
+            query.createdAt = { $lt: new Date(sequenceKey) };
         }
     }
 
@@ -71,6 +68,7 @@ class AbstractFeed extends AbstractContent {
 
         for (const modelObject of modelObjects) {
             delete modelObject._id;
+            delete modelObject.createdAt;
         }
 
         return {
@@ -86,23 +84,23 @@ class AbstractFeed extends AbstractContent {
         };
     }
 
-    _getSequenceKey(models, { sortBy, limit }) {
+    _getSequenceKey(modelObjects, { sortBy, limit }) {
         switch (sortBy) {
             case 'timeDesc':
             case 'time':
             default:
-                return this._getSequenceKeyByTime(models, limit);
+                return this._getSequenceKeyByTime(modelObjects, limit);
         }
     }
 
-    _getSequenceKeyByTime(models, limit) {
-        if (models.length < limit) {
+    _getSequenceKeyByTime(modelObjects, limit) {
+        if (modelObjects.length < limit) {
             return null;
         }
 
-        const id = models[models.length - 1]._id.toString();
+        const time = modelObjects[modelObjects.length - 1].createdAt.toString();
 
-        return this._packSequenceKey(id);
+        return this._packSequenceKey(time);
     }
 }
 
