@@ -1,6 +1,6 @@
 const elasticsearch = require('elasticsearch');
+const bodybuilder = require('bodybuilder');
 const core = require('gls-core-service');
-const Logger = core.utils.Logger;
 const BasicService = core.services.Basic;
 const env = require('../data/env');
 const SyncModel = require('../models/SearchSync');
@@ -9,40 +9,71 @@ const esclient = new elasticsearch.Client({
 });
 
 class SyncService extends BasicService {
-    constructor(modelsToWatch, ...args) {
+    constructor(modelsToWatch, modelsMappers, ...args) {
         super(...args);
         this.modelsToWatch = modelsToWatch;
+        this.modelsMappers = modelsMappers;
+        this.modelsInSync = new Map();
     }
 
     async start() {
+        await this._waitForElasticSearch();
+        for (let model of this.modelsToWatch) {
+            const exists = await esclient.indices.exists({ index: model.modelName.toLowerCase() });
+            if (!exists)
+                await esclient.indices.create({
+                    index: model.modelName.toLowerCase(),
+                });
+        }
         await this.startLoop(0, env.GLS_SEARCH_SYNC_TIMEOUT);
+        await this.startDeleteLoop(env.GLS_SEARCH_SYNC_TIMEOUT, 10000);
     }
 
     async stop() {
-        await this.stopLoop();
+        this.stopLoop();
+        this.stopDeleteLoop();
     }
 
-    async checkIndexExists({ id, index, type }) {
-        try {
-            await esclient.get({
-                id,
-                index,
-                type,
-            });
+    startDeleteLoop(firstIterationTimeout = 0, interval = Infinity) {
+        setTimeout(async () => {
+            await this.deleteIteration();
+            this._deleteLoopId = setInterval(this.deleteIteration.bind(this), interval);
+        }, firstIterationTimeout);
+    }
 
-            return true;
-        } catch (error) {
-            if (error.status === 404) {
-                return false;
-            } else {
-                throw error;
-            }
+    stopDeleteLoop() {
+        clearInterval(this._deleteLoopId);
+    }
+
+    async deleteIteration() {
+        for (const model of this.modelsToWatch) {
+            await this._syncDeleted(model);
         }
     }
 
-    async getDocSyncType({ index, id, type }) {
+    async _waitForElasticSearch(retryNum = 1, maxRetries = 10) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await esclient.ping();
+                resolve();
+            } catch (e) {
+                if (retryNum < maxRetries) return await this._waitForElasticSearch(retryNum + 1);
+                else reject('Too many retries to ping Elasticsearch');
+            }
+        });
+    }
+
+    async _checkIndexExists({ id, index, type }) {
+        return await esclient.exists({
+            id,
+            index,
+            type,
+        });
+    }
+
+    async _getDocSyncType({ index, id, type }) {
         let syncType = 'create';
-        const indexExists = await this.checkIndexExists({ id, index, type });
+        const indexExists = await this._checkIndexExists({ id, index, type });
 
         if (indexExists) {
             syncType = 'update';
@@ -50,7 +81,7 @@ class SyncService extends BasicService {
         return syncType;
     }
 
-    async createIndex({ index, body, type, id }) {
+    async _createIndex({ index, body, type, id }) {
         return await esclient.create({
             index,
             body,
@@ -59,7 +90,7 @@ class SyncService extends BasicService {
         });
     }
 
-    async updateIndex({ index, body, type, id }) {
+    async _updateIndex({ index, body, type, id }) {
         return await esclient.update({
             index,
             body: { doc: body },
@@ -68,11 +99,23 @@ class SyncService extends BasicService {
         });
     }
 
-    prepareIndexBody({ data, model }) {
-        const dataModel = new model(data).toObject();
-        const id = dataModel._id.toString();
-        const index = model.modelName.toLowerCase();
-        const type = 'doc';
+    async _deleteIndex({ index, type, id }) {
+        return await esclient.delete({ type, index, id });
+    }
+
+    _mapBody(data, modelType) {
+        try {
+            return this.modelsMappers[modelType]({ ...data });
+        } catch (e) {
+            return data;
+        }
+    }
+
+    _prepareIndexBody({ data, model }) {
+        const modelName = model.modelName;
+        const dataModel = this._mapBody(new model(data).toObject(), modelName);
+        const id = data._id.toString();
+        const index = modelName.toLowerCase();
 
         delete dataModel._id;
 
@@ -80,48 +123,84 @@ class SyncService extends BasicService {
             body: dataModel,
             id,
             index,
-            type,
+            type: modelName,
         };
     }
 
-    async syncDoc(model, data) {
-        const indexDoc = this.prepareIndexBody({ data, model });
-        const syncType = await this.getDocSyncType(indexDoc);
+    async _syncDoc(model, data) {
+        const indexDoc = this._prepareIndexBody({ data, model });
+        const syncType = await this._getDocSyncType(indexDoc);
 
         switch (syncType) {
             case 'create':
-                await this.createIndex(indexDoc);
+                await this._createIndex(indexDoc);
                 break;
             case 'update':
-                await this.updateIndex(indexDoc);
+                await this._updateIndex(indexDoc);
                 break;
         }
     }
 
-    async getDocsToSync(model, from = new Date(null)) {
+    async _getDocsToSync(model, from = new Date(null)) {
         return await await model.find({
             $or: [{ updatedAt: { $gte: from } }, { createdAt: { $gte: from } }],
         });
     }
 
-    async syncModel(model, from) {
-        const dataToSync = await this.getDocsToSync(model, from);
+    async _getAllIndexes(model, offset = 0) {
+        const STEP = 1000;
+        const allDocs = [];
+        const body = bodybuilder()
+            .query('match_all')
+            .size(STEP)
+            .from(offset)
+            .build();
+
+        const allDocsResponse = await esclient.search({
+            index: model.modelName.toLowerCase(),
+            body,
+        });
+        allDocs.push(...allDocsResponse.hits.hits);
+
+        if (allDocsResponse.hits.hits.length === STEP) {
+            allDocs.push(...(await this._getAllIndexes(model, offset + STEP)));
+        }
+        return allDocs;
+    }
+
+    async _syncModel(model, from) {
+        const dataToSync = await this._getDocsToSync(model, from);
 
         if (dataToSync.length > 0) {
             for (const data of dataToSync) {
-                await this.syncDoc(model, data);
+                await this._syncDoc(model, data);
             }
-            Logger.info(`${model.modelName} has synced ${dataToSync.length} docs`);
         }
     }
 
-    async findOrCreateSyncModel(model) {
+    async _syncDeleted(model) {
+        const allDocs = await this._getAllIndexes(model);
+        if (allDocs.length > 0) {
+            for (const doc of allDocs) {
+                const count = await model.countDocuments({ _id: doc._id });
+                if (count === 0) {
+                    const docToDelete = this._prepareIndexBody({ data: doc, model });
+                    try {
+                        await this._deleteIndex(docToDelete);
+                    } catch (e) {
+                        // do nothing
+                    }
+                }
+            }
+        }
+    }
+
+    async _findOrCreateSyncModel(model) {
         let modelSync = await SyncModel.findOne({ model: model.modelName });
 
         if (!modelSync) {
             modelSync = new SyncModel({
                 model: model.modelName,
-                inSync: false,
             });
 
             await modelSync.save();
@@ -131,17 +210,16 @@ class SyncService extends BasicService {
 
     async iteration() {
         for (const model of this.modelsToWatch) {
-            const syncModel = await this.findOrCreateSyncModel(model);
+            const syncModel = await this._findOrCreateSyncModel(model);
 
-            if (!syncModel.inSync) {
-                syncModel.inSync = true;
-                await syncModel.save();
+            if (!this.modelsInSync.get(syncModel)) {
+                this.modelsInSync.set(syncModel, true);
 
-                await this.syncModel(model, syncModel.lastSynced);
+                await this._syncModel(model, syncModel.lastSynced);
 
-                syncModel.inSync = false;
                 syncModel.lastSynced = Date.now();
                 await syncModel.save();
+                this.modelsInSync.set(syncModel, false);
             }
         }
     }

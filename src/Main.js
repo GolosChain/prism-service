@@ -10,8 +10,8 @@ const Cleaner = require('./services/Cleaner');
 const FeedCache = require('./services/FeedCache');
 const Sync = require('./services/Sync');
 const ServiceMetaModel = require('./models/ServiceMeta');
-const HashTag = require('./models/HashTag');
 const Post = require('./models/Post');
+const Comment = require('./models/Comment');
 const Profile = require('./models/Profile');
 
 class Main extends BasicMain {
@@ -22,7 +22,27 @@ class Main extends BasicMain {
         const connector = new Connector({ feedCache });
         const cleaner = new Cleaner();
         const prism = new Prism({ connector });
-        const sync = new Sync([Post, Profile, HashTag]);
+        const sync = new Sync([Post, Profile, Comment], {
+            Post: data => {
+                return {
+                    title: data.content.title,
+                    body: data.content.body,
+                    permlink: data.contentId.permlink,
+                };
+            },
+            Profile: data => {
+                return {
+                    username: data.username,
+                };
+            },
+            Comment: data => {
+                return {
+                    title: data.content.title,
+                    body: data.content.body,
+                    permlink: data.contentId.permlink,
+                };
+            },
+        });
         this.startMongoBeforeBoot();
         this.addNested(cleaner, prism, feedCache, sync, connector);
     }

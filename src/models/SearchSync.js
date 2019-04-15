@@ -11,11 +11,6 @@ module.exports = MongoDB.makeModel(
         lastSynced: {
             type: Date,
             default: new Date(null),
-            // default: Date.now(),
-        },
-        inSync: {
-            type: Boolean,
-            required: true,
         },
     },
     {
