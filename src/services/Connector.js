@@ -250,6 +250,18 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                waitForTransaction: {
+                    handler: this._block.waitForTransaction,
+                    scope: this._block,
+                    validation: {
+                        required: ['transactionId'],
+                        properties: {
+                            transactionId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
             },
             serverDefaults: {
                 parents: {

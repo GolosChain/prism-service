@@ -17,17 +17,39 @@ class Block extends BasicController {
                 return;
             }
 
-            this._startBlockChecker(blockNum, resolve);
+            this._startBlockNumChecker(blockNum, resolve);
         });
     }
 
-    _startBlockChecker(blockNum, resolve) {
+    waitForTransaction({ transactionId }) {
+        return new Promise(resolve => {
+            if (this._prismService.hasRecentTransaction(transactionId)) {
+                resolve();
+                return;
+            }
+
+            this._startTransactionIdChecker(transactionId, resolve);
+        });
+    }
+
+    _startBlockNumChecker(blockNum, resolve) {
         this._prismService.once('blockDone', currentBlockNum => {
             if (currentBlockNum >= blockNum) {
                 resolve();
             } else {
                 // Avoid max call stack size error
-                setImmediate(() => this._startBlockChecker(blockNum, resolve));
+                setImmediate(() => this._startBlockNumChecker(blockNum, resolve));
+            }
+        });
+    }
+
+    _startTransactionIdChecker(transactionId, resolve) {
+        this._prismService.once('transactionDone', currentTransactionId => {
+            if (currentTransactionId === transactionId) {
+                resolve();
+            } else {
+                // Avoid max call stack size error
+                setImmediate(() => this._startTransactionIdChecker(transactionId, resolve));
             }
         });
     }
