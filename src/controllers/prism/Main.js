@@ -9,7 +9,7 @@ const HashTag = require('./HashTag');
 const Leader = require('./Leader');
 
 // TODO Change after MVP
-const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'cyber'];
+const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'gls.ctrl', 'cyber'];
 
 class Main {
     constructor({ connector }) {
@@ -102,20 +102,20 @@ class Main {
                 await this._subscribe.unpin(actionArgs);
                 break;
 
-            case `${communityId}TODO1`: // TODO -
-                await this._leader.register(actionArgs);
+            case `${communityId}.ctrl->regwitness`:
+                await this._leader.register(actionArgs, { communityId });
                 break;
 
-            case `${communityId}TODO2`: // TODO -
-                await this._leader.unregister(actionArgs);
+            case `${communityId}.ctrl->unregwitness`:
+                await this._leader.unregister(actionArgs, { communityId });
                 break;
 
-            case `${communityId}TODO3`: // TODO -
-                await this._leader.vote(actionArgs);
+            case `${communityId}.ctrl->votewitness`:
+                await this._leader.vote(actionArgs, { communityId });
                 break;
 
-            case `${communityId}TODO4`: // TODO -
-                await this._leader.unvote(actionArgs);
+            case `${communityId}.ctrl->unvotewitn`:
+                await this._leader.unvote(actionArgs, { communityId });
                 break;
 
             default:

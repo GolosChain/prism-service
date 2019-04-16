@@ -7,16 +7,35 @@ module.exports = MongoDB.makeModel(
         communityId: {
             type: String,
         },
-        accountId: {
+        userId: {
             type: String,
         },
-        rating: {
+        url: {
+            type: String,
+        },
+        about: {
+            type: String,
+        },
+        rShares: {
             type: Number,
             default: 0,
+        },
+        votes: {
+            type: [String],
         },
     },
     {
         index: [
+            {
+                // Search
+                fields: {
+                    communityId: 1,
+                    userId: 1,
+                },
+                options: {
+                    unique: true,
+                },
+            },
             {
                 // Top
                 fields: {
