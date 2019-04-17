@@ -82,7 +82,7 @@ class Notify extends BasicController {
     async _getCommentData(contentId) {
         const data = await Comment.findOne(
             { contentId },
-            { _id: false, 'content.body.preview': true },
+            { _id: false, 'content.body.preview': true, 'parent.post': true },
             { lean: true }
         );
 
@@ -93,6 +93,7 @@ class Notify extends BasicController {
         return {
             contentId,
             body: data.content.body.preview,
+            parentPost: data.parent.post,
         };
     }
 
