@@ -24,7 +24,7 @@ class HashTag extends AbstractContent {
             return;
         }
 
-        const newTags = this._extractTags(content);
+        const newTags = await this._extractTags(content);
 
         model.content.tags = newTags;
         await model.save();
@@ -43,7 +43,7 @@ class HashTag extends AbstractContent {
             return;
         }
 
-        const newTags = this._extractTags(content);
+        const newTags = await this._extractTags(content);
         const recentTags = model.content.tags;
 
         model.content.tags = newTags;
@@ -69,15 +69,15 @@ class HashTag extends AbstractContent {
         await this._decrementTagsScore(recentTags, communityId);
     }
 
-    _extractTags(content) {
-        const tagsFromMetadata = this._extractTagsFromMetadata(content);
+    async _extractTags(content) {
+        const tagsFromMetadata = await this._extractTagsFromMetadata(content);
         const tagsFromText = this._extractTagsFromBlockChain(content);
 
         return [...new Set([...tagsFromMetadata, ...tagsFromText])];
     }
 
-    _extractTagsFromMetadata(content) {
-        const metadata = this._extractMetadata(content);
+    async _extractTagsFromMetadata(content) {
+        const metadata = await this._extractMetadata(content);
         const rawTags = Array.from(metadata.tags || []);
 
         return rawTags.filter(
