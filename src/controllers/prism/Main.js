@@ -47,6 +47,7 @@ class Main {
         const communityId = this._extractCommunityId(action);
         const actionArgs = action.args;
         const previousArgs = previous.args;
+        const events = action.events;
 
         switch (pathName) {
             case `${communityId}.publish->createmssg`:
@@ -111,15 +112,11 @@ class Main {
                 break;
 
             case `${communityId}.ctrl->votewitness`:
-                await this._leader.vote(actionArgs, { communityId });
+                await this._leader.vote(actionArgs, { communityId, events });
                 break;
 
             case `${communityId}.ctrl->unvotewitn`:
-                await this._leader.unvote(actionArgs, { communityId });
-                break;
-
-            case `${communityId}.ctrl->witnessstate`:
-                await this._leader.changeLeaderState(actionArgs, { communityId });
+                await this._leader.unvote(actionArgs, { communityId, events });
                 break;
 
             default:
