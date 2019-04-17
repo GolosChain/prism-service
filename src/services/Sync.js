@@ -18,8 +18,10 @@ class SyncService extends BasicService {
 
     async start() {
         await this._waitForElasticSearch();
+
         for (const model of this.modelsToWatch) {
             const exists = await esclient.indices.exists({ index: model.modelName.toLowerCase() });
+
             if (!exists) {
                 await esclient.indices.create({
                     index: model.modelName.toLowerCase(),
@@ -35,15 +37,21 @@ class SyncService extends BasicService {
         this.stopDeleteLoop();
     }
 
-    startDeleteLoop(firstIterationTimeout = 0, interval = Infinity) {
+    startDeleteLoop(firstIterationTimeout = 0, interval) {
         setTimeout(async () => {
-            await this.deleteIteration();
-            this._deleteLoopId = setInterval(this.deleteIteration.bind(this), interval);
+            if (interval) {
+                await this.deleteIteration();
+                this._deleteLoopId = setInterval(this.deleteIteration.bind(this), interval);
+            } else {
+                await this.deleteIteration();
+            }
         }, firstIterationTimeout);
     }
 
     stopDeleteLoop() {
-        clearInterval(this._deleteLoopId);
+        if (this._deleteLoopId) {
+            clearInterval(this._deleteLoopId);
+        }
     }
 
     async deleteIteration() {
@@ -53,15 +61,15 @@ class SyncService extends BasicService {
     }
 
     async _waitForElasticSearch(retryNum = 1, maxRetries = 10) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await esclient.ping();
-                resolve();
-            } catch (e) {
-                if (retryNum < maxRetries) return await this._waitForElasticSearch(retryNum + 1);
-                else reject('Too many retries to ping Elasticsearch');
+        try {
+            return await esclient.ping();
+        } catch (error) {
+            if (retryNum < maxRetries) {
+                return await this._waitForElasticSearch(retryNum + 1);
+            } else {
+                throw 'Too many retries to ping Elasticsearch';
             }
-        });
+        }
     }
 
     async _checkIndexExists({ id, index, type }) {
@@ -144,7 +152,7 @@ class SyncService extends BasicService {
 
     async _getDocsToSync(model, from = new Date(null)) {
         return await await model.find({
-            $or: [{ updatedAt: { $gte: from } }, { createdAt: { $gte: from } }],
+            updatedAt: { $gte: from },
         });
     }
 
@@ -181,17 +189,19 @@ class SyncService extends BasicService {
 
     async _syncDeleted(model) {
         const allDocs = await this._getAllIndexes(model);
-        if (allDocs.length > 0) {
-            for (const doc of allDocs) {
-                const count = await model.countDocuments({ _id: doc._id });
-                if (count === 0) {
-                    const docToDelete = this._prepareIndexBody({ data: doc, model });
-                    try {
-                        await this._deleteIndex(docToDelete);
-                    } catch (error) {
-                        // do nothing
-                    }
-                }
+
+        for (const doc of allDocs) {
+            const count = await model.countDocuments({ _id: doc._id });
+
+            if (count !== 0) {
+                return;
+            }
+
+            const docToDelete = this._prepareIndexBody({ data: doc, model });
+            try {
+                await this._deleteIndex(docToDelete);
+            } catch (error) {
+                // do nothing
             }
         }
     }
@@ -213,15 +223,17 @@ class SyncService extends BasicService {
         for (const model of this.modelsToWatch) {
             const syncModel = await this._findOrCreateSyncModel(model);
 
-            if (!this.modelsInSync.get(syncModel)) {
-                this.modelsInSync.set(syncModel, true);
-
-                await this._syncModel(model, syncModel.lastSynced);
-
-                syncModel.lastSynced = Date.now();
-                await syncModel.save();
-                this.modelsInSync.set(syncModel, false);
+            if (this.modelsInSync.get(syncModel)) {
+                continue;
             }
+
+            this.modelsInSync.set(syncModel, true);
+
+            await this._syncModel(model, syncModel.lastSynced);
+
+            syncModel.lastSynced = Date.now();
+            await syncModel.save();
+            this.modelsInSync.set(syncModel, false);
         }
     }
 }

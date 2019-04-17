@@ -42,8 +42,10 @@
     "pluralize": "^7.0.0",
     "then-sleep": "^1.0.1",
     "gls-core-service": "^3.17.8",
-    "moment": "^2.24.0",
     "uuid": "^3.3.2",
     "valid-url": "^1.0.9"
+  },
+  "devDependencies": {
+    "prettier": "^1.17.0"
   }
 }

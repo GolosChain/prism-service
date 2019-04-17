@@ -35,21 +35,31 @@ class Connector extends BasicConnector {
                         properties: {
                             type: {
                                 type: 'string',
-                                enum: ['match_phrase_prefix', 'match'],
-                                default: 'match_phrase_prefix',
+                                enum: ['matchPrefix', 'match'],
+                                default: 'matchPrefix',
                             },
                             where: {
                                 type: 'string',
-                                default: '_all',
+                                enum: ['all', 'posts', 'comments', 'profiles'],
+                                default: 'all',
                             },
                             text: {
                                 type: 'string',
                             },
                             field: {
                                 type: 'string',
-                                default: '_all',
+                                enum: [
+                                    'all',
+                                    'title',
+                                    'raw',
+                                    'full',
+                                    'preview',
+                                    'permlink',
+                                    'username',
+                                ],
+                                default: 'all',
                             },
-                            count: {
+                            limit: {
                                 type: 'number',
                                 default: 10,
                             },

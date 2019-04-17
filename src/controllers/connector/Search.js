@@ -10,8 +10,15 @@ const esclient = new elasticsearch.Client({
 });
 
 class Search extends BasicController {
-    async search({ where, text, field, count, offset, type }) {
-        if (field === '_all') {
+    async search({ where, text, field, limit, offset, type }) {
+        type = this._parseType(type);
+        field = this._parseField(field);
+
+        if (where === 'all') {
+            where = '_all';
+        }
+
+        if (field === 'all') {
             type = 'query_string';
             field = 'query';
             text += '*';
@@ -19,7 +26,7 @@ class Search extends BasicController {
 
         const body = bodybuilder()
             .query(type, field, text)
-            .size(count)
+            .size(limit)
             .from(offset)
             .build();
 
@@ -32,7 +39,7 @@ class Search extends BasicController {
             if (result.hits.total > 0) {
                 return this._prepareResponse(result.hits.hits);
             } else {
-                return [];
+                return { results: [] };
             }
         } catch (error) {
             Logger.error(error);
@@ -40,37 +47,56 @@ class Search extends BasicController {
         }
     }
 
+    _parseType(type) {
+        const typeMapping = {
+            match: 'match',
+            matchPrefix: 'match_phrase_prefix',
+        };
+
+        return typeMapping[type];
+    }
+
+    _parseField(field) {
+        const fieldMapping = {
+            full: 'body.full',
+            raw: 'body.raw',
+            preview: 'body,preview',
+        };
+
+        return fieldMapping[field] || field;
+    }
+
     _mergeResults(...arrays) {
-        if (arrays.length > 1) {
-            const uniqueResults = new Map();
-            for (const array of arrays) {
-                for (const doc of array) {
-                    uniqueResults.set(doc._id, doc);
-                }
+        const uniqueResults = new Map();
+
+        for (const array of arrays) {
+            for (const doc of array) {
+                uniqueResults.set(doc._id, doc);
             }
-            return [...uniqueResults.values()];
-        } else {
-            return arrays[0];
         }
+        return [...uniqueResults.values()];
     }
 
     _differByTypes(results) {
         const differedResults = {};
         for (const doc of results) {
             let type = doc._type;
+
             if (pluralize.isSingular(type)) {
                 type = pluralize.plural(type).toLowerCase();
             }
+
             if (!differedResults[type]) {
                 differedResults[type] = [];
             }
+
             differedResults[type].push(doc);
         }
         return differedResults;
     }
 
     _prepareResponse(...results) {
-        return this._differByTypes(this._mergeResults(...results));
+        return { results: this._differByTypes(this._mergeResults(...results)) };
     }
 }
 

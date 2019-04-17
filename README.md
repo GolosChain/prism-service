@@ -13,11 +13,30 @@ API JSON-RPC:
 
 ```
 search:                                     // Поиск по данным из призмы
-    type <string>('match_phrase_prefix')    // Тип поиска. Принимает значения "match_phrase_prefix" и "match"
-    where <string>('_all')                  // Индекс, в котором нужно искать
+    type <string>('matchPrefix')            // Тип поиска. Принимает значения "matchPrefix" и "match"
+        [
+          match                             // Ищет по вхождениям слов. Например, на запрос `app` найдет только `app`
+        | matchPrefix                       // Ищет по вхождениям частей слов. Например, на запрос `app` найдет и `app`, и `apple`
+        ]
+    where <string>('all')                   // Модель, в которой нужно искать
+            [
+              all                           // Ищет везде
+            | profiles                      // Ищет только в профилях
+            | comments                      // Ищет только в комментах
+            | posts                         // Ищет только в постах
+            ]
     text <string>                           // Текст, который требуется найти
-    field <string>('_all')                  // Поле, по которому требуется выполнить поиск
-    count <number>(10)                      // Ограничение на размер найденных результатов
+    field <string>('all')                   // Поле, по которому требуется выполнить поиск
+            [
+              all                           // Ищет по всем полям
+            | title                         // Ищет только в `title` (доступно для `comments` и `posts`)
+            | preview                       // Ищет только в `preview` (доступно для `comments` и `posts`)
+            | raw                           // Ищет только в `raw` (доступно для `comments` и `posts`)
+            | full                          // Ищет только в `full` (доступно для `comments` и `posts`)
+            | permlink                      // Ищет только в `permlink` (доступно для `comments` и `posts`)
+            | username                      // Ищет только в `username` (доступно для `profiles`)
+            ]
+    limit <number>(10)                      // Ограничение на размер найденных результатов
     offset <number>(0)                      // Количество результатов, которое надо "пропустить"
     
 getProfile:                        // Получение профиля пользователя
