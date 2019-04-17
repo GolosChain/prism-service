@@ -10,6 +10,8 @@ const RevertTraceModel = require('../models/RevertTrace');
 class Prism extends BasicService {
     setConnector(connector) {
         this._connector = connector;
+
+        this.getEmitter().setMaxListeners(Infinity);
     }
 
     async start() {
