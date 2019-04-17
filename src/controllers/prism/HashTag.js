@@ -77,8 +77,7 @@ class HashTag extends AbstractContent {
     }
 
     _extractTagsFromMetadata(content) {
-        const metadata = this._extractMetadata(content);
-        const rawTags = Array.from(metadata.tags || []);
+        const rawTags = content.tags.map(tagObject => tagObject.tag);
 
         return rawTags.filter(
             tag => typeof tag === 'string' && tag.length <= env.GLS_MAX_HASH_TAG_SIZE
