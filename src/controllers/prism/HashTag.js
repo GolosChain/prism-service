@@ -71,23 +71,22 @@ class HashTag extends AbstractContent {
 
     _extractTags(content) {
         const tagsFromMetadata = this._extractTagsFromMetadata(content);
-        const tagsFromText = this._extractTagsFromText(content);
+        const tagsFromText = this._extractTagsFromBlockChain(content);
 
         return [...new Set([...tagsFromMetadata, ...tagsFromText])];
     }
 
     _extractTagsFromMetadata(content) {
-        const rawTags = content.tags.map(tagObject => tagObject.tag);
+        const metadata = this._extractMetadata(content);
+        const rawTags = Array.from(metadata.tags || []);
 
         return rawTags.filter(
             tag => typeof tag === 'string' && tag.length <= env.GLS_MAX_HASH_TAG_SIZE
         );
     }
 
-    _extractTagsFromText(content) {
-        const text = this._extractBodyRaw(content);
-
-        return this._contentUtil.extractHashTags(text);
+    _extractTagsFromBlockChain(content) {
+        return content.tags.map(tagObject => tagObject.tag);
     }
 
     async _tryGetModel(content, projection) {
