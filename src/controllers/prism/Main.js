@@ -118,6 +118,10 @@ class Main {
                 await this._leader.unvote(actionArgs, { communityId });
                 break;
 
+            case `${communityId}.ctrl->witnessstate`:
+                await this._leader.changeLeaderState(actionArgs, { communityId });
+                break;
+
             default:
             // unknown action, do nothing
         }

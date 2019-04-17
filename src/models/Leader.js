@@ -6,28 +6,32 @@ module.exports = MongoDB.makeModel(
     {
         communityId: {
             type: String,
+            required: true,
         },
         userId: {
             type: String,
+            required: true,
         },
         url: {
             type: String,
+            default: '',
         },
-        about: {
-            type: String,
-        },
-        rShares: {
+        rating: {
             type: Number,
             default: 0,
         },
         votes: {
             type: [String],
         },
+        active: {
+            type: Boolean,
+            default: true,
+        },
     },
     {
         index: [
             {
-                // Search
+                // Search for change
                 fields: {
                     communityId: 1,
                     userId: 1,
@@ -39,8 +43,8 @@ module.exports = MongoDB.makeModel(
             {
                 // Top
                 fields: {
+                    active: 1,
                     communityId: 1,
-                    accountId: 1,
                     rating: -1,
                 },
             },
