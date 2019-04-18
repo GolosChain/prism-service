@@ -90,10 +90,12 @@ class Notify extends BasicController {
             throw { code: 404, message: 'Comment not found' };
         }
 
+        const parent = data.parent || { post: null };
+
         return {
             contentId,
             body: data.content.body.preview,
-            parentPost: data.parent.post,
+            parentPost: parent.post,
         };
     }
 
