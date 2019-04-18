@@ -30,7 +30,8 @@ class AbstractContent extends Abstract {
     }
 
     _extractBodyMobile(content) {
-        const original = this._extractBodyFull(content);
+        const raw = this._extractBodyRaw(content);
+        const original = this._contentUtil.sanitizeMobile(raw);
         const result = [];
         let part = original;
 
