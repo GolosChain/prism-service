@@ -95,7 +95,7 @@ class Comment extends AbstractContent {
 
         const comment = await CommentModel.findOne({ contentId }, { 'parent.post': true });
 
-        if (comment.parent) {
+        if (comment) {
             return comment.parent.post;
         }
 
