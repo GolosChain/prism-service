@@ -1,26 +1,29 @@
 const uuid = require('uuid/v4');
 const core = require('gls-core-service');
-const Logger = core.utils.Logger;
 const BasicService = core.services.Basic;
+const Logger = core.utils.Logger;
 const env = require('../data/env');
-const Popular = require('../controllers/feedCache/Popular');
 
 const NEWEST = 'newest';
 const ID_DIVIDER = '|';
 
-class FeedCache extends BasicService {
-    async start() {
+class AbstractFeedCache extends BasicService {
+    async start(controller) {
         this._cache = new Map();
         this._newestMap = new Map();
         this._inActualization = false;
 
-        this._popularController = new Popular();
+        this._controller = controller;
 
         await this._actualize(true);
         this.startLoop(env.GLS_FEED_CACHE_INTERVAL, env.GLS_FEED_CACHE_INTERVAL);
     }
 
-    getIdsWithSequenceKey({ communityId = '~all', sortBy, timeframe = 'day', sequenceKey, limit }) {
+    _getController() {
+        return this._controller;
+    }
+
+    getIdsWithSequenceKey({ communityId, sortBy, timeframe, sequenceKey, limit }) {
         try {
             const [queueId, index] = this._unpackSequenceKey(sequenceKey);
             const storageId = this._makeStorageId({ communityId, sortBy, timeframe, queueId });
@@ -118,13 +121,7 @@ class FeedCache extends BasicService {
         const storageId = this._makeStorageId(factors);
         const newestFactors = { communityId, sortBy, timeframe, queueId: NEWEST };
         const newestStorageId = this._makeStorageId(newestFactors);
-        let ids = [];
-
-        switch (sortBy) {
-            case 'popular':
-                ids = await this._popularController.getFor(communityId, timeframe);
-                break;
-        }
+        const ids = await this._getIds(sortBy, communityId, timeframe);
 
         this._cache.set(storageId, ids);
         this._cache.set(newestStorageId, ids);
@@ -133,6 +130,10 @@ class FeedCache extends BasicService {
         setTimeout(() => {
             this._cache.delete(storageId);
         }, env.GLS_FEED_CACHE_TTL);
+    }
+
+    async _getIds(sortBy, communityId, timeframe) {
+        // Abstract
     }
 
     async *_makeVariantsIterator() {
@@ -151,12 +152,12 @@ class FeedCache extends BasicService {
     }
 
     _getSortingVariants() {
-        return ['popular'];
+        // Abstract
     }
 
     _getTimeframeVariants() {
-        return ['day', 'week', 'month', 'year', 'all', 'WilsonHot', 'WilsonTrending'];
+        // Abstract
     }
 }
 
-module.exports = FeedCache;
+module.exports = AbstractFeedCache;

@@ -11,12 +11,12 @@ const Leaders = require('../controllers/connector/Leaders');
 const Block = require('../controllers/connector/Block');
 
 class Connector extends BasicConnector {
-    constructor({ feedCache, prism }) {
+    constructor({ postFeedCache, prism }) {
         super();
 
         const linking = { connector: this };
 
-        this._feed = new Feed({ feedCache, ...linking });
+        this._feed = new Feed({ postFeedCache, ...linking });
         this._comment = new Comment(linking);
         this._post = new Post(linking);
         this._profile = new Profile(linking);

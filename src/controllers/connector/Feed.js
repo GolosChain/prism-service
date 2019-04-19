@@ -3,10 +3,10 @@ const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
 class Feed extends AbstractFeed {
-    constructor({ feedCache }) {
+    constructor({ postFeedCache }) {
         super();
 
-        this._feedCache = feedCache;
+        this._postFeedCache = postFeedCache;
     }
 
     async getFeed(params) {
@@ -73,7 +73,7 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                const { ids, newSequenceKey } = this._feedCache.getIdsWithSequenceKey({
+                const { ids, newSequenceKey } = this._postFeedCache.getIdsWithSequenceKey({
                     communityId: query.communityId,
                     sortBy,
                     timeframe,
