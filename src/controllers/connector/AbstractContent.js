@@ -160,7 +160,7 @@ class AbstractContent extends BasicController {
     }
 
     _removeEmptyParents(modelObject) {
-        if (!modelObject.parent || !modelObject.parent.comment.contentId) {
+        if (modelObject.parent && !modelObject.parent.comment.contentId) {
             delete modelObject.parent.comment;
         }
     }
