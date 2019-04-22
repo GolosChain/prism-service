@@ -25,11 +25,12 @@ class Leaders extends AbstractFeed {
     }
 
     async _tryApplyVotesForModels(modelObjects, currentUserId) {
-        if (!currentUserId) {
-            return;
-        }
-
         for (const modelObject of modelObjects) {
+            if (!currentUserId) {
+                modelObject.hasVote = false;
+                return;
+            }
+
             const voteCount = await LeaderModel.count({ _id, votes: currentUserId });
 
             modelObject.hasVote = Boolean(voteCount);
