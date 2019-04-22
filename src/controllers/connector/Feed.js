@@ -165,11 +165,7 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                if (models.length < limit) {
-                    return null;
-                }
-
-                return this._packSequenceKey(meta.newSequenceKey);
+                return this._getCachedSequenceKey(models, limit, meta);
 
             default:
                 return origin;
@@ -179,32 +175,10 @@ class Feed extends AbstractFeed {
     _finalizeSorting(modelObjects, sortBy, fullQuery) {
         switch (sortBy) {
             case 'popular':
-                return this._finalizePopularSorting(modelObjects, fullQuery);
+                return this._finalizeCachedSorting(modelObjects, fullQuery.query);
             default:
                 return modelObjects;
         }
-    }
-
-    _finalizePopularSorting(
-        modelObjects,
-        {
-            query: {
-                _id: { $in: ids },
-            },
-        }
-    ) {
-        const idMapping = new Map();
-        const result = [];
-
-        for (const modelObject of modelObjects) {
-            idMapping.set(String(modelObject._id), modelObject);
-        }
-
-        for (const id of ids) {
-            result.push(idMapping.get(String(id)));
-        }
-
-        return result;
     }
 }
 

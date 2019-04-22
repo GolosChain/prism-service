@@ -48,6 +48,16 @@ module.exports = MongoDB.makeModel(
                     rating: -1,
                 },
             },
+            {
+                // Detect votes
+                fields: {
+                    _id: 1,
+                    votes: 1,
+                },
+                options: {
+                    unique: true,
+                },
+            },
         ],
     }
 );

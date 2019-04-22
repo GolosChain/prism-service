@@ -6,6 +6,7 @@ const Prism = require('./services/Prism');
 const Connector = require('./services/Connector');
 const Cleaner = require('./services/Cleaner');
 const PostFeedCache = require('./services/PostFeedCache');
+const LeaderFeedCache = require('./services/LeaderFeedCache');
 const ServiceMetaModel = require('./models/ServiceMeta');
 
 class Main extends BasicMain {
@@ -13,14 +14,15 @@ class Main extends BasicMain {
         super(stats, env);
 
         const postFeedCache = new PostFeedCache();
+        const leaderFeedCache = new LeaderFeedCache();
         const prism = new Prism();
-        const connector = new Connector({ postFeedCache, prism });
+        const connector = new Connector({ postFeedCache, leaderFeedCache, prism });
         const cleaner = new Cleaner();
 
         prism.setConnector(connector);
 
         this.startMongoBeforeBoot();
-        this.addNested(cleaner, prism, postFeedCache, connector);
+        this.addNested(cleaner, prism, postFeedCache, leaderFeedCache, connector);
     }
 
     async boot() {

@@ -11,7 +11,7 @@ const Leaders = require('../controllers/connector/Leaders');
 const Block = require('../controllers/connector/Block');
 
 class Connector extends BasicConnector {
-    constructor({ postFeedCache, prism }) {
+    constructor({ postFeedCache, leaderFeedCache, prism }) {
         super();
 
         const linking = { connector: this };
@@ -22,7 +22,7 @@ class Connector extends BasicConnector {
         this._profile = new Profile(linking);
         this._notify = new Notify(linking);
         this._hashTag = new HashTag(linking);
-        this._leaders = new Leaders(linking);
+        this._leaders = new Leaders({ leaderFeedCache, ...linking });
         this._block = new Block({ prismService: prism, ...linking });
     }
 
@@ -226,7 +226,7 @@ class Connector extends BasicConnector {
                     scope: this._leaders,
                     inherits: ['feedPagination'],
                     validation: {
-                        required: ['currentUserId', 'communityId'],
+                        required: ['communityId'],
                         properties: {
                             currentUserId: {
                                 type: 'string',

@@ -109,6 +109,34 @@ class AbstractFeed extends AbstractContent {
 
         return this._packSequenceKey(time);
     }
+
+    _getCachedSequenceKey(models, limit, meta) {
+        if (models.length < limit) {
+            return null;
+        }
+
+        return this._packSequenceKey(meta.newSequenceKey);
+    }
+
+    _finalizeCachedSorting(
+        modelObjects,
+        {
+            _id: { $in: ids },
+        }
+    ) {
+        const idMapping = new Map();
+        const result = [];
+
+        for (const modelObject of modelObjects) {
+            idMapping.set(String(modelObject._id), modelObject);
+        }
+
+        for (const id of ids) {
+            result.push(idMapping.get(String(id)));
+        }
+
+        return result;
+    }
 }
 
 module.exports = AbstractFeed;
