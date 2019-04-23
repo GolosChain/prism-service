@@ -7,6 +7,7 @@ const Post = require('../controllers/connector/Post');
 const Profile = require('../controllers/connector/Profile');
 const Notify = require('../controllers/connector/Notify');
 const HashTag = require('../controllers/connector/HashTag');
+const Search = require('../controllers/connector/Search');
 
 class Connector extends BasicConnector {
     constructor({ feedCache }) {
@@ -20,11 +21,55 @@ class Connector extends BasicConnector {
         this._profile = new Profile(linking);
         this._notify = new Notify(linking);
         this._hashTagTop = new HashTag(linking);
+        this._search = new Search(linking);
     }
 
     async start() {
         await super.start({
             serverRoutes: {
+                search: {
+                    handler: this._search.search,
+                    scope: this._search,
+                    validation: {
+                        required: ['text'],
+                        properties: {
+                            type: {
+                                type: 'string',
+                                enum: ['matchPrefix', 'match'],
+                                default: 'matchPrefix',
+                            },
+                            where: {
+                                type: 'string',
+                                enum: ['all', 'posts', 'comments', 'profiles'],
+                                default: 'all',
+                            },
+                            text: {
+                                type: 'string',
+                            },
+                            field: {
+                                type: 'string',
+                                enum: [
+                                    'all',
+                                    'title',
+                                    'raw',
+                                    'full',
+                                    'preview',
+                                    'permlink',
+                                    'username',
+                                ],
+                                default: 'all',
+                            },
+                            limit: {
+                                type: 'number',
+                                default: 10,
+                            },
+                            offset: {
+                                type: 'number',
+                                default: 0,
+                            },
+                        },
+                    },
+                },
                 getPost: {
                     handler: this._post.getPost,
                     scope: this._post,

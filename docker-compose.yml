@@ -1,5 +1,6 @@
 version: '2.1'
 services:
+
   prism-mongo:
     container_name: prism-mongo
     image: mongo
@@ -16,11 +17,22 @@ services:
     networks:
       - services-tier
 
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.7.1
+    networks:
+      - services-tier
+    ports:
+      - 127.0.0.1:9200:9200
+    environment:
+      "discovery.type": "single-node"
+
   prism-node:
     container_name: prism-node
     restart: always
     depends_on:
       - prism-mongo
+      - elasticsearch
     build:
       context: .
       dockerfile: Dockerfile
