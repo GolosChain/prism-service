@@ -1,26 +1,16 @@
 const moment = require('moment');
-const env = require('../../data/env');
 const PostModel = require('../../models/Post');
+const Abstract = require('./Abstract');
 
-class Popular {
+class Popular extends Abstract {
     async getFor(communityId, timeframe) {
-        const query = { communityId };
-        const projection = { _id: true };
-        const options = { limit: env.GLS_FEED_CACHE_MAX_ITEMS, lean: true };
+        const { query, projection, options } = this._getDefaultRequestOptions(communityId);
 
         this._applyTimeCond(query, options, timeframe);
 
-        if (communityId === '~all') {
-            delete query.communityId;
-        }
+        const modelObjects = await PostModel.find(query, projection, options);
 
-        const result = await PostModel.find(query, projection, options);
-
-        if (result) {
-            return result.map(model => model._id);
-        } else {
-            return [];
-        }
+        return this._makeResult(modelObjects);
     }
 
     _applyTimeCond(query, options, timeframe) {

@@ -3,9 +3,7 @@ const ProfileModel = require('../../models/Profile');
 
 class Profile extends Abstract {
     async handleCreate(
-        {
-            args: { name: userId },
-        },
+        { name: userId },
         { blockTime }
     ) {
         if (await ProfileModel.findOne({ userId })) {
@@ -22,7 +20,7 @@ class Profile extends Abstract {
         });
     }
 
-    async handleMeta({ args: { account: userId, meta } }) {
+    async handleMeta({ account: userId, meta }) {
         let profile = await ProfileModel.findOne({ userId });
 
         if (!profile) {

@@ -7,24 +7,73 @@ const Post = require('../controllers/connector/Post');
 const Profile = require('../controllers/connector/Profile');
 const Notify = require('../controllers/connector/Notify');
 const HashTag = require('../controllers/connector/HashTag');
+const Leaders = require('../controllers/connector/Leaders');
+const Block = require('../controllers/connector/Block');
+const Search = require('../controllers/connector/Search');
 
 class Connector extends BasicConnector {
-    constructor({ feedCache }) {
+    constructor({ postFeedCache, leaderFeedCache, prism }) {
         super();
 
         const linking = { connector: this };
 
-        this._feed = new Feed({ feedCache, ...linking });
+        this._feed = new Feed({ postFeedCache, ...linking });
         this._comment = new Comment(linking);
         this._post = new Post(linking);
         this._profile = new Profile(linking);
         this._notify = new Notify(linking);
-        this._hashTagTop = new HashTag(linking);
+        this._hashTag = new HashTag(linking);
+        this._leaders = new Leaders({ leaderFeedCache, ...linking });
+        this._block = new Block({ prismService: prism, ...linking });
+        this._search = new Search(linking);
     }
 
     async start() {
         await super.start({
             serverRoutes: {
+                search: {
+                    handler: this._search.search,
+                    scope: this._search,
+                    validation: {
+                        required: ['text'],
+                        properties: {
+                            type: {
+                                type: 'string',
+                                enum: ['matchPrefix', 'match'],
+                                default: 'matchPrefix',
+                            },
+                            where: {
+                                type: 'string',
+                                enum: ['all', 'posts', 'comments', 'profiles'],
+                                default: 'all',
+                            },
+                            text: {
+                                type: 'string',
+                            },
+                            field: {
+                                type: 'string',
+                                enum: [
+                                    'all',
+                                    'title',
+                                    'raw',
+                                    'full',
+                                    'preview',
+                                    'permlink',
+                                    'username',
+                                ],
+                                default: 'all',
+                            },
+                            limit: {
+                                type: 'number',
+                                default: 10,
+                            },
+                            offset: {
+                                type: 'number',
+                                default: 0,
+                            },
+                        },
+                    },
+                },
                 getPost: {
                     handler: this._post.getPost,
                     scope: this._post,
@@ -43,9 +92,10 @@ class Connector extends BasicConnector {
                             refBlockNum: {
                                 type: 'number',
                             },
-                            raw: {
-                                type: 'boolean',
-                                default: false,
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
                             },
                         },
                     },
@@ -68,9 +118,10 @@ class Connector extends BasicConnector {
                             refBlockNum: {
                                 type: 'number',
                             },
-                            raw: {
-                                type: 'boolean',
-                                default: false,
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
                             },
                         },
                     },
@@ -104,8 +155,10 @@ class Connector extends BasicConnector {
                             refBlockNum: {
                                 type: 'number',
                             },
-                            raw: {
-                                type: 'boolean',
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
                             },
                         },
                     },
@@ -152,8 +205,10 @@ class Connector extends BasicConnector {
                             tags: {
                                 type: 'array',
                             },
-                            raw: {
-                                type: 'boolean',
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
                             },
                         },
                     },
@@ -199,13 +254,54 @@ class Connector extends BasicConnector {
                     },
                 },
                 getHashTagTop: {
-                    handler: this._hashTagTop.getTop,
-                    scope: this._hashTagTop,
+                    handler: this._hashTag.getTop,
+                    scope: this._hashTag,
                     inherits: ['feedPagination'],
                     validation: {
                         required: ['communityId'],
                         properties: {
                             communityId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
+                getLeadersTop: {
+                    handler: this._leaders.getTop,
+                    scope: this._leaders,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: ['communityId'],
+                        properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            communityId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
+                waitForBlock: {
+                    handler: this._block.waitForBlock,
+                    scope: this._block,
+                    validation: {
+                        required: ['blockNum'],
+                        properties: {
+                            blockNum: {
+                                type: 'number',
+                                minValue: 0,
+                            },
+                        },
+                    },
+                },
+                waitForTransaction: {
+                    handler: this._block.waitForTransaction,
+                    scope: this._block,
+                    validation: {
+                        required: ['transactionId'],
+                        properties: {
+                            transactionId: {
                                 type: 'string',
                             },
                         },

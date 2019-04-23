@@ -10,7 +10,7 @@ class Post extends AbstractContent {
         this._contentUtil = new Content();
     }
 
-    async handleCreate({ args: content }, { communityId, blockTime }) {
+    async handleCreate(content, { communityId, blockTime }) {
         if (!(await this._isPost(content))) {
             return;
         }
@@ -28,7 +28,7 @@ class Post extends AbstractContent {
         await this._updateUserPostsCount(contentId.userId, 1);
     }
 
-    async handleUpdate({ args: content }) {
+    async handleUpdate(content) {
         if (!(await this._isPost(content))) {
             return;
         }
@@ -45,7 +45,7 @@ class Post extends AbstractContent {
         );
     }
 
-    async handleDelete({ args: content }) {
+    async handleDelete(content) {
         if (!(await this._isPost(content))) {
             return;
         }

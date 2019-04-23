@@ -13,7 +13,7 @@ class Comment extends AbstractContent {
         this._contentUtil = new Content();
     }
 
-    async handleCreate({ args: content }, { blockTime }) {
+    async handleCreate(content, { blockTime }) {
         if (!(await this._isComment(content))) {
             return;
         }
@@ -33,7 +33,7 @@ class Comment extends AbstractContent {
         await this._updateUserCommentsCount(model.contentId.userId, 1);
     }
 
-    async handleUpdate({ args: content }) {
+    async handleUpdate(content) {
         if (!(await this._isComment(content))) {
             return;
         }
@@ -50,7 +50,7 @@ class Comment extends AbstractContent {
         );
     }
 
-    async handleDelete({ args: content }) {
+    async handleDelete(content) {
         if (!(await this._isComment(content))) {
             return;
         }

@@ -6,7 +6,7 @@ const ProfileModel = require('../../models/Profile');
 class AbstractContent extends BasicController {
     async _getContent(
         Model,
-        { currentUserId, requestedUserId, permlink, refBlockNum, raw: onlyRawRequired }
+        { currentUserId, requestedUserId, permlink, refBlockNum, contentType }
     ) {
         const modelObject = await Model.findOne(
             {
@@ -16,7 +16,7 @@ class AbstractContent extends BasicController {
                     refBlockNum,
                 },
             },
-            this._makeContentProjection(onlyRawRequired),
+            this._makeContentProjection(contentType),
             { lean: true }
         );
 
@@ -30,17 +30,29 @@ class AbstractContent extends BasicController {
         return modelObject;
     }
 
-    _makeContentProjection(onlyRawRequired) {
+    _makeContentProjection(contentType) {
         let excludeContentVariant;
 
-        if (onlyRawRequired) {
-            excludeContentVariant = {
-                'content.body.full': false,
-            };
-        } else {
-            excludeContentVariant = {
-                'content.body.raw': false,
-            };
+        switch (contentType) {
+            case 'web':
+                excludeContentVariant = {
+                    'content.body.mobile': false,
+                    'content.body.raw': false,
+                };
+                break;
+            case 'mobile':
+                excludeContentVariant = {
+                    'content.body.full': false,
+                    'content.body.mobile._id': false,
+                    'content.body.raw': false,
+                };
+                break;
+            case 'raw':
+                excludeContentVariant = {
+                    'content.body.full': false,
+                    'content.body.mobile': false,
+                };
+                break;
         }
 
         return {
@@ -148,7 +160,7 @@ class AbstractContent extends BasicController {
     }
 
     _removeEmptyParents(modelObject) {
-        if (!modelObject.parent.comment.contentId) {
+        if (modelObject.parent && !modelObject.parent.comment.contentId) {
             delete modelObject.parent.comment;
         }
     }

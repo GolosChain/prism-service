@@ -45,6 +45,37 @@ module.exports = MongoDB.makeModel(
                     },
                 },
             },
+        },
+        content: {
+            title: {
+                type: String,
+            },
+            body: {
+                preview: {
+                    type: String,
+                },
+                full: {
+                    type: String,
+                },
+                mobile: {
+                    type: [
+                        {
+                            type: {
+                                type: String,
+                            },
+                            content: {
+                                type: String,
+                            },
+                        },
+                    ],
+                },
+                raw: {
+                    type: String,
+                },
+            },
+            metadata: {
+                type: Object,
+            },
             embeds: {
                 type: [
                     {
@@ -59,25 +90,6 @@ module.exports = MongoDB.makeModel(
                         },
                     },
                 ],
-            },
-        },
-        content: {
-            title: {
-                type: String,
-            },
-            body: {
-                preview: {
-                    type: String,
-                },
-                full: {
-                    type: String,
-                },
-                raw: {
-                    type: String,
-                },
-            },
-            metadata: {
-                type: Object,
             },
         },
         payout: {

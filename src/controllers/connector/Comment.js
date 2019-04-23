@@ -7,13 +7,13 @@ const PostModel = require('../../models/Post');
 const UNKNOWN_PLACEHOLDER = '-';
 
 class Comment extends AbstractFeed {
-    async getComment({ currentUserId, requestedUserId, permlink, refBlockNum, raw }) {
+    async getComment({ currentUserId, requestedUserId, permlink, refBlockNum, contentType }) {
         const modelObject = await this._getContent(CommentModel, {
             currentUserId,
             requestedUserId,
             permlink,
             refBlockNum,
-            raw,
+            contentType,
         });
 
         this._removeEmptyParents(modelObject);
@@ -45,7 +45,7 @@ class Comment extends AbstractFeed {
             permlink,
             refBlockNum,
             type,
-            raw,
+            contentType,
         } = this._normalizeParams(params);
 
         const query = {};
@@ -57,7 +57,7 @@ class Comment extends AbstractFeed {
         const options = { lean: true };
         const fullQuery = { query, projection, options };
 
-        this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit, raw });
+        this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit, contentType });
         this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink, refBlockNum });
 
         return { type, fullQuery, currentUserId, sortBy, limit };
