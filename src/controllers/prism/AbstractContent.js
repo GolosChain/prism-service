@@ -29,6 +29,70 @@ class AbstractContent extends Abstract {
         return this._contentUtil.sanitizePreview(raw, env.GLS_CONTENT_PREVIEW_LENGTH);
     }
 
+    _extractBodyMobile(content) {
+        const raw = this._extractBodyRaw(content);
+        const original = this._contentUtil.sanitizeMobile(raw);
+        const result = [];
+        let part = original;
+
+        while (part) {
+            part = this._extractNextMobileContentFor(part, result);
+        }
+
+        return result;
+    }
+
+    _extractNextMobileContentFor(part, result) {
+        const imgPosition = this._getImageStartPosition(part);
+
+        if (imgPosition === -1) {
+            this._addMobileText(part, result);
+            return;
+        }
+
+        this._addMobileText(part.slice(0, imgPosition), result);
+
+        part = part.slice(imgPosition);
+
+        const imgEndPosition = part.search('>');
+
+        if (imgEndPosition === -1) {
+            return;
+        }
+
+        const srcMatch = this._matchImageSrc(part, imgEndPosition);
+
+        if (srcMatch) {
+            this._addMobileImage(srcMatch[1], result);
+        }
+
+        return part.slice(imgEndPosition + 1);
+    }
+
+    _addMobileText(content, result) {
+        result.push({
+            type: 'text',
+            content,
+        });
+    }
+
+    _addMobileImage(src, result) {
+        result.push({
+            type: 'image',
+            src,
+        });
+    }
+
+    _getImageStartPosition(text) {
+        return text.search(/<\s*?img/i);
+    }
+
+    _matchImageSrc(text, imgEndPosition) {
+        const img = text.slice(0, imgEndPosition + 1);
+
+        return img.match(/src.*?=.*?"(.*?)"/i);
+    }
+
     async _extractMetadata(content) {
         const raw = content.jsonmetadata;
 
@@ -142,6 +206,7 @@ class AbstractContent extends Abstract {
             body: {
                 preview: this._extractBodyPreview(rawContent),
                 full: this._extractBodyFull(rawContent),
+                mobile: this._extractBodyMobile(rawContent),
                 raw: this._extractBodyRaw(rawContent),
             },
             metadata,

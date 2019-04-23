@@ -82,7 +82,7 @@ class Notify extends BasicController {
     async _getCommentData(contentId) {
         const data = await Comment.findOne(
             { contentId },
-            { _id: false, 'content.body.preview': true },
+            { _id: false, 'content.body.preview': true, 'parent.post': true },
             { lean: true }
         );
 
@@ -90,9 +90,12 @@ class Notify extends BasicController {
             throw { code: 404, message: 'Comment not found' };
         }
 
+        const parent = data.parent || { post: null };
+
         return {
             contentId,
             body: data.content.body.preview,
+            parentPost: parent.post,
         };
     }
 

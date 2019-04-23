@@ -6,9 +6,10 @@ const Profile = require('./Profile');
 const Vote = require('./Vote');
 const Subscribe = require('./Subscribe');
 const HashTag = require('./HashTag');
+const Leader = require('./Leader');
 
 // TODO Change after MVP
-const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'cyber'];
+const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'gls.ctrl', 'cyber'];
 
 class Main {
     constructor({ connector }) {
@@ -18,11 +19,12 @@ class Main {
         this._vote = new Vote({ connector });
         this._subscribe = new Subscribe({ connector });
         this._hashTag = new HashTag({ connector });
+        this._leader = new Leader({ connector });
     }
 
     async disperse({ transactions, blockNum, blockTime }) {
         for (const transaction of transactions) {
-            let previous = null;
+            let previous;
 
             for (const action of transaction.actions) {
                 await this._disperseAction(action, previous, { blockNum, blockTime });
@@ -31,7 +33,7 @@ class Main {
         }
     }
 
-    async _disperseAction(action, previous, { blockNum, blockTime }) {
+    async _disperseAction(action, previous = { args: {} }, { blockNum, blockTime }) {
         if (!action) {
             Logger.error('Empty transaction! But continue.');
             return;
@@ -43,68 +45,87 @@ class Main {
 
         const pathName = [action.code, action.action].join('->');
         const communityId = this._extractCommunityId(action);
+        const actionArgs = action.args;
+        const previousArgs = previous.args;
+        const events = action.events;
 
         switch (pathName) {
-            case 'gls.publish->createmssg':
+            case `${communityId}.publish->createmssg`:
                 // Warning - do not change ordering
-                await this._post.handleCreate(action, { communityId, blockTime });
-                await this._hashTag.handleCreate(action, { communityId });
-                await this._comment.handleCreate(action, { communityId, blockTime });
+                await this._post.handleCreate(actionArgs, { communityId, blockTime });
+                await this._hashTag.handleCreate(actionArgs, { communityId });
+                await this._comment.handleCreate(actionArgs, { communityId, blockTime });
                 break;
 
-            case 'gls.publish->updatemssg':
+            case `${communityId}.publish->updatemssg`:
                 // Warning - do not change ordering
-                await this._hashTag.handleUpdate(action, { communityId });
-                await this._post.handleUpdate(action);
-                await this._comment.handleUpdate(action);
+                await this._hashTag.handleUpdate(actionArgs, { communityId });
+                await this._post.handleUpdate(actionArgs);
+                await this._comment.handleUpdate(actionArgs);
                 break;
 
-            case 'gls.publish->deletemssg':
+            case `${communityId}.publish->deletemssg`:
                 // Warning - do not change ordering
-                await this._hashTag.handleDelete(action, { communityId });
-                await this._post.handleDelete(action);
-                await this._comment.handleDelete(action);
+                await this._hashTag.handleDelete(actionArgs, { communityId });
+                await this._post.handleDelete(actionArgs);
+                await this._comment.handleDelete(actionArgs);
                 break;
 
-            case 'cyber->newaccount':
-                await this._profile.handleCreate(action, { blockTime });
+            case `cyber->newaccount`:
+                await this._profile.handleCreate(actionArgs, { blockTime });
                 break;
 
-            case 'gls.social->updatemeta':
-                await this._profile.handleMeta(action);
+            case `${communityId}.social->updatemeta`:
+                await this._profile.handleMeta(actionArgs);
                 break;
 
-            case 'gls.social->changereput':
-                await this._vote.handleReputation(action, previous);
+            case `${communityId}.social->changereput`:
+                await this._vote.handleReputation(actionArgs, previousArgs);
                 break;
 
-            case 'gls.publish->upvote':
-                await this._vote.handleUpVote(action);
+            case `${communityId}.publish->upvote`:
+                await this._vote.handleUpVote(actionArgs);
                 break;
 
-            case 'gls.publish->downvote':
-                await this._vote.handleDownVote(action);
+            case `${communityId}.publish->downvote`:
+                await this._vote.handleDownVote(actionArgs);
                 break;
 
-            case 'gls.publish->unvote':
-                await this._vote.handleUnVote(action);
+            case `${communityId}.publish->unvote`:
+                await this._vote.handleUnVote(actionArgs);
                 break;
 
-            case 'gls.social->pin':
-                await this._subscribe.pin(action);
+            case `${communityId}.social->pin`:
+                await this._subscribe.pin(actionArgs);
                 break;
 
-            case 'gls.social->unpin':
-                await this._subscribe.unpin(action);
+            case `${communityId}.social->unpin`:
+                await this._subscribe.unpin(actionArgs);
+                break;
+
+            case `${communityId}.ctrl->regwitness`:
+                await this._leader.register(actionArgs, { communityId });
+                break;
+
+            case `${communityId}.ctrl->unregwitness`:
+                await this._leader.unregister(actionArgs, { communityId });
+                break;
+
+            case `${communityId}.ctrl->votewitness`:
+                await this._leader.vote(actionArgs, { communityId, events });
+                break;
+
+            case `${communityId}.ctrl->unvotewitn`:
+                await this._leader.unvote(actionArgs, { communityId, events });
                 break;
 
             default:
-            // unknown transaction, do nothing
+            // unknown action, do nothing
         }
     }
 
-    _extractCommunityId(transaction) {
-        const calledCodeName = transaction.code;
+    _extractCommunityId(action) {
+        const calledCodeName = action.code;
 
         return calledCodeName.split('.')[0];
     }

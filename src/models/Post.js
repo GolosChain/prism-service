@@ -32,6 +32,21 @@ module.exports = MongoDB.makeModel(
                 full: {
                     type: String,
                 },
+                mobile: {
+                    type: [
+                        {
+                            type: {
+                                type: String,
+                            },
+                            content: {
+                                type: String,
+                            },
+                            src: {
+                                type: String,
+                            },
+                        },
+                    ],
+                },
                 raw: {
                     type: String,
                 },

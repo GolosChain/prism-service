@@ -3,10 +3,10 @@ const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
 class Feed extends AbstractFeed {
-    constructor({ feedCache }) {
+    constructor({ postFeedCache }) {
         super();
 
-        this._feedCache = feedCache;
+        this._postFeedCache = postFeedCache;
     }
 
     async getFeed(params) {
@@ -34,12 +34,13 @@ class Feed extends AbstractFeed {
             requestedUserId,
             communityId,
             tags,
-            raw,
+            contentType,
         } = this._normalizeParams(params);
 
         const query = {};
         const projection = {
             'content.body.full': false,
+            'content.body.mobile': false,
         };
         const options = { lean: true };
         const fullQuery = { query, projection, options };
@@ -53,7 +54,7 @@ class Feed extends AbstractFeed {
         });
         this._applySortingAndSequence(
             fullQuery,
-            { type, sortBy, timeframe, sequenceKey, limit, raw },
+            { type, sortBy, timeframe, sequenceKey, limit, contentType },
             meta
         );
 
@@ -62,17 +63,17 @@ class Feed extends AbstractFeed {
 
     _applySortingAndSequence(
         { query, projection, options },
-        { type, sortBy, timeframe, sequenceKey, limit, raw },
+        { type, sortBy, timeframe, sequenceKey, limit, contentType },
         meta
     ) {
         super._applySortingAndSequence(
             { query, projection, options },
-            { type, sortBy, sequenceKey, limit, raw }
+            { type, sortBy, sequenceKey, limit, contentType }
         );
 
         switch (sortBy) {
             case 'popular':
-                const { ids, newSequenceKey } = this._feedCache.getIdsWithSequenceKey({
+                const { ids, newSequenceKey } = this._postFeedCache.getIdsWithSequenceKey({
                     communityId: query.communityId,
                     sortBy,
                     timeframe,
@@ -164,11 +165,7 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                if (models.length < limit) {
-                    return null;
-                }
-
-                return this._packSequenceKey(meta.newSequenceKey);
+                return this._getCachedSequenceKey(models, limit, meta);
 
             default:
                 return origin;
@@ -178,32 +175,10 @@ class Feed extends AbstractFeed {
     _finalizeSorting(modelObjects, sortBy, fullQuery) {
         switch (sortBy) {
             case 'popular':
-                return this._finalizePopularSorting(modelObjects, fullQuery);
+                return this._finalizeCachedSorting(modelObjects, fullQuery.query);
             default:
                 return modelObjects;
         }
-    }
-
-    _finalizePopularSorting(
-        modelObjects,
-        {
-            query: {
-                _id: { $in: ids },
-            },
-        }
-    ) {
-        const idMapping = new Map();
-        const result = [];
-
-        for (const modelObject of modelObjects) {
-            idMapping.set(String(modelObject._id), modelObject);
-        }
-
-        for (const id of ids) {
-            result.push(idMapping.get(String(id)));
-        }
-
-        return result;
     }
 }
 

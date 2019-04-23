@@ -1,12 +1,12 @@
 const AbstractContent = require('./AbstractContent');
 
 class AbstractFeed extends AbstractContent {
-    _normalizeParams({ sortBy, sequenceKey, limit, raw }) {
+    _normalizeParams({ sortBy, sequenceKey, limit, contentType }) {
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
         }
 
-        return { sortBy, sequenceKey, limit, raw };
+        return { sortBy, sequenceKey, limit, contentType };
     }
 
     _packSequenceKey(sequenceKey) {
@@ -17,7 +17,10 @@ class AbstractFeed extends AbstractContent {
         return Buffer.from(String(sequenceKey), 'base64').toString();
     }
 
-    _applySortingAndSequence({ query, projection, options }, { sortBy, sequenceKey, limit, raw }) {
+    _applySortingAndSequence(
+        { query, projection, options },
+        { sortBy, sequenceKey, limit, contentType }
+    ) {
         options.limit = limit;
         projection.__v = false;
         projection.updatedAt = false;
@@ -25,11 +28,15 @@ class AbstractFeed extends AbstractContent {
         projection['votes.downUserIds'] = false;
         projection['stats.wilson'] = false;
 
-        if (raw) {
-            projection['content.body.full'] = false;
-            projection['content.body.preview'] = false;
-        } else {
-            projection['content.body.raw'] = false;
+        switch (contentType) {
+            case 'web':
+            case 'mobile':
+                projection['content.body.raw'] = false;
+                break;
+            case 'raw':
+                projection['content.body.full'] = false;
+                projection['content.body.preview'] = false;
+                break;
         }
 
         switch (sortBy) {
@@ -101,6 +108,34 @@ class AbstractFeed extends AbstractContent {
         const time = modelObjects[modelObjects.length - 1].createdAt.toString();
 
         return this._packSequenceKey(time);
+    }
+
+    _getCachedSequenceKey(models, limit, meta) {
+        if (models.length < limit) {
+            return null;
+        }
+
+        return this._packSequenceKey(meta.newSequenceKey);
+    }
+
+    _finalizeCachedSorting(
+        modelObjects,
+        {
+            _id: { $in: ids },
+        }
+    ) {
+        const idMapping = new Map();
+        const result = [];
+
+        for (const modelObject of modelObjects) {
+            idMapping.set(String(modelObject._id), modelObject);
+        }
+
+        for (const id of ids) {
+            result.push(idMapping.get(String(id)));
+        }
+
+        return result;
     }
 }
 
