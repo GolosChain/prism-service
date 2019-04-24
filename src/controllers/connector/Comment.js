@@ -80,7 +80,7 @@ class Comment extends AbstractFeed {
 
     async _populateUserCommentsMetaForModels(modelObjects) {
         for (const modelObject of modelObjects) {
-            if (modelObject.parentCommentId) {
+            if (modelObject.parent.comment && modelObject.parent.comment.contentId) {
                 await this._populateUserParentCommentMeta(modelObject);
             } else {
                 await this._populateUserPostMeta(modelObject);
@@ -99,11 +99,13 @@ class Comment extends AbstractFeed {
             modelObject.parent.post = {
                 content: { title: post.content.title },
                 communityId: post.communityId,
+                ...modelObject.parent.post,
             };
         } else {
             modelObject.parent.post = {
                 content: { title: UNKNOWN_PLACEHOLDER },
                 communityId: UNKNOWN_PLACEHOLDER,
+                ...modelObject.parent.post,
             };
 
             Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
@@ -113,7 +115,7 @@ class Comment extends AbstractFeed {
     }
 
     async _populateUserParentCommentMeta(modelObject) {
-        const id = modelObject.parentCommentId;
+        const id = modelObject.parent.comment.contentId;
         const comment = await CommentModel.findOne(
             { contentId: id },
             { 'content.body.preview': true, 'parent.contentId': true }
@@ -134,8 +136,6 @@ class Comment extends AbstractFeed {
         }
 
         await this._populateAuthors([modelObject.parentComment]);
-
-        delete modelObject.parentCommentId;
     }
 
     _normalizeParams({ type, currentUserId, requestedUserId, permlink, refBlockNum, ...params }) {
