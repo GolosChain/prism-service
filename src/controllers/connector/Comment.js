@@ -22,6 +22,10 @@ class Comment extends AbstractFeed {
     }
 
     async getComments(params) {
+        if (params.type === 'replies' && !params.requestedUserId) {
+            throw { code: 400, message: 'Invalid userId' };
+        }
+
         const { type, fullQuery, currentUserId, sortBy, limit } = await this._prepareQuery(params);
         const modelObjects = await CommentModel.find(...Object.values(fullQuery));
 
@@ -89,11 +93,16 @@ class Comment extends AbstractFeed {
     }
 
     async _populateUserPostMeta(modelObject) {
-        const id = modelObject.parent.post.contentId;
-        const post = await PostModel.findOne(
-            { contentId: id },
-            { 'content.title': true, communityId: true }
-        );
+        let post;
+        let id;
+
+        if (modelObject.parent.post) {
+            id = modelObject.parent.post.contentId;
+            post = await PostModel.findOne(
+                { contentId: id },
+                { 'content.title': true, communityId: true }
+            );
+        }
 
         if (post) {
             modelObject.parent.post = {
@@ -108,7 +117,9 @@ class Comment extends AbstractFeed {
                 ...modelObject.parent.post,
             };
 
-            Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
+            if (id) {
+                Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
+            }
         }
 
         await this._populateCommunities([modelObject.parent.post]);
