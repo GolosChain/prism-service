@@ -45,10 +45,14 @@ class Main extends BasicMain {
                 };
             },
         });
-        
+
         prism.setConnector(connector);
         this.startMongoBeforeBoot();
-        this.addNested(cleaner, prism, postFeedCache, leaderFeedCache, sync, connector);
+        this.addNested(cleaner, prism, postFeedCache, leaderFeedCache);
+        if (env.GLS_SEARCH_ENABLED) {
+            this.addNested(sync);
+        }
+        this.addNested(connector);
     }
 
     async boot() {
