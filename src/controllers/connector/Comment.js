@@ -73,7 +73,7 @@ class Comment extends AbstractFeed {
         await this._tryApplyVotesForModels({ Model: CommentModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects);
 
-        if (type === 'user') {
+        if (type === 'user' || type === 'replies') {
             await this._populateUserCommentsMetaForModels(modelObjects);
         }
     }
