@@ -9,7 +9,6 @@ const Connector = require('./services/Connector');
 const Cleaner = require('./services/Cleaner');
 const PostFeedCache = require('./services/PostFeedCache');
 const LeaderFeedCache = require('./services/LeaderFeedCache');
-const FeedCache = require('./services/FeedCache');
 const Sync = require('./services/Sync');
 const ServiceMetaModel = require('./models/ServiceMeta');
 const Post = require('./models/Post');
