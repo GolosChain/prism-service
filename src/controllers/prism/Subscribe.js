@@ -2,13 +2,13 @@ const Abstract = require('./Abstract');
 const ProfileModel = require('../../models/Profile');
 
 class Subscribe extends Abstract {
-    async pin({ userId, target }) {
+    async pin({ pinner: userId, pinning: target }) {
         const field = await this._getTargetField(target);
 
         await ProfileModel.update({ userId }, { $addToSet: { [field]: target } });
     }
 
-    async unpin({ userId, target }) {
+    async unpin({ pinner: userId, pinning: target }) {
         const field = await this._getTargetField(target);
 
         await ProfileModel.update({ userId }, { $pull: { [field]: target } });
