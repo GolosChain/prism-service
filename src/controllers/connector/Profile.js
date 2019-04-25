@@ -14,7 +14,7 @@ class Profile extends BasicController {
             throw { code: 404, message: 'Not found' };
         }
 
-        modelObject.subscriptions = modelObject.subscriptions || {};
+        modelObject.subscriptions = modelObject.subscriptions || { userIds: [], communityIds: [] };
         modelObject.personal = modelObject.personal || {};
         modelObject.personal = modelObject.personal[type] || {};
 
