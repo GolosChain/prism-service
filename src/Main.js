@@ -24,17 +24,12 @@ class Main extends BasicMain {
         const prism = new Prism();
         const connector = new Connector({ postFeedCache, leaderFeedCache, prism });
         const cleaner = new Cleaner();
-        const sync = new Sync([Post, Profile, Comment], {
+        const sync = new Sync([Post, Comment], {
             Post: data => {
                 return {
                     title: data.content.title,
                     body: data.content.body,
                     permlink: data.contentId.permlink,
-                };
-            },
-            Profile: data => {
-                return {
-                    username: data.username,
                 };
             },
             Comment: data => {
@@ -45,10 +40,14 @@ class Main extends BasicMain {
                 };
             },
         });
-        
+
         prism.setConnector(connector);
         this.startMongoBeforeBoot();
-        this.addNested(cleaner, prism, postFeedCache, leaderFeedCache, sync, connector);
+        this.addNested(cleaner, prism, postFeedCache, leaderFeedCache);
+        if (env.GLS_SEARCH_ENABLED) {
+            this.addNested(sync);
+        }
+        this.addNested(connector);
     }
 
     async boot() {
