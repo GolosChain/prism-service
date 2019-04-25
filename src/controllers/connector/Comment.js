@@ -22,6 +22,10 @@ class Comment extends AbstractFeed {
     }
 
     async getComments(params) {
+        if (params.type === 'replies' && !params.requestedUserId) {
+            throw { code: 400, message: 'Invalid userId' };
+        }
+
         const { type, fullQuery, currentUserId, sortBy, limit } = await this._prepareQuery(params);
         const modelObjects = await CommentModel.find(...Object.values(fullQuery));
 
@@ -73,14 +77,14 @@ class Comment extends AbstractFeed {
         await this._tryApplyVotesForModels({ Model: CommentModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects);
 
-        if (type === 'user') {
+        if (type === 'user' || type === 'replies') {
             await this._populateUserCommentsMetaForModels(modelObjects);
         }
     }
 
     async _populateUserCommentsMetaForModels(modelObjects) {
         for (const modelObject of modelObjects) {
-            if (modelObject.parentCommentId) {
+            if (modelObject.parent.comment && modelObject.parent.comment.contentId) {
                 await this._populateUserParentCommentMeta(modelObject);
             } else {
                 await this._populateUserPostMeta(modelObject);
@@ -89,31 +93,40 @@ class Comment extends AbstractFeed {
     }
 
     async _populateUserPostMeta(modelObject) {
-        const id = modelObject.parent.post.contentId;
-        const post = await PostModel.findOne(
-            { contentId: id },
-            { 'content.title': true, communityId: true }
-        );
+        let post;
+        let id;
+
+        if (modelObject.parent.post) {
+            id = modelObject.parent.post.contentId;
+            post = await PostModel.findOne(
+                { contentId: id },
+                { 'content.title': true, communityId: true }
+            );
+        }
 
         if (post) {
             modelObject.parent.post = {
                 content: { title: post.content.title },
                 communityId: post.communityId,
+                ...modelObject.parent.post,
             };
         } else {
             modelObject.parent.post = {
                 content: { title: UNKNOWN_PLACEHOLDER },
                 communityId: UNKNOWN_PLACEHOLDER,
+                ...modelObject.parent.post,
             };
 
-            Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
+            if (id) {
+                Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
+            }
         }
 
         await this._populateCommunities([modelObject.parent.post]);
     }
 
     async _populateUserParentCommentMeta(modelObject) {
-        const id = modelObject.parentCommentId;
+        const id = modelObject.parent.comment.contentId;
         const comment = await CommentModel.findOne(
             { contentId: id },
             { 'content.body.preview': true, 'parent.contentId': true }
@@ -134,8 +147,6 @@ class Comment extends AbstractFeed {
         }
 
         await this._populateAuthors([modelObject.parentComment]);
-
-        delete modelObject.parentCommentId;
     }
 
     _normalizeParams({ type, currentUserId, requestedUserId, permlink, refBlockNum, ...params }) {
