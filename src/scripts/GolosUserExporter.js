@@ -12,20 +12,22 @@ class GolosUserExporter {
             .collection('username')
             .find({})
             .project({ owner: 1, name: 1, _id: 0 })
-            .forEach(document => {
-                if (!document) {
-                    return;
-                }
+            .forEach(this._createUser.bind(this));
+    }
 
-                ProfileModel.updateOne(
-                    { userId: document.owner },
-                    { userId: document.owner, username: `${document.name}@golos` },
-                    { upsert: true }
-                ).catch(error => {
-                    Logger.error(`GOLOS Export users error - ${error}`);
-                    process.exit(1);
-                });
-            });
+    _createUser(document) {
+        if (!document) {
+            return;
+        }
+
+        ProfileModel.updateOne(
+            { userId: document.owner },
+            { userId: document.owner, username: `${document.name}@golos` },
+            { upsert: true }
+        ).catch(error => {
+            Logger.error(`GOLOS Export users error - ${error}`);
+            process.exit(1);
+        });
     }
 }
 
