@@ -44,7 +44,7 @@ class Connector extends BasicConnector {
                             },
                             where: {
                                 type: 'string',
-                                enum: ['all', 'posts', 'comments', 'profiles'],
+                                enum: ['all', 'post', 'comment'],
                                 default: 'all',
                             },
                             text: {
@@ -52,15 +52,7 @@ class Connector extends BasicConnector {
                             },
                             field: {
                                 type: 'string',
-                                enum: [
-                                    'all',
-                                    'title',
-                                    'raw',
-                                    'full',
-                                    'preview',
-                                    'permlink',
-                                    'username',
-                                ],
+                                enum: ['all', 'title', 'raw', 'full', 'preview', 'permlink'],
                                 default: 'all',
                             },
                             limit: {
