@@ -14,9 +14,11 @@ class Profile extends BasicController {
             throw { code: 404, message: 'Not found' };
         }
 
-        await this._populateSubscriptions(modelObject.subscriptions);
+        modelObject.subscriptions = modelObject.subscriptions || {};
         modelObject.personal = modelObject.personal || {};
         modelObject.personal = modelObject.personal[type] || {};
+
+        await this._populateSubscriptions(modelObject.subscriptions);
 
         return modelObject;
     }
