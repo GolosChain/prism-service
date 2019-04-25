@@ -15,7 +15,8 @@ class Profile extends BasicController {
         }
 
         modelObject.subscriptions = modelObject.subscriptions || { userIds: [], communityIds: [] };
-        modelObject.stats = modelObject.stats || { stats: { postsCount: 0, commentsCount: 0 } };
+        modelObject.stats = modelObject.stats || { postsCount: 0, commentsCount: 0 };
+        modelObject.registration = modelObject.registration || { time: new Date(0) };
         modelObject.personal = modelObject.personal || {};
         modelObject.personal = modelObject.personal[type] || {};
 
