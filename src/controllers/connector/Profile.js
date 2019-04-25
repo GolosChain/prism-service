@@ -6,7 +6,7 @@ class Profile extends BasicController {
     async getProfile({ requestedUserId, type }) {
         const modelObject = await Model.findOne(
             { userId: requestedUserId },
-            { _id: false, __v: false, createdAt: false, updatedAt: false },
+            { _id: false, __v: false, updatedAt: false },
             { lean: true }
         );
 
