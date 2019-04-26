@@ -31,7 +31,10 @@ class Leaders extends AbstractFeed {
                 return;
             }
 
-            const voteCount = await LeaderModel.count({ _id, votes: currentUserId });
+            const voteCount = await LeaderModel.count({
+                _id: modelObject._id,
+                votes: currentUserId,
+            });
 
             modelObject.hasVote = Boolean(voteCount);
         }
