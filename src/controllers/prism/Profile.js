@@ -68,12 +68,14 @@ class Profile extends Abstract {
         for (const key of Object.keys(data)) {
             const value = data[key];
 
-            if (value !== null) {
-                if (value === '') {
-                    newData[key] = null;
-                } else {
-                    newData[key] = value;
-                }
+            if (value === null || value === undefined) {
+                continue;
+            }
+
+            if (value === '') {
+                newData[key] = null;
+            } else {
+                newData[key] = value;
             }
         }
 
