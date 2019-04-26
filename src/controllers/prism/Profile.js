@@ -29,13 +29,11 @@ class Profile extends Abstract {
         if (updateFields.profile_image) {
             updateFields.avatarUrl = updateFields.profile_image;
             updateFields.profileImage = updateFields.profile_image;
-            delete updateFields.profile_image;
         }
 
         if (updateFields.cover_image) {
             updateFields.coverImage = updateFields.cover_image;
             updateFields.coverUrl = updateFields.cover_image;
-            delete updateFields.cover_image;
         }
 
         profile.personal.gls = {
