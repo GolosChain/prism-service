@@ -3,7 +3,9 @@ const BasicController = core.controllers.Basic;
 const Model = require('../../models/Profile');
 
 class Profile extends BasicController {
-    async getProfile({ requestedUserId, type }) {
+    async getProfile({ requestedUserId, type, username, app }) {
+        // TODO Check user
+
         const modelObject = await Model.findOne(
             { userId: requestedUserId },
             { _id: false, __v: false, updatedAt: false },
@@ -38,6 +40,14 @@ class Profile extends BasicController {
         }
 
         delete subscriptions.communityIds;
+    }
+
+    async resolveProfile({ username, app }) {
+        // TODO -
+    }
+
+    async getSubscribes({ userId }) {
+        // TODO -
     }
 }
 

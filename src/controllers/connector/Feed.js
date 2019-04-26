@@ -10,6 +10,8 @@ class Feed extends AbstractFeed {
     }
 
     async getFeed(params) {
+        // TODO username, app
+
         const { fullQuery, currentUserId, sortBy, meta, limit } = await this._prepareQuery(params);
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 

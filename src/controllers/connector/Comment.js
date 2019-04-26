@@ -7,7 +7,17 @@ const PostModel = require('../../models/Post');
 const UNKNOWN_PLACEHOLDER = '-';
 
 class Comment extends AbstractFeed {
-    async getComment({ currentUserId, requestedUserId, permlink, refBlockNum, contentType }) {
+    async getComment({
+        currentUserId,
+        requestedUserId,
+        permlink,
+        refBlockNum,
+        contentType,
+        username,
+        app,
+    }) {
+        // TODO Check user
+
         const modelObject = await this._getContent(CommentModel, {
             currentUserId,
             requestedUserId,
@@ -22,6 +32,8 @@ class Comment extends AbstractFeed {
     }
 
     async getComments(params) {
+        // TODO username, app
+
         if (params.type === 'replies' && !params.requestedUserId) {
             throw { code: 400, message: 'Invalid userId' };
         }
@@ -37,6 +49,10 @@ class Comment extends AbstractFeed {
         this._removeEmptyParentsForAll(modelObjects);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit });
+    }
+
+    getCommentVotes({ requestedUserId, permlink, refBlockNum }) {
+        // TODO -
     }
 
     async _prepareQuery(params) {
