@@ -69,7 +69,11 @@ class Profile extends Abstract {
             const value = data[key];
 
             if (value !== null) {
-                newData[key] = value;
+                if (value === '') {
+                    newData[key] = null;
+                } else {
+                    newData[key] = value;
+                }
             }
         }
 
