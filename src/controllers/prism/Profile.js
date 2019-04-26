@@ -26,13 +26,11 @@ class Profile extends Abstract {
 
         const updateFields = this._omitNulls(meta);
 
-        if (updateFields.profile_image) {
+        if (updateFields.profile_image !== undefined) {
             updateFields.avatarUrl = updateFields.profile_image;
-            updateFields.profileImage = updateFields.profile_image;
         }
 
-        if (updateFields.cover_image) {
-            updateFields.coverImage = updateFields.cover_image;
+        if (updateFields.cover_image !== undefined) {
             updateFields.coverUrl = updateFields.cover_image;
         }
 
