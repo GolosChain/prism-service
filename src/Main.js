@@ -30,6 +30,7 @@ class Main extends BasicMain {
                     title: data.content.title,
                     body: data.content.body,
                     permlink: data.contentId.permlink,
+                    contentId: data.contentId,
                 };
             },
             Comment: data => {
@@ -37,6 +38,7 @@ class Main extends BasicMain {
                     title: data.content.title,
                     body: data.content.body,
                     permlink: data.contentId.permlink,
+                    contentId: data.contentId,
                 };
             },
         });
