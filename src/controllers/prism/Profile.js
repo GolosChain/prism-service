@@ -2,10 +2,7 @@ const Abstract = require('./Abstract');
 const ProfileModel = require('../../models/Profile');
 
 class Profile extends Abstract {
-    async handleCreate(
-        { name: userId },
-        { blockTime }
-    ) {
+    async handleCreate({ name: userId }, { blockTime }) {
         if (await ProfileModel.findOne({ userId })) {
             return;
         }
@@ -21,29 +18,40 @@ class Profile extends Abstract {
     }
 
     async handleMeta({ account: userId, meta }) {
-        let profile = await ProfileModel.findOne({ userId });
+        const profile = await ProfileModel.findOne({ userId });
 
         if (!profile) {
             return;
         }
 
+        const updateFields = this._omitNulls(meta);
+
+        if (updateFields.profile_image) {
+            updateFields.avatarUrl = updateFields.profile_image;
+            updateFields.profileImage = updateFields.profile_image;
+            delete updateFields.profile_image;
+        }
+
+        if (updateFields.cover_image) {
+            updateFields.coverImage = updateFields.cover_image;
+            updateFields.coverUrl = updateFields.cover_image;
+            delete updateFields.cover_image;
+        }
+
         profile.personal.gls = {
             ...profile.personal.gls,
-            ...meta,
-            profileImage: meta.profile_image,
-            coverImage: meta.cover_image,
+            ...updateFields,
         };
 
         const personal = profile.personal.cyber;
         const contacts = personal.contacts;
         const or = this._currentOrNew.bind(this);
 
-        // TODO Wait for blockchain...
-        personal.avatarUrl = or(personal.avatarUrl, 'WAIT FOR BLOCKCHAIN');
-        personal.coverUrl = or(personal.coverUrl, 'WAIT FOR BLOCKCHAIN');
-        personal.biography = or(personal.biography, 'WAIT FOR BLOCKCHAIN');
-        contacts.facebook = or(contacts.facebook, 'WAIT FOR BLOCKCHAIN');
-        contacts.telegram = or(contacts.telegram, 'WAIT FOR BLOCKCHAIN');
+        personal.avatarUrl = or(personal.avatarUrl, meta.profile_image);
+        personal.coverUrl = or(personal.coverUrl, meta.cover_image);
+        personal.biography = or(personal.biography, meta.about);
+        contacts.facebook = or(contacts.facebook, meta.facebook);
+        contacts.telegram = or(contacts.telegram, meta.telegram);
         contacts.whatsApp = or(contacts.whatsApp, 'WAIT FOR BLOCKCHAIN');
         contacts.weChat = or(contacts.weChat, 'WAIT FOR BLOCKCHAIN');
 
@@ -56,6 +64,20 @@ class Profile extends Abstract {
         } else {
             return newValue;
         }
+    }
+
+    _omitNulls(data) {
+        const newData = {};
+
+        for (const key of Object.keys(data)) {
+            const value = data[key];
+
+            if (value !== null) {
+                newData[key] = value;
+            }
+        }
+
+        return newData;
     }
 }
 
