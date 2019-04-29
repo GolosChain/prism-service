@@ -1,8 +1,7 @@
-const core = require('gls-core-service');
-const BasicController = core.controllers.Basic;
+const AbstractFeed = require('./AbstractFeed');
 const Model = require('../../models/Profile');
 
-class Profile extends BasicController {
+class Profile extends AbstractFeed {
     async getProfile({ currentUserId, requestedUserId, type, username, app }) {
         if (!requestedUserId && !username) {
             throw { code: 400, message: 'Invalid user identification' };
@@ -87,36 +86,84 @@ class Profile extends BasicController {
         return result;
     }
 
-    async getSubscriptions({ requestedUserId }) {
-        const modelObject = await Model.findOne(
-            { userId: requestedUserId },
-            {
-                _id: false,
-                'subscriptions.userIds': true,
-                'subscriptions.communityIds': true,
-            },
-            { lean: true }
-        );
-
-        this._checkExists(modelObject);
-
-        return modelObject.subscriptions;
+    async getSubscriptions({ requestedUserId, limit, sequenceKey, type }) {
+        return await this._getSubscribes({
+            requestedUserId,
+            limit,
+            sequenceKey,
+            type,
+            field: 'subscriptions',
+        });
     }
 
-    async getSubscribers({ requestedUserId }) {
-        const modelObject = await Model.findOne(
-            { userId: requestedUserId },
-            {
-                _id: false,
-                'subscribers.userIds': true,
-                'subscribers.communityIds': true,
-            },
-            { lean: true }
-        );
+    async getSubscribers({ requestedUserId, limit, sequenceKey, type }) {
+        return await this._getSubscribes({
+            requestedUserId,
+            limit,
+            sequenceKey,
+            type,
+            field: 'subscribers',
+        });
+    }
+
+    async _getSubscribes({ requestedUserId, limit, sequenceKey, type, field }) {
+        const query = { userId: requestedUserId };
+        const projection = { _id: false };
+        const options = { lean: true };
+        const targetType = this._getSubscribesTargetType(type);
+        const targetPath = `${field}.${targetType}`;
+        let skip = 0;
+
+        if (sequenceKey) {
+            skip = Number(this._unpackSequenceKey(sequenceKey));
+
+            if (Number.isNaN(skip)) {
+                throw { code: 400, message: 'Invalid sequenceKey' };
+            }
+
+            projection[targetPath] = { $slice: [skip, limit] };
+        } else {
+            projection[targetPath] = { $slice: [0, limit] };
+        }
+
+        const modelObject = await Model.findOne(query, projection, options);
 
         this._checkExists(modelObject);
 
-        return modelObject.subscribers;
+        const items = modelObject[field][targetType];
+
+        return this._makeSubscribesResult(items, skip, limit);
+    }
+
+    _getSubscribesTargetType(type) {
+        switch (type) {
+            case 'community':
+                return 'communityIds';
+            case 'user':
+            default:
+                return 'userIds';
+        }
+    }
+
+    _makeSubscribesResult(items, skip, limit) {
+        if (!items || !items.length) {
+            return {
+                items: [],
+                sequenceKey: null,
+            };
+        }
+
+        if (items.length < limit) {
+            return {
+                items,
+                sequenceKey: null,
+            };
+        }
+
+        return {
+            items,
+            sequenceKey: this._packSequenceKey(skip + limit),
+        };
     }
 
     _checkExists(modelObject) {

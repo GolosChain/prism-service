@@ -398,6 +398,7 @@ class Connector extends BasicConnector {
                 getSubscriptions: {
                     handler: this._profile.getSubscriptions,
                     scope: this._profile,
+                    inherits: ['feedPagination'],
                     validation: {
                         required: ['requestedUserId'],
                         properties: {
@@ -410,6 +411,7 @@ class Connector extends BasicConnector {
                 getSubscribers: {
                     handler: this._profile.getSubscribers,
                     scope: this._profile,
+                    inherits: ['feedPagination'],
                     validation: {
                         required: ['requestedUserId'],
                         properties: {
