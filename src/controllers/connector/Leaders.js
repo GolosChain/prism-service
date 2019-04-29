@@ -1,5 +1,6 @@
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
+const ProfileModel = require('../../models/Profile');
 
 class Leaders extends AbstractFeed {
     constructor({ leaderFeedCache }) {
@@ -18,6 +19,7 @@ class Leaders extends AbstractFeed {
             return this._makeEmptyFeedResult();
         }
 
+        await this._populateUsers(modelObjects, communityId);
         await this._tryApplyVotesForModels(modelObjects, currentUserId);
         this._finalizeCachedSorting(modelObjects, query);
 
@@ -67,6 +69,38 @@ class Leaders extends AbstractFeed {
         query._id = { $in: ids };
 
         return { query, projection, options, meta: { newSequenceKey } };
+    }
+
+    async _populateUsers(modelObjects, communityId) {
+        for (const modelObject of modelObjects) {
+            await this._populateUser(modelObject, communityId);
+        }
+    }
+
+    async _populateUser(modelObject, communityId) {
+        const profile = await ProfileModel.findOne(
+            { userId: modelObject.userId },
+            { _id: false, usernames: true }
+        );
+
+        let app;
+
+        switch (communityId) {
+            case 'gls':
+                app = 'gls';
+                break;
+
+            case 'cyber':
+            default:
+                app = 'cyber';
+                break;
+        }
+
+        if (profile) {
+            modelObject.username = profile.usernames[app];
+        } else {
+            modelObject.username = modelObject.userId;
+        }
     }
 }
 
