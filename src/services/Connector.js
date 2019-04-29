@@ -395,8 +395,20 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
-                getSubscribes: {
-                    handler: this._profile.getSubscribes,
+                getSubscriptions: {
+                    handler: this._profile.getSubscriptions,
+                    scope: this._profile,
+                    validation: {
+                        required: ['userId'],
+                        properties: {
+                            userId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
+                getSubscribers: {
+                    handler: this._profile.getSubscribers,
                     scope: this._profile,
                     validation: {
                         required: ['userId'],

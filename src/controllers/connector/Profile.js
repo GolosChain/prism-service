@@ -63,8 +63,40 @@ class Profile extends BasicController {
         // TODO -
     }
 
-    async getSubscribes({ userId }) {
-        // TODO -
+    async getSubscriptions({ userId }) {
+        const modelObject = await Model.findOne(
+            { userId },
+            {
+                _id: false,
+                'subscriptions.userIds': true,
+                'subscriptions.communityIds': true,
+            },
+            { lean: true }
+        );
+
+        if (!modelObject) {
+            throw { code: 404, message: 'Not found' };
+        }
+
+        return modelObject.subscriptions;
+    }
+
+    async getSubscribers({ userId }) {
+        const modelObject = await Model.findOne(
+            { userId },
+            {
+                _id: false,
+                'subscribers.userIds': true,
+                'subscribers.communityIds': true,
+            },
+            { lean: true }
+        );
+
+        if (!modelObject) {
+            throw { code: 404, message: 'Not found' };
+        }
+
+        return modelObject.subscribers;
     }
 }
 

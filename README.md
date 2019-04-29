@@ -12,30 +12,30 @@
 API JSON-RPC:
 
 ```
-search:                                     // Поиск по данным из призмы
-    type <string>('matchPrefix')            // Тип поиска. Принимает значения "matchPrefix" и "match"
+search:                            // Поиск по данным из призмы
+    type <string>('matchPrefix')   // Тип поиска. Принимает значения "matchPrefix" и "match"
         [
-          match                             // Ищет по вхождениям слов. Например, на запрос `app` найдет только `app`
-        | matchPrefix                       // Ищет по вхождениям частей слов. Например, на запрос `app` найдет и `app`, и `apple`
+          match                    // Ищет по вхождениям слов. Например, на запрос `app` найдет только `app`
+        | matchPrefix              // Ищет по вхождениям частей слов. Например, на запрос `app` найдет и `app`, и `apple`
         ]
-    where <string>('all')                   // Модель, в которой нужно искать
-            [
-              all                           // Ищет везде
-            | comment                       // Ищет только в комментах
-            | post                          // Ищет только в постах
-            ]
-    text <string>                           // Текст, который требуется найти
-    field <string>('all')                   // Поле, по которому требуется выполнить поиск
-            [
-              all                           // Ищет по всем полям
-            | title                         // Ищет только в `title` (доступно для `comments` и `posts`)
-            | preview                       // Ищет только в `preview` (доступно для `comments` и `posts`)
-            | raw                           // Ищет только в `raw` (доступно для `comments` и `posts`)
-            | full                          // Ищет только в `full` (доступно для `comments` и `posts`)
-            | permlink                      // Ищет только в `permlink` (доступно для `comments` и `posts`)
-            ]
-    limit <number>(10)                      // Ограничение на размер найденных результатов
-    offset <number>(0)                      // Количество результатов, которое надо "пропустить"
+    where <string>('all')          // Модель, в которой нужно искать
+        [
+          all                      // Ищет везде
+        | comment                  // Ищет только в комментах
+        | post                     // Ищет только в постах
+        ]
+    text <string>                  // Текст, который требуется найти
+    field <string>('all')          // Поле, по которому требуется выполнить поиск
+        [
+          all                      // Ищет по всем полям
+        | title                    // Ищет только в `title` (доступно для `comments` и `posts`)
+        | preview                  // Ищет только в `preview` (доступно для `comments` и `posts`)
+        | raw                      // Ищет только в `raw` (доступно для `comments` и `posts`)
+        | full                     // Ищет только в `full` (доступно для `comments` и `posts`)
+        | permlink                 // Ищет только в `permlink` (доступно для `comments` и `posts`)
+        ]
+    limit <number>(10)             // Ограничение на размер найденных результатов
+    offset <number>(0)             // Количество результатов, которое надо "пропустить"
 
 getProfile:                        // Получение профиля пользователя
     requestedUserId <string>       // Идентификатор пользователя
@@ -71,14 +71,14 @@ getPost:                           // Получение конкретного 
         | raw                      // Сырой контент без обработки
         ]
 
-content.getComment:                // Получение конкретного комментария
+getComment:                        // Получение конкретного комментария
     currentUserId <string/null>    // Идентификатор текущего пользователя
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
-    username <string>            // Имя пользователя относительно домена
-    app <string>('cyber')        // Тип приложения / домена
+    username <string>              // Имя пользователя относительно домена
+    app <string>('cyber')          // Тип приложения / домена
         [
-          cyber                  // CyberWay
-        | gls                    // Golos
+          cyber                    // CyberWay
+        | gls                      // Golos
         ]
     permlink <string>              // Пермлинк поста
     refBlockNum <number>           // Привязанный блок поста
@@ -129,7 +129,7 @@ getFeed:                           // Получение ленты постов
         [
           cyber                    // CyberWay
         | gls                      // Golos
-        ]        
+        ]
 
 getComments:                       // Получение ленты комментариев
     sortBy <string>('time')        // Способ сортировки
@@ -160,7 +160,7 @@ getComments:                       // Получение ленты коммен
         [
           cyber                    // CyberWay
         | gls                      // Golos
-        ]    
+        ]
 
 getNotifyMeta:                // Получение мета-данных для отображения нотификации
     userId <string>           // Получить данные пользователя по идентификатору
@@ -178,26 +178,29 @@ getNotifyMeta:                // Получение мета-данных для
         permlink <string>     // Пермлинк контента
         refBlockNum <string>  // Привязанный блок блокчейна
 
-content.getPostVotes          // Получение списка голосов за пост
+getPostVotes:                 // Получение списка голосов за пост
     userId <string>           // Идентификатор пользователя
     permlink <string>         // Пермлинк поста
     refBlockNum <number>      // Привязанный блок поста
 
-content.getCommentVotes       // Получение списка голосов за коммент
+getCommentVotes:              // Получение списка голосов за коммент
     userId <string>           // Идентификатор пользователя
     permlink <string>         // Пермлинк коммента
     refBlockNum <number>      // Привязанный блок коммента
 
-content.resolveProfile        // Резолв идентификатора пользователя и аватара по имени с доменом
+resolveProfile:               // Резолв идентификатора пользователя и аватара по имени с доменом
     username <string>         // Имя пользователя относительно домена
     app <string>('cyber')     // Тип приложения / домена
         [
           cyber               // CyberWay
         | gls                 // Golos
         ]
-            
-content.getSubscribes         // Получить подписчиков и подписки пользователя
-    userId <string>           // Идентификатор пользователя                  
+
+getSubscriptions:             // Получить подписки пользователя
+    userId <string>           // Идентификатор пользователя
+
+getSubscribers:               // Получить подписчиков пользователя
+    userId <string>           // Идентификатор пользователя
 
 getHashTagTop:                   // Получение топа хеш-тегов
     communityId <string>         // Идентификатор комьюнити
