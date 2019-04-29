@@ -8,8 +8,9 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        username: {
-            type: String,
+        usernames: {
+            // app -> name
+            type: Object,
         },
         personal: {
             cyber: {

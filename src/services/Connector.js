@@ -399,9 +399,9 @@ class Connector extends BasicConnector {
                     handler: this._profile.getSubscriptions,
                     scope: this._profile,
                     validation: {
-                        required: ['userId'],
+                        required: ['requestedUserId'],
                         properties: {
-                            userId: {
+                            requestedUserId: {
                                 type: 'string',
                             },
                         },
@@ -411,9 +411,9 @@ class Connector extends BasicConnector {
                     handler: this._profile.getSubscribers,
                     scope: this._profile,
                     validation: {
-                        required: ['userId'],
+                        required: ['requestedUserId'],
                         properties: {
-                            userId: {
+                            requestedUserId: {
                                 type: 'string',
                             },
                         },

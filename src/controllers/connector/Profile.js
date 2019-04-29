@@ -24,9 +24,7 @@ class Profile extends BasicController {
             { lean: true }
         );
 
-        if (!modelObject) {
-            throw { code: 404, message: 'Not found' };
-        }
+        this._checkExists(modelObject);
 
         modelObject.subscriptions = modelObject.subscriptions || {
             usersCount: 0,
@@ -60,12 +58,38 @@ class Profile extends BasicController {
     }
 
     async resolveProfile({ username, app }) {
-        // TODO -
+        const modelObject = await Model.findOne(
+            { [`usernames.${app}`]: username },
+            { userId: true, usernames: true, personal: true },
+            { lean: true }
+        );
+
+        this._checkExists(modelObject);
+
+        const result = {
+            userId: modelObject.userId,
+        };
+
+        modelObject.personal = modelObject.personal || {};
+        modelObject.personal.gls = modelObject.personal.gls || {};
+        modelObject.personal.cyber = modelObject.personal.cyber || {};
+
+        switch (app) {
+            case 'gls':
+                result.profileImage = modelObject.personal.gls.profileImage || null;
+                break;
+
+            case 'cyber':
+            default:
+                result.avatarUrl = modelObject.personal.cyber.avatarUrl || null;
+        }
+
+        return result;
     }
 
-    async getSubscriptions({ userId }) {
+    async getSubscriptions({ requestedUserId }) {
         const modelObject = await Model.findOne(
-            { userId },
+            { userId: requestedUserId },
             {
                 _id: false,
                 'subscriptions.userIds': true,
@@ -74,16 +98,14 @@ class Profile extends BasicController {
             { lean: true }
         );
 
-        if (!modelObject) {
-            throw { code: 404, message: 'Not found' };
-        }
+        this._checkExists(modelObject);
 
         return modelObject.subscriptions;
     }
 
-    async getSubscribers({ userId }) {
+    async getSubscribers({ requestedUserId }) {
         const modelObject = await Model.findOne(
-            { userId },
+            { userId: requestedUserId },
             {
                 _id: false,
                 'subscribers.userIds': true,
@@ -92,11 +114,15 @@ class Profile extends BasicController {
             { lean: true }
         );
 
+        this._checkExists(modelObject);
+
+        return modelObject.subscribers;
+    }
+
+    _checkExists(modelObject) {
         if (!modelObject) {
             throw { code: 404, message: 'Not found' };
         }
-
-        return modelObject.subscribers;
     }
 }
 

@@ -22,7 +22,7 @@ class GolosUserExporter {
 
         ProfileModel.updateOne(
             { userId: document.owner },
-            { userId: document.owner, username: `${document.name}@golos` },
+            { userId: document.owner, usernames: { gls: document.name } },
             { upsert: true }
         ).catch(error => {
             Logger.error(`GOLOS Export users error - ${error}`);
