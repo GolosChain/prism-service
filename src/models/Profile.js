@@ -53,9 +53,35 @@ module.exports = MongoDB.makeModel(
                 type: [String],
                 default: [],
             },
+            usersCount: {
+                type: Number,
+                default: 0,
+            },
             communityIds: {
                 type: [String],
                 default: [],
+            },
+            communitiesCount: {
+                type: Number,
+                default: 0,
+            },
+        },
+        subscribers: {
+            userIds: {
+                type: [String],
+                default: [],
+            },
+            usersCount: {
+                type: Number,
+                default: 0,
+            },
+            communityIds: {
+                type: [String],
+                default: [],
+            },
+            communitiesCount: {
+                type: Number,
+                default: 0,
             },
         },
         registration: {
