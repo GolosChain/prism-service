@@ -243,6 +243,9 @@ class Connector extends BasicConnector {
                     validation: {
                         required: [],
                         properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
                             requestedUserId: {
                                 type: 'string',
                             },
