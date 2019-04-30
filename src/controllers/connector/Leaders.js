@@ -9,7 +9,7 @@ class Leaders extends AbstractFeed {
         this._leaderFeedCache = leaderFeedCache;
     }
 
-    async getTop({ currentUserId, communityId, limit, sequenceKey }) {
+    async getTop({ currentUserId, communityId, limit, sequenceKey, app }) {
         const queryData = { communityId, sequenceKey, limit };
         const { query, projection, options, meta } = this._prepareQuery(queryData);
 
@@ -19,7 +19,7 @@ class Leaders extends AbstractFeed {
             return this._makeEmptyFeedResult();
         }
 
-        await this._populateUsers(modelObjects, communityId);
+        await this._populateUsers(modelObjects, app);
         await this._tryApplyVotesForModels(modelObjects, currentUserId);
         this._finalizeCachedSorting(modelObjects, query);
 
@@ -71,34 +71,27 @@ class Leaders extends AbstractFeed {
         return { query, projection, options, meta: { newSequenceKey } };
     }
 
-    async _populateUsers(modelObjects, communityId) {
+    async _populateUsers(modelObjects, app) {
         for (const modelObject of modelObjects) {
-            await this._populateUser(modelObject, communityId);
+            await this._populateUser(modelObject, app);
         }
     }
 
-    async _populateUser(modelObject, communityId) {
+    async _populateUser(modelObject, communityId, app) {
         const profile = await ProfileModel.findOne(
             { userId: modelObject.userId },
-            { _id: false, usernames: true }
+            { _id: false, usernames: true, [`personal.${app}.avatarUrl`]: true }
         );
 
-        let app;
+        if (profile) {
+            profile.personal = profile.personal || {};
+            profile.personal[app] = profile.personal[app] || {};
+            profile.usernames = profile.usernames || {};
 
-        switch (communityId) {
-            case 'gls':
-                app = 'gls';
-                break;
-
-            case 'cyber':
-            default:
-                app = 'cyber';
-                break;
-        }
-
-        if (profile && profile.usernames) {
-            modelObject.username = profile.usernames[app];
+            modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
+            modelObject.username = profile.usernames[app] || modelObject.userId;
         } else {
+            modelObject.avatarUrl = null;
             modelObject.username = modelObject.userId;
         }
     }

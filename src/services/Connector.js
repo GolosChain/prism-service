@@ -314,6 +314,11 @@ class Connector extends BasicConnector {
                             communityId: {
                                 type: 'string',
                             },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
                         },
                     },
                 },
