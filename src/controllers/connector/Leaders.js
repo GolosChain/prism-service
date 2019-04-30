@@ -96,7 +96,7 @@ class Leaders extends AbstractFeed {
                 break;
         }
 
-        if (profile) {
+        if (profile && profile.usernames) {
             modelObject.username = profile.usernames[app];
         } else {
             modelObject.username = modelObject.userId;
