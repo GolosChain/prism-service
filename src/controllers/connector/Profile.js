@@ -35,8 +35,7 @@ class Profile extends AbstractFeed {
         };
         modelObject.stats = modelObject.stats || { postsCount: 0, commentsCount: 0 };
         modelObject.registration = modelObject.registration || { time: new Date(0) };
-        modelObject.personal = modelObject.personal || {};
-        modelObject.personal = modelObject.personal[type] || {};
+        modelObject.personal = (modelObject.personal || {})[type] || {};
 
         await this._detectSubscription(modelObject, currentUserId, requestedUserId);
 
