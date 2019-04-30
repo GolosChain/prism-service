@@ -74,7 +74,7 @@ class Profile extends AbstractFeed {
 
         switch (app) {
             case 'gls':
-                result.profileImage = modelObject.personal.gls.profileImage || null;
+                result.avatarUrl = modelObject.personal.gls.avatarUrl || null;
                 break;
 
             case 'cyber':

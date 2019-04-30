@@ -39,14 +39,30 @@ module.exports = MongoDB.makeModel(
                 },
             },
             gls: {
-                name: String,
-                gender: String,
-                about: String,
-                location: String,
-                website: String,
-                avatarUrl: String,
-                coverUrl: String,
-                social: String,
+                name: {
+                    type: String,
+                },
+                gender: {
+                    type: String,
+                },
+                about: {
+                    type: String,
+                },
+                location: {
+                    type: String,
+                },
+                website: {
+                    type: String,
+                },
+                avatarUrl: {
+                    type: String,
+                },
+                coverUrl: {
+                    type: String,
+                },
+                social: {
+                    type: String,
+                },
             },
         },
         subscriptions: {
