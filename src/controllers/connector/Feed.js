@@ -12,7 +12,14 @@ class Feed extends AbstractFeed {
     async getFeed(params) {
         await this._tryApplyUserIdByName(params);
 
-        const { fullQuery, currentUserId, sortBy, meta, limit } = await this._prepareQuery(params);
+        const {
+            fullQuery,
+            currentUserId,
+            sortBy,
+            meta,
+            limit,
+            contentType,
+        } = await this._prepareQuery(params);
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -20,7 +27,7 @@ class Feed extends AbstractFeed {
         }
 
         modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
-        await this._populate(modelObjects, currentUserId);
+        await this._populate(modelObjects, currentUserId, contentType);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
     }
@@ -42,11 +49,14 @@ class Feed extends AbstractFeed {
         const query = {};
         const projection = {
             'content.body.full': false,
-            'content.body.mobile': false,
         };
         const options = { lean: true };
         const fullQuery = { query, projection, options };
         const meta = {};
+
+        if (contentType !== 'mobile') {
+            projection['content.body.mobile'] = false;
+        }
 
         await this._applyFeedTypeConditions(fullQuery, {
             type,
@@ -60,7 +70,7 @@ class Feed extends AbstractFeed {
             meta
         );
 
-        return { fullQuery, currentUserId, sortBy, meta, limit };
+        return { fullQuery, currentUserId, sortBy, meta, limit, contentType };
     }
 
     _applySortingAndSequence(
@@ -96,10 +106,14 @@ class Feed extends AbstractFeed {
         options.sort = { _id: direction };
     }
 
-    async _populate(modelObjects, currentUserId) {
+    async _populate(modelObjects, currentUserId, contentType) {
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects);
         await this._populateCommunities(modelObjects);
+
+        if (contentType === 'mobile') {
+            this._prepareMobile(modelObjects);
+        }
     }
 
     _normalizeParams({
@@ -160,6 +174,34 @@ class Feed extends AbstractFeed {
         }
 
         query['communityId'] = { $in: model.subscriptions.communityIds };
+    }
+
+    _prepareMobile(modelObjects) {
+        for (const modelObject of modelObjects) {
+            const chunks = modelObject.content.body.mobile;
+            let image;
+
+            for (let i = 0; i < chunks.length; i++) {
+                if (chunks[i].type === 'image') {
+                    image = chunks[i];
+                    break;
+                }
+            }
+
+            if (image) {
+                modelObject.content.body.mobile = [
+                    {
+                        type: 'text',
+                        content: modelObject.body.preview,
+                    },
+                    image,
+                ];
+            } else if (modelObject.embeds) {
+                // TODO -
+            }
+
+            delete modelObject.body.preview;
+        }
     }
 
     _getSequenceKey(models, { sortBy, limit }, meta) {
