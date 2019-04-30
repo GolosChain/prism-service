@@ -226,6 +226,11 @@ getLeadersTop:                   // Получить топ лидеров
     communityId <string>         // Идентификатор комьюнити
     sequenceKey <string/null>    // Идентификатор пагинации для получения следующего контента
     limit <number>(10)           // Количество элементов
+    app <string>('cyber')        // Тип приложения / домена
+        [
+          cyber                  // CyberWay
+        | gls                    // Golos
+        ]
 
 waitForBlock                     // Дождаться и получить ответ когда призма обработает указанный блок
     blockNum <number>            // Номер блока
