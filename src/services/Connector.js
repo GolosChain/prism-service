@@ -285,6 +285,12 @@ class Connector extends BasicConnector {
                             contentId: {
                                 type: 'object',
                             },
+                            username: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                            },
                         },
                     },
                 },

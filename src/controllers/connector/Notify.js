@@ -1,15 +1,14 @@
-const core = require('gls-core-service');
-const BasicController = core.controllers.Basic;
+const AbstractContent = require('./AbstractContent');
 const Profile = require('../../models/Profile');
 const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
 
-class Notify extends BasicController {
-    async getMeta({ userId, communityId, postId, commentId, contentId }) {
+class Notify extends AbstractContent {
+    async getMeta({ userId, communityId, postId, commentId, contentId, username, app }) {
         const result = {};
 
         if (userId) {
-            result.user = await this._getUserData(userId);
+            result.user = await this._getUserData(userId, username, app);
         }
 
         if (communityId) {
@@ -37,10 +36,19 @@ class Notify extends BasicController {
         return result;
     }
 
-    async _getUserData(userId) {
+    async _getUserData(userId, username, app) {
+        if (!app) {
+            throw { code: 400, message: 'app required' };
+        }
+
+        const { requestedUserId: resolvedUserId } = await this._tryApplyUserIdByName({
+            requestedUserId: userId,
+            username,
+            app,
+        });
         const data = await Profile.findOne(
-            { userId },
-            { _id: false, username: true, 'personal.avatarUrl': true }
+            { userId: resolvedUserId },
+            { _id: false, username: true, [`personal.${app}.avatarUrl`]: true }
         );
 
         if (!data) {
@@ -48,9 +56,9 @@ class Notify extends BasicController {
         }
 
         return {
-            id: userId,
+            userId: resolvedUserId,
             username: data.username,
-            avatarUrl: data.personal.avatarUrl,
+            avatarUrl: data.personal[app].avatarUrl,
         };
     }
 
