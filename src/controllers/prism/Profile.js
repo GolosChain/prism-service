@@ -9,11 +9,9 @@ class Profile extends Abstract {
 
         await ProfileModel.create({
             userId,
-            username: userId, // TODO Change after MVP
             registration: {
                 time: blockTime,
             },
-            subscriptions: ['gls'], // TODO Change after MVP
         });
     }
 

@@ -6,8 +6,16 @@ const ProfileModel = require('../../models/Profile');
 class AbstractContent extends BasicController {
     async _getContent(
         Model,
-        { currentUserId, requestedUserId, permlink, refBlockNum, contentType }
+        { currentUserId, requestedUserId, permlink, refBlockNum, contentType, username, app }
     ) {
+        if (!requestedUserId && !username) {
+            throw { code: 400, message: 'Invalid user identification' };
+        }
+
+        if (!requestedUserId) {
+            requestedUserId = this._getUserIdByName(username, app);
+        }
+
         const modelObject = await Model.findOne(
             {
                 contentId: {
@@ -21,7 +29,7 @@ class AbstractContent extends BasicController {
         );
 
         if (!modelObject) {
-            throw { code: 404, message: 'Not found' };
+            this._throwNotFound();
         }
 
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
@@ -136,7 +144,7 @@ class AbstractContent extends BasicController {
             modelObject.community = {
                 id: 'gls',
                 name: 'GOLOS',
-                avatarUrl: 'none', // TODO Set before MVP
+                avatarUrl: null, // TODO Set before MVP
             };
 
             communities.set(id, modelObject.community);
@@ -167,6 +175,34 @@ class AbstractContent extends BasicController {
         ) {
             delete modelObject.parent.comment;
         }
+    }
+
+    async _tryApplyUserIdByName(params) {
+        if (!params.requestedUserId && !params.username) {
+            throw { code: 400, message: 'Invalid user identification' };
+        }
+
+        if (!params.requestedUserId) {
+            params.requestedUserId = this._getUserIdByName(params.username, params.app);
+        }
+    }
+
+    async _getUserIdByName(username, app) {
+        const profile = await ProfileModel.findOne(
+            { [`usernames.${app}`]: username },
+            { userId: true, _id: false },
+            { lean: true }
+        );
+
+        if (!profile) {
+            this._throwNotFound();
+        }
+
+        return profile.userId;
+    }
+
+    _throwNotFound() {
+        throw { code: 404, message: 'Not found' };
     }
 }
 

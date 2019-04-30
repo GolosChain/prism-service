@@ -16,14 +16,14 @@ class Comment extends AbstractFeed {
         username,
         app,
     }) {
-        // TODO Check user
-
         const modelObject = await this._getContent(CommentModel, {
             currentUserId,
             requestedUserId,
             permlink,
             refBlockNum,
             contentType,
+            username,
+            app,
         });
 
         this._removeEmptyParents(modelObject);
@@ -32,7 +32,7 @@ class Comment extends AbstractFeed {
     }
 
     async getComments(params) {
-        // TODO username, app
+        await this._tryApplyUserIdByName(params);
 
         if (params.type === 'replies' && !params.requestedUserId) {
             throw { code: 400, message: 'Invalid userId' };

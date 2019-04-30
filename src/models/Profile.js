@@ -128,6 +128,18 @@ module.exports = MongoDB.makeModel(
                     unique: true,
                 },
             },
+            // Golos user search
+            {
+                fields: {
+                    'usernames.gls': 1,
+                },
+            },
+            // Cyber user search
+            {
+                fields: {
+                    'usernames.cyber': 1,
+                },
+            },
         ],
     }
 );

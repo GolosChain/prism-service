@@ -59,6 +59,7 @@ class Notify extends BasicController {
         return {
             id: 'gls',
             name: 'Golos',
+            avatarUrl: null,
         };
     }
 

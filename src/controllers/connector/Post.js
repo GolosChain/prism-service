@@ -11,14 +11,14 @@ class Post extends AbstractContent {
         username,
         app,
     }) {
-        // TODO Check user
-
         const modelObject = await this._getContent(PostModel, {
             currentUserId,
             requestedUserId,
             permlink,
             refBlockNum,
             contentType,
+            username,
+            app,
         });
 
         await this._populateCommunities([modelObject]);

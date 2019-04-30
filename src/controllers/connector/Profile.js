@@ -7,10 +7,16 @@ class Profile extends AbstractFeed {
             throw { code: 400, message: 'Invalid user identification' };
         }
 
-        // TODO Check user
+        let query;
+
+        if (requestedUserId) {
+            query = { userId: requestedUserId };
+        } else {
+            query = { [`usernames.${app}`]: username };
+        }
 
         const modelObject = await Model.findOne(
-            { userId: requestedUserId },
+            query,
             {
                 _id: false,
                 __v: false,
