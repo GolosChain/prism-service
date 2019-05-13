@@ -11,7 +11,6 @@ class Comment extends AbstractFeed {
         currentUserId,
         requestedUserId,
         permlink,
-        refBlockNum,
         contentType,
         username,
         app,
@@ -20,7 +19,6 @@ class Comment extends AbstractFeed {
             currentUserId,
             requestedUserId,
             permlink,
-            refBlockNum,
             contentType,
             username,
             app,
@@ -63,7 +61,6 @@ class Comment extends AbstractFeed {
             currentUserId,
             requestedUserId,
             permlink,
-            refBlockNum,
             type,
             contentType,
         } = this._normalizeParams(params);
@@ -78,7 +75,7 @@ class Comment extends AbstractFeed {
         const fullQuery = { query, projection, options };
 
         this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit, contentType });
-        this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink, refBlockNum });
+        this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink });
 
         return { type, fullQuery, currentUserId, sortBy, limit };
     }
@@ -165,18 +162,17 @@ class Comment extends AbstractFeed {
         await this._populateAuthors([modelObject.parentComment]);
     }
 
-    _normalizeParams({ type, currentUserId, requestedUserId, permlink, refBlockNum, ...params }) {
+    _normalizeParams({ type, currentUserId, requestedUserId, permlink, ...params }) {
         return {
             type,
             currentUserId,
             requestedUserId,
             permlink,
-            refBlockNum,
             ...super._normalizeParams(params),
         };
     }
 
-    _applyFeedTypeConditions({ query }, { type, requestedUserId, permlink, refBlockNum }) {
+    _applyFeedTypeConditions({ query }, { type, requestedUserId, permlink }) {
         switch (type) {
             case 'user':
                 query['contentId.userId'] = requestedUserId;
@@ -193,7 +189,6 @@ class Comment extends AbstractFeed {
             default:
                 query['parent.post.contentId.userId'] = requestedUserId;
                 query['parent.post.contentId.permlink'] = permlink;
-                query['parent.post.contentId.refBlockNum'] = refBlockNum;
                 break;
         }
     }
