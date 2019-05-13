@@ -416,6 +416,10 @@ class Connector extends BasicConnector {
                             requestedUserId: {
                                 type: 'string',
                             },
+                            type: {
+                                type: 'string',
+                                enum: ['user', 'community'],
+                            },
                         },
                     },
                 },
