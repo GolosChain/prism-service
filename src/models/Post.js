@@ -13,10 +13,6 @@ module.exports = MongoDB.makeModel(
                 type: String,
                 required: true,
             },
-            refBlockNum: {
-                type: Number,
-                required: true,
-            },
         },
         communityId: {
             type: String,
@@ -124,7 +120,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'contentId.userId': 1,
                     'contentId.permlink': 1,
-                    'contentId.refBlockNum': 1,
                 },
                 options: {
                     unique: true,
