@@ -64,7 +64,7 @@ class Comment extends AbstractContent {
         }
 
         await this._updatePostCommentsCount(model, -1);
-        await this._updateUserPostsCount(model.contentId.userId, -1);
+        await this.updateUserPostsCount(model.contentId.userId, -1);
         await model.remove();
     }
 

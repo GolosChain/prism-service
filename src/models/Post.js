@@ -110,6 +110,7 @@ module.exports = MongoDB.makeModel(
         meta: {
             time: {
                 type: Date,
+                default: new Date(),
             },
         },
     },
