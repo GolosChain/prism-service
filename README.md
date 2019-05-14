@@ -63,6 +63,7 @@ getPost:                           // Получение конкретного 
         | gls                      // Golos
         ]
     permlink <string>              // Пермлинк поста
+    refBlockNum <number>           // Привязанный блок поста
     contentType <string>('web')    // Определить тип получаемого контента
         [
           web                      // Контент, пригодный для веб-клиентов
@@ -80,6 +81,7 @@ getComment:                        // Получение конкретного 
         | gls                      // Golos
         ]
     permlink <string>              // Пермлинк поста
+    refBlockNum <number>           // Привязанный блок поста
     contentType <string>('web')    // Определить тип получаемого контента
         [
           web                      // Контент, пригодный для веб-клиентов
@@ -140,12 +142,13 @@ getComments:                       // Получение ленты коммен
     type <string>('post')          // Тип ленты
         [
           user                     // Получить комментарии пользователя, требует requestedUserId
-        | post                     // Получить комментарии для поста, требует requestedUserId, permlink
+        | post                     // Получить комментарии для поста, требует requestedUserId, permlink, refBlockNum
         | replies                  // Получить комментарии, которые были оставлены пользователю, требует userId
         ]
     currentUserId <string/null>    // Идентификатор текущего пользователя
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
     permlink <string/null>         // Пермлинк поста
+    refBlockNum <number/null>      // Привязанный блок поста
     contentType <string>('web')    // Определить тип получаемого контента
         [
           web                      // Контент, пригодный для веб-клиентов
@@ -165,20 +168,25 @@ getNotifyMeta:                // Получение мета-данных для
     postId:                   // Получить данные поста по идентификатору
         userId <string>       // Идентификатор пользователя-автора
         permlink <string>     // Пермлинк контента
+        refBlockNum <string>  // Привязанный блок блокчейна
     commentId:                // Получить данные комментария по идентификатору
         userId <string>       // Идентификатор пользователя-автора
         permlink <string>     // Пермлинк контента
+        refBlockNum <string>  // Привязанный блок блокчейна
     contentId:                // Получить данные поста/комментария по идентификатору
         userId <string>       // Идентификатор пользователя-автора
         permlink <string>     // Пермлинк контента
+        refBlockNum <string>  // Привязанный блок блокчейна
 
 getPostVotes:                 // Получение списка голосов за пост
     userId <string>           // Идентификатор пользователя
     permlink <string>         // Пермлинк поста
+    refBlockNum <number>      // Привязанный блок поста
 
 getCommentVotes:              // Получение списка голосов за коммент
     userId <string>           // Идентификатор пользователя
     permlink <string>         // Пермлинк коммента
+    refBlockNum <number>      // Привязанный блок коммента
 
 resolveProfile:               // Резолв идентификатора пользователя и аватара по имени с доменом
     username <string>         // Имя пользователя относительно домена

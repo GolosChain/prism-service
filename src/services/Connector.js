@@ -70,7 +70,7 @@ class Connector extends BasicConnector {
                     handler: this._post.getPost,
                     scope: this._post,
                     validation: {
-                        required: ['permlink'],
+                        required: ['permlink', 'refBlockNum'],
                         properties: {
                             currentUserId: {
                                 type: 'string',
@@ -80,6 +80,9 @@ class Connector extends BasicConnector {
                             },
                             permlink: {
                                 type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
                             },
                             contentType: {
                                 type: 'string',
@@ -101,7 +104,7 @@ class Connector extends BasicConnector {
                     handler: this._comment.getComment,
                     scope: this._comment,
                     validation: {
-                        required: ['permlink'],
+                        required: ['permlink', 'refBlockNum'],
                         properties: {
                             currentUserId: {
                                 type: 'string',
@@ -111,6 +114,9 @@ class Connector extends BasicConnector {
                             },
                             permlink: {
                                 type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
                             },
                             contentType: {
                                 type: 'string',
@@ -153,6 +159,9 @@ class Connector extends BasicConnector {
                             },
                             permlink: {
                                 type: 'string',
+                            },
+                            refBlockNum: {
+                                type: 'number',
                             },
                             contentType: {
                                 type: 'string',

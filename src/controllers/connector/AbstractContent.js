@@ -6,7 +6,7 @@ const ProfileModel = require('../../models/Profile');
 class AbstractContent extends BasicController {
     async _getContent(
         Model,
-        { currentUserId, requestedUserId, permlink, contentType, username, app }
+        { currentUserId, requestedUserId, permlink, refBlockNum, contentType, username, app }
     ) {
         if (!requestedUserId && !username) {
             throw { code: 400, message: 'Invalid user identification' };
@@ -21,6 +21,7 @@ class AbstractContent extends BasicController {
                 contentId: {
                     userId: requestedUserId,
                     permlink,
+                    refBlockNum,
                 },
             },
             this._makeContentProjection(contentType),

@@ -13,6 +13,10 @@ module.exports = MongoDB.makeModel(
                 type: String,
                 required: true,
             },
+            refBlockNum: {
+                type: Number,
+                required: true,
+            },
         },
         parent: {
             post: {
@@ -23,6 +27,9 @@ module.exports = MongoDB.makeModel(
                     permlink: {
                         type: String,
                     },
+                    refBlockNum: {
+                        type: Number,
+                    },
                 },
             },
             comment: {
@@ -32,6 +39,9 @@ module.exports = MongoDB.makeModel(
                     },
                     permlink: {
                         type: String,
+                    },
+                    refBlockNum: {
+                        type: Number,
                     },
                 },
             },
@@ -122,6 +132,7 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'contentId.userId': 1,
                     'contentId.permlink': 1,
+                    'contentId.refBlockNum': 1,
                 },
                 options: {
                     unique: true,
@@ -132,6 +143,7 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'parent.post.contentId.userId': 1,
                     'parent.post.contentId.permlink': 1,
+                    'parent.post.contentId.refBlockNum': 1,
                     'ordering.byTime': 1,
                 },
                 options: {
