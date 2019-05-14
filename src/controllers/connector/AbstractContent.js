@@ -178,11 +178,7 @@ class AbstractContent extends BasicController {
     }
 
     async _tryApplyUserIdByName(params) {
-        if (!params.requestedUserId && !params.username) {
-            throw { code: 400, message: 'Invalid user identification' };
-        }
-
-        if (!params.requestedUserId) {
+        if (!params.requestedUserId && params.username) {
             params.requestedUserId = this._getUserIdByName(params.username, params.app);
         }
     }
