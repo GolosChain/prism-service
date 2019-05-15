@@ -126,6 +126,8 @@ class AbstractContent extends BasicController {
             );
 
             if (profile) {
+                profile.personal = profile.personal || {};
+                profile.personal[app] = profile.personal[app] || {};
                 profile.usernames = profile.usernames || {};
 
                 modelObject.author = {
