@@ -3,11 +3,13 @@ const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 const SubscribeController = require('./Subscribe');
 const PostController = require('./Post');
+const CommentController = require('./Comment');
 
 class Genesis {
     constructor() {
         this._subscribeController = new SubscribeController();
         this._postController = new PostController();
+        this._commentController = new CommentController();
     }
 
     async handle(type, data) {
@@ -47,15 +49,15 @@ class Genesis {
         votes,
         parent_author: parentAuthor,
     }) {
-        let Model;
-
         if (parentAuthor) {
-            Model = CommentModel;
+            await this._handlePost({ userId, permlink, title, body, tags, votes });
         } else {
-            Model = PostModel;
+            await this._handleComment({ userId, permlink, title, body, votes });
         }
+    }
 
-        const model = new Model({
+    async _handlePost({ userId, permlink, title, body, tags, votes }) {
+        const model = new PostModel({
             communityId: 'gls',
             contentId: {
                 userId,
@@ -69,6 +71,24 @@ class Genesis {
 
         await model.save();
         await this._postController.updateUserPostsCount(userId, 1);
+    }
+
+    async _handleComment({ userId, permlink, title, body, votes }) {
+        const controller = this._commentController;
+        const contentId = { userId, permlink };
+        const model = new CommentModel({
+            communityId: 'gls',
+            contentId,
+            content: controller.extractContentObjectFromGenesis({ title, body }),
+        });
+
+        this._applyVotes(model, votes);
+
+        await controller.applyParentById(model, contentId);
+        await controller.applyOrdering(model);
+        await model.save();
+        await controller.updatePostCommentsCount(model, 1);
+        await controller.updateUserCommentsCount(userId, 1);
     }
 
     _applyVotes(model, votes) {
