@@ -7,87 +7,123 @@ class Block extends BasicController {
         super({ connector });
 
         this._prismService = prismService;
+        this._blockWaiters = new Map();
+        this._transactionWaiters = new Map();
+
+        this._prismService.on('blockDone', this._releaseBlockWaiters.bind(this));
+        this._prismService.on('transactionDone', this._releaseTransactionWaiters.bind(this));
+
+        // Low block flow optimization
+        setInterval(() => {
+            this._releaseBlockWaiters();
+            this._releaseTransactionWaiters();
+        }, env.GLS_MAX_WAIT_FOR_BLOCKCHAIN_TIMEOUT / 4);
     }
 
     waitForBlock({ blockNum }) {
         return new Promise((resolve, reject) => {
-            const currentBlockNum = this._prismService.getCurrentBlockNum();
+            const resolved = this._tryResolveBlockWaiter(blockNum, resolve);
 
-            if (currentBlockNum >= blockNum) {
-                resolve();
+            if (resolved) {
                 return;
             }
 
-            const stopFlag = this._makeStopFlag();
-
-            this._startBlockNumChecker(blockNum, resolve, stopFlag);
-            this._setWatchDog(stopFlag, reject);
+            this._blockWaiters.set(Symbol(), {
+                resolve,
+                reject,
+                blockNum,
+                startTime: new Date(),
+            });
         });
     }
 
     waitForTransaction({ transactionId }) {
         return new Promise((resolve, reject) => {
-            if (this._prismService.hasRecentTransaction(transactionId)) {
-                resolve();
+            const resolved = this._tryResolveTransactionWaiter(transactionId, resolve);
+
+            if (resolved) {
                 return;
             }
 
-            const stopFlag = this._makeStopFlag();
-
-            this._startTransactionIdChecker(transactionId, resolve, stopFlag);
-            this._setWatchDog(stopFlag, reject);
+            this._transactionWaiters.set(Symbol(), {
+                resolve,
+                reject,
+                transactionId,
+                startTime: new Date(),
+            });
         });
     }
 
-    _startBlockNumChecker(blockNum, resolve, stopFlag) {
-        this._prismService.once('blockDone', currentBlockNum => {
-            if (this._isStopped(stopFlag)) {
-                return;
+    _releaseBlockWaiters() {
+        const released = new Set();
+        const waiters = this._blockWaiters;
+
+        for (const [id, { resolve, reject, blockNum, startTime }] of waiters) {
+            const resolved = this._tryResolveBlockWaiter(blockNum, resolve);
+
+            if (resolved) {
+                released.add(id);
+                continue;
             }
 
-            if (currentBlockNum >= blockNum) {
-                resolve();
-            } else {
-                // Avoid potential max call stack size error
-                setImmediate(() => this._startBlockNumChecker(blockNum, resolve, stopFlag));
+            if (this._isExpired(startTime)) {
+                released.add(id);
+                this._rejectTimeout(reject);
             }
-        });
+        }
+
+        this._removeReleased(waiters, released);
     }
 
-    _startTransactionIdChecker(transactionId, resolve, stopFlag) {
-        this._prismService.once('transactionDone', currentTransactionId => {
-            if (this._isStopped(stopFlag)) {
-                return;
+    _tryResolveBlockWaiter(blockNum, resolve) {
+        const currentBlockNum = this._prismService.getCurrentBlockNum();
+
+        if (currentBlockNum >= blockNum) {
+            resolve();
+            return true;
+        }
+    }
+
+    _releaseTransactionWaiters() {
+        const released = new Set();
+        const waiters = this._transactionWaiters;
+
+        for (const [id, { resolve, reject, transactionId, startTime }] of waiters) {
+            const resolved = this._tryResolveTransactionWaiter(transactionId, resolve);
+
+            if (resolved) {
+                released.add(id);
+                continue;
             }
 
-            if (currentTransactionId === transactionId) {
-                resolve();
-            } else {
-                // Avoid potential max call stack size error
-                setImmediate(() =>
-                    this._startTransactionIdChecker(transactionId, resolve, stopFlag)
-                );
+            if (this._isExpired(startTime)) {
+                released.add(id);
+                this._rejectTimeout(reject);
             }
-        });
+        }
+
+        this._removeReleased(waiters, released);
     }
 
-    _setWatchDog(stopFlag, reject) {
-        setTimeout(() => {
-            this._markStopped(stopFlag);
-            reject({ code: 408, message: 'Request timeout' });
-        }, env.GLS_MAX_WAIT_FOR_BLOCKCHAIN_TIMEOUT);
+    _tryResolveTransactionWaiter(transactionId, resolve) {
+        if (this._prismService.hasRecentTransaction(transactionId)) {
+            resolve();
+            return true;
+        }
     }
 
-    _makeStopFlag() {
-        return { stop: false };
+    _isExpired(startTime) {
+        return startTime + env.GLS_MAX_WAIT_FOR_BLOCKCHAIN_TIMEOUT < new Date();
     }
 
-    _isStopped(stopFlag) {
-        return stopFlag.stop;
+    _rejectTimeout(reject) {
+        reject({ code: 408, message: 'Request timeout' });
     }
 
-    _markStopped(stopFlag) {
-        stopFlag.stop = true;
+    _removeReleased(waiters, released) {
+        for (const id of released) {
+            waiters.delete(id);
+        }
     }
 }
 
