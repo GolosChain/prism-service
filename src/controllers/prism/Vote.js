@@ -1,6 +1,8 @@
+const Logger = core.utils.Logger;
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
+const ProfileModel = require('../../models/Profile');
 const WilsonScoring = require('../../utils/WilsonScoring');
 
 class Vote extends AbstractContent {
@@ -83,7 +85,7 @@ class Vote extends AbstractContent {
         }
     }
 
-    async handleReputation({ rshares: rShares }, content) {
+    async handleReputation({ voter, author, rshares: rShares }, content) {
         const model = await this._getModel(content, {
             payout: true,
             'meta.time': true,
@@ -100,7 +102,40 @@ class Vote extends AbstractContent {
         model.stats.wilson.hot = WilsonScoring.calcHot(rShares, model.meta.time);
         model.stats.wilson.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
 
+        await this._updateProfileReputation(voter, author, rShares);
+
         await model.save();
+    }
+
+    async _updateProfileReputation(voter, author, rShares) {
+        const modelVoter = await ProfileModel.findOne({ userId: voter }, {
+            'stats.reputation': true
+        });
+
+        if (!modelVoter) {
+            Logger.warn(`Unknown voter - ${voter}`);
+            return
+        }
+
+        const modelAuthor = await ProfileModel.findOne({ userId: author }, {
+            'stats.reputation': true
+        });
+
+        if (!modelAuthor) {
+            Logger.warn(`Unknown voter - ${author}`);
+            return
+        }
+
+        if (modelVoter.stats.reputation < 0) {
+            return
+        }
+
+        if (rShares < 0 && modelVoter.stats.reputation <= modelAuthor.stats.reputation) {
+            return
+        }
+
+        modelAuthor.stats.reputation += rShares
+        await modelAuthor.save()
     }
 
     async _getModelWithVotes(content) {
