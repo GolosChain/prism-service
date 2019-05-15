@@ -33,7 +33,7 @@ class AbstractContent extends BasicController {
         }
 
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
-        await this._populateAuthors([modelObject]);
+        await this._populateAuthors([modelObject], app);
 
         return modelObject;
     }
@@ -106,11 +106,11 @@ class AbstractContent extends BasicController {
         return { hasUpVote: Boolean(upVoteCount), hasDownVote: Boolean(downVoteCount) };
     }
 
-    async _populateAuthors(modelObjects) {
-        await this._populateWithCache(modelObjects, this._populateAuthor);
+    async _populateAuthors(modelObjects, app) {
+        await this._populateWithCache(modelObjects, this._populateAuthor, app);
     }
 
-    async _populateAuthor(modelObject, authors) {
+    async _populateAuthor(modelObject, authors, app) {
         const id = modelObject.contentId.userId;
 
         if (authors.has(id)) {
@@ -121,7 +121,7 @@ class AbstractContent extends BasicController {
                 {
                     username: true,
                     _id: false,
-                    [`personal.${modelObject.communityId}.avatarUrl`]: true,
+                    [`personal.${app}.avatarUrl`]: true,
                 }
             );
 
@@ -130,8 +130,8 @@ class AbstractContent extends BasicController {
 
                 modelObject.author = {
                     userId: id,
-                    username: profile.usernames[modelObject.communityId] || id,
-                    avatarUrl: profile.personal[modelObject.communityId].avatarUrl || null,
+                    username: profile.usernames[app] || id,
+                    avatarUrl: profile.personal[app].avatarUrl || null,
                 };
             } else {
                 Logger.error(`Feed - unknown user - ${id}`);
@@ -163,11 +163,11 @@ class AbstractContent extends BasicController {
         delete modelObject.communityId;
     }
 
-    async _populateWithCache(modelObjects, method) {
+    async _populateWithCache(modelObjects, method, ...args) {
         const cacheMap = new Map();
 
         for (const modelObject of modelObjects) {
-            await method.call(this, modelObject, cacheMap);
+            await method.call(this, modelObject, cacheMap, ...args);
         }
     }
 
