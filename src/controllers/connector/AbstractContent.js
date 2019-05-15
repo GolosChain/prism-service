@@ -118,11 +118,21 @@ class AbstractContent extends BasicController {
         } else {
             const profile = await ProfileModel.findOne(
                 { userId: id },
-                { username: true, _id: false }
+                {
+                    username: true,
+                    _id: false,
+                    [`personal.${modelObject.communityId}.avatarUrl`]: true,
+                }
             );
 
             if (profile) {
-                modelObject.author = { userId: id, username: profile.username };
+                profile.usernames = profile.usernames || {};
+
+                modelObject.author = {
+                    userId: id,
+                    username: profile.usernames[modelObject.communityId] || id,
+                    avatarUrl: profile.personal[modelObject.communityId].avatarUrl || null,
+                };
             } else {
                 Logger.error(`Feed - unknown user - ${id}`);
                 modelObject.author = { userId: id, username: id };
