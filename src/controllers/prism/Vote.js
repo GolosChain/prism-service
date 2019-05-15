@@ -122,6 +122,10 @@ class Vote extends AbstractContent {
             return;
         }
 
+        if (modelVoter.stats.reputation < 0) {
+            return;
+        }
+
         const modelAuthor = await ProfileModel.findOne(
             { userId: author },
             {
@@ -131,10 +135,6 @@ class Vote extends AbstractContent {
 
         if (!modelAuthor) {
             Logger.warn(`Unknown voter - ${author}`);
-            return;
-        }
-
-        if (modelVoter.stats.reputation < 0) {
             return;
         }
 
