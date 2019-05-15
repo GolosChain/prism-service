@@ -109,34 +109,40 @@ class Vote extends AbstractContent {
     }
 
     async _updateProfileReputation(voter, author, rShares) {
-        const modelVoter = await ProfileModel.findOne({ userId: voter }, {
-            'stats.reputation': true
-        });
+        const modelVoter = await ProfileModel.findOne(
+            { userId: voter },
+            {
+                'stats.reputation': true,
+            }
+        );
 
         if (!modelVoter) {
             Logger.warn(`Unknown voter - ${voter}`);
-            return
+            return;
         }
 
-        const modelAuthor = await ProfileModel.findOne({ userId: author }, {
-            'stats.reputation': true
-        });
+        const modelAuthor = await ProfileModel.findOne(
+            { userId: author },
+            {
+                'stats.reputation': true,
+            }
+        );
 
         if (!modelAuthor) {
             Logger.warn(`Unknown voter - ${author}`);
-            return
+            return;
         }
 
         if (modelVoter.stats.reputation < 0) {
-            return
+            return;
         }
 
         if (rShares < 0 && modelVoter.stats.reputation <= modelAuthor.stats.reputation) {
-            return
+            return;
         }
 
-        modelAuthor.stats.reputation += rShares
-        await modelAuthor.save()
+        modelAuthor.stats.reputation += rShares;
+        await modelAuthor.save();
     }
 
     async _getModelWithVotes(content) {
