@@ -107,6 +107,10 @@ module.exports = MongoDB.makeModel(
             },
         },
         stats: {
+            reputation: {
+                type: Number,
+                default: 0,
+            },
             postsCount: {
                 type: Number,
                 default: 0,
