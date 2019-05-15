@@ -113,7 +113,8 @@ class Vote extends AbstractContent {
             { userId: voter },
             {
                 'stats.reputation': true,
-            }
+            },
+            { lean: true }
         );
 
         if (!modelVoter) {
