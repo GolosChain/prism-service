@@ -19,6 +19,7 @@ class Feed extends AbstractFeed {
             meta,
             limit,
             contentType,
+            app,
         } = await this._prepareQuery(params);
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
@@ -27,7 +28,7 @@ class Feed extends AbstractFeed {
         }
 
         modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
-        await this._populate(modelObjects, currentUserId, contentType);
+        await this._populate(modelObjects, currentUserId, contentType, app);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
     }
@@ -44,6 +45,7 @@ class Feed extends AbstractFeed {
             communityId,
             tags,
             contentType,
+            app,
         } = this._normalizeParams(params);
 
         const query = {};
@@ -70,7 +72,7 @@ class Feed extends AbstractFeed {
             meta
         );
 
-        return { fullQuery, currentUserId, sortBy, meta, limit, contentType };
+        return { fullQuery, currentUserId, sortBy, meta, limit, contentType, app };
     }
 
     _applySortingAndSequence(
@@ -106,9 +108,9 @@ class Feed extends AbstractFeed {
         options.sort = { _id: direction };
     }
 
-    async _populate(modelObjects, currentUserId, contentType) {
+    async _populate(modelObjects, currentUserId, contentType, app) {
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
-        await this._populateAuthors(modelObjects);
+        await this._populateAuthors(modelObjects, app);
         await this._populateCommunities(modelObjects);
 
         if (contentType === 'mobile') {
