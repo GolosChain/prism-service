@@ -33,7 +33,7 @@ class AbstractContent extends BasicController {
         }
 
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
-        await this._populateAuthors([modelObject]);
+        await this._populateAuthors([modelObject], app);
 
         return modelObject;
     }
@@ -106,11 +106,11 @@ class AbstractContent extends BasicController {
         return { hasUpVote: Boolean(upVoteCount), hasDownVote: Boolean(downVoteCount) };
     }
 
-    async _populateAuthors(modelObjects) {
-        await this._populateWithCache(modelObjects, this._populateAuthor);
+    async _populateAuthors(modelObjects, app) {
+        await this._populateWithCache(modelObjects, this._populateAuthor, app);
     }
 
-    async _populateAuthor(modelObject, authors) {
+    async _populateAuthor(modelObject, authors, app) {
         const id = modelObject.contentId.userId;
 
         if (authors.has(id)) {
@@ -118,11 +118,23 @@ class AbstractContent extends BasicController {
         } else {
             const profile = await ProfileModel.findOne(
                 { userId: id },
-                { username: true, _id: false }
+                {
+                    username: true,
+                    _id: false,
+                    [`personal.${app}.avatarUrl`]: true,
+                }
             );
 
             if (profile) {
-                modelObject.author = { userId: id, username: profile.username };
+                profile.personal = profile.personal || {};
+                profile.personal[app] = profile.personal[app] || {};
+                profile.usernames = profile.usernames || {};
+
+                modelObject.author = {
+                    userId: id,
+                    username: profile.usernames[app] || id,
+                    avatarUrl: profile.personal[app].avatarUrl || null,
+                };
             } else {
                 Logger.error(`Feed - unknown user - ${id}`);
                 modelObject.author = { userId: id, username: id };
@@ -153,11 +165,11 @@ class AbstractContent extends BasicController {
         delete modelObject.communityId;
     }
 
-    async _populateWithCache(modelObjects, method) {
+    async _populateWithCache(modelObjects, method, ...args) {
         const cacheMap = new Map();
 
         for (const modelObject of modelObjects) {
-            await method.call(this, modelObject, cacheMap);
+            await method.call(this, modelObject, cacheMap, ...args);
         }
     }
 
