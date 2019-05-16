@@ -41,11 +41,11 @@ class Notify extends AbstractContent {
             throw { code: 400, message: 'app required' };
         }
 
-        const { requestedUserId: resolvedUserId } = await this._tryApplyUserIdByName({
-            requestedUserId: userId,
-            username,
-            app,
-        });
+        const params = { requestedUserId: userId, username, app };
+
+        await this._tryApplyUserIdByName(params);
+
+        const resolvedUserId = params.requestedUserId;
         const data = await Profile.findOne(
             { userId: resolvedUserId },
             { _id: false, username: true, [`personal.${app}.avatarUrl`]: true }
