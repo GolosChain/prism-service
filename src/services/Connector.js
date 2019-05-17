@@ -458,6 +458,7 @@ class Connector extends BasicConnector {
             },
             requiredClients: {
                 facade: env.GLS_FACADE_CONNECT,
+                meta: env.GLS_META_CONNECT,
             },
         });
     }

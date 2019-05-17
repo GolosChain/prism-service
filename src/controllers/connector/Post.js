@@ -21,7 +21,10 @@ class Post extends AbstractContent {
             app,
         });
 
-        await this._populateCommunities([modelObject]);
+        await Promise.all([
+            this._populateCommunities([modelObject]),
+            this._populateViewCount([modelObject]),
+        ]);
 
         return modelObject;
     }
