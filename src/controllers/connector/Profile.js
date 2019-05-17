@@ -42,6 +42,7 @@ class Profile extends AbstractFeed {
         modelObject.stats = modelObject.stats || { reputation: 0, postsCount: 0, commentsCount: 0 };
         modelObject.registration = modelObject.registration || { time: new Date(0) };
         modelObject.personal = (modelObject.personal || {})[type] || {};
+        modelObject.username = (modelObject.usernames || {})[type] || null;
 
         await this._detectSubscription(modelObject, currentUserId, requestedUserId);
 
@@ -77,15 +78,18 @@ class Profile extends AbstractFeed {
         modelObject.personal = modelObject.personal || {};
         modelObject.personal.gls = modelObject.personal.gls || {};
         modelObject.personal.cyber = modelObject.personal.cyber || {};
+        modelObject.usernames = modelObject.usernames || {};
 
         switch (app) {
             case 'gls':
                 result.avatarUrl = modelObject.personal.gls.avatarUrl || null;
+                result.username = modelObject.usernames.gls || null;
                 break;
 
             case 'cyber':
             default:
                 result.avatarUrl = modelObject.personal.cyber.avatarUrl || null;
+                result.username = modelObject.usernames.cyber || null;
         }
 
         return result;
