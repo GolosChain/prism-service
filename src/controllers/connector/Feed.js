@@ -191,10 +191,10 @@ class Feed extends AbstractFeed {
             }
 
             if (image) {
-                modelObject.content.body.mobile = [
+                modelObject.content.body.mobilePreview = [
                     {
                         type: 'text',
-                        content: modelObject.body.preview,
+                        content: modelObject.content.body.preview,
                     },
                     image,
                 ];
