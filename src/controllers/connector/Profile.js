@@ -49,7 +49,6 @@ class Profile extends AbstractFeed {
 
         await this._detectSubscription(modelObject, currentUserId, requestedUserId);
 
-
         return modelObject;
     }
 
@@ -101,19 +100,24 @@ class Profile extends AbstractFeed {
         return result;
     }
 
-    async getSubscriptions({ requestedUserId, limit, sequenceKey, type, app }) {
+    async getSubscriptions({ currentUserId, requestedUserId, limit, sequenceKey, type, app }) {
+        const markAllAsSubscribed = currentUserId === requestedUserId;
+
         return await this._getSubscribes({
+            currentUserId,
             requestedUserId,
             limit,
             sequenceKey,
             type,
             field: 'subscriptions',
             app,
+            markAllAsSubscribed,
         });
     }
 
-    async getSubscribers({ requestedUserId, limit, sequenceKey, type, app }) {
+    async getSubscribers({ currentUserId, requestedUserId, limit, sequenceKey, type, app }) {
         return await this._getSubscribes({
+            currentUserId,
             requestedUserId,
             limit,
             sequenceKey,
@@ -123,7 +127,16 @@ class Profile extends AbstractFeed {
         });
     }
 
-    async _getSubscribes({ requestedUserId, limit, sequenceKey, type, field, app }) {
+    async _getSubscribes({
+        currentUserId,
+        requestedUserId,
+        limit,
+        sequenceKey,
+        type,
+        field,
+        app,
+        markAllAsSubscribed = false,
+    }) {
         const query = { userId: requestedUserId };
         const projection = { _id: false };
         const options = { lean: true };
@@ -150,6 +163,7 @@ class Profile extends AbstractFeed {
         const items = modelObject[field][targetType];
 
         await this._populateSubscribes(items, app);
+        await this._populateSelfSubscribed(items, currentUserId, markAllAsSubscribed);
 
         return this._makeSubscribesResult(items, skip, limit);
     }
@@ -222,6 +236,27 @@ class Profile extends AbstractFeed {
             username,
             avatarUrl,
         };
+    }
+
+    async _populateSelfSubscribed(items, currentUserId, markAllAsSubscribed) {
+        for (const item of items) {
+            if (!currentUserId) {
+                item.hasSubscription = false;
+                continue;
+            }
+
+            if (markAllAsSubscribed) {
+                item.hasSubscription = true;
+                continue;
+            }
+
+            const count = await Model.countDocuments({
+                userId: currentUserId,
+                subscriptions: item.userId,
+            });
+
+            item.hasSubscription = Boolean(count);
+        }
     }
 }
 
