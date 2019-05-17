@@ -45,8 +45,10 @@ class Profile extends AbstractFeed {
         modelObject.usernames = modelObject.usernames || {};
         modelObject.username =
             modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
+        delete modelObject.usernames;
 
         await this._detectSubscription(modelObject, currentUserId, requestedUserId);
+
 
         return modelObject;
     }
@@ -84,6 +86,7 @@ class Profile extends AbstractFeed {
 
         result.username =
             modelObject.usernames[app] || modelObject.usernames['gls'] || result.userId;
+        delete modelObject.usernames;
 
         switch (app) {
             case 'gls':
