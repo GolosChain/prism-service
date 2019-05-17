@@ -202,7 +202,7 @@ class Feed extends AbstractFeed {
                 // TODO -
             }
 
-            delete modelObject.body.preview;
+            delete modelObject.content.body.preview;
         }
     }
 
