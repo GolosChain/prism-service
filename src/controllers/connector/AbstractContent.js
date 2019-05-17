@@ -116,29 +116,31 @@ class AbstractContent extends BasicController {
         if (authors.has(id)) {
             modelObject.author = authors.get(id);
         } else {
-            const profile = await ProfileModel.findOne(
-                { userId: id },
-                {
-                    username: true,
-                    _id: false,
-                    [`personal.${app}.avatarUrl`]: true,
-                }
-            );
+            const user = { userId: id };
+            await this._populateUser(user, app);
+            modelObject.author = user;
+        }
+    }
 
-            if (profile) {
-                profile.personal = profile.personal || {};
-                profile.personal[app] = profile.personal[app] || {};
-                profile.usernames = profile.usernames || {};
+    async _populateUser(modelObject, app) {
+        const profile = await ProfileModel.findOne(
+            { userId: modelObject.userId },
+            { _id: false, usernames: true, [`personal.${app}.avatarUrl`]: true },
+            { lean: true }
+        );
 
-                modelObject.author = {
-                    userId: id,
-                    username: profile.usernames[app] || id,
-                    avatarUrl: profile.personal[app].avatarUrl || null,
-                };
-            } else {
-                Logger.error(`Feed - unknown user - ${id}`);
-                modelObject.author = { userId: id, username: id };
-            }
+        if (profile) {
+            profile.personal = profile.personal || {};
+            profile.personal[app] = profile.personal[app] || {};
+            profile.usernames = profile.usernames || {};
+
+            modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
+            modelObject.username =
+                profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
+        } else {
+            Logger.error(`populateUser - unknown user - ${modelObject.userId}`);
+            modelObject.avatarUrl = null;
+            modelObject.username = modelObject.userId;
         }
     }
 

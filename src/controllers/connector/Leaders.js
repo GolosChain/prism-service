@@ -76,25 +76,6 @@ class Leaders extends AbstractFeed {
             await this._populateUser(modelObject, app);
         }
     }
-
-    async _populateUser(modelObject, communityId, app) {
-        const profile = await ProfileModel.findOne(
-            { userId: modelObject.userId },
-            { _id: false, usernames: true, [`personal.${app}.avatarUrl`]: true }
-        );
-
-        if (profile) {
-            profile.personal = profile.personal || {};
-            profile.personal[app] = profile.personal[app] || {};
-            profile.usernames = profile.usernames || {};
-
-            modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
-            modelObject.username = profile.usernames[app] || modelObject.userId;
-        } else {
-            modelObject.avatarUrl = null;
-            modelObject.username = modelObject.userId;
-        }
-    }
 }
 
 module.exports = Leaders;
