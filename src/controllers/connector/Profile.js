@@ -218,6 +218,7 @@ class Profile extends AbstractFeed {
         }
 
         return {
+            userId,
             username,
             avatarUrl,
         };
