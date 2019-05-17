@@ -7,7 +7,7 @@ class Profile extends Abstract {
             { userId },
             {
                 $set: {
-                    [`usernames.${communityId}}`]: username,
+                    [`usernames.${communityId}`]: username,
                 },
             }
         );
