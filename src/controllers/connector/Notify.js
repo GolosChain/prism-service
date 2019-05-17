@@ -46,19 +46,23 @@ class Notify extends AbstractContent {
         await this._tryApplyUserIdByName(params);
 
         const resolvedUserId = params.requestedUserId;
-        const data = await Profile.findOne(
+        const profile = await Profile.findOne(
             { userId: resolvedUserId },
-            { _id: false, username: true, [`personal.${app}.avatarUrl`]: true }
+            { _id: false, usernames: true, [`personal.${app}.avatarUrl`]: true }
         );
 
-        if (!data) {
+        if (!profile) {
             throw { code: 404, message: 'User not found' };
         }
 
+        profile.personal = profile.personal || {};
+        profile.personal[app] = profile.personal[app] || {};
+        profile.usernames = profile.usernames || {};
+
         return {
             userId: resolvedUserId,
-            username: data.username,
-            avatarUrl: data.personal[app].avatarUrl,
+            username: profile.usernames[app] || profile.usernames['gls'] || resolvedUserId,
+            avatarUrl: profile.personal[app].avatarUrl || null,
         };
     }
 
