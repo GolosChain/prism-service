@@ -9,7 +9,14 @@ const HashTag = require('./HashTag');
 const Leader = require('./Leader');
 
 // TODO Change after MVP
-const communityRegistry = ['gls.publish', 'gls.social', 'gls.vesting', 'gls.ctrl', 'cyber'];
+const communityRegistry = [
+    'gls.publish',
+    'gls.social',
+    'gls.vesting',
+    'gls.ctrl',
+    'cyber',
+    'cyber.domain',
+];
 
 class Main {
     constructor({ connector }) {
@@ -117,6 +124,10 @@ class Main {
 
             case `${communityId}.ctrl->unvotewitn`:
                 await this._leader.unvote(actionArgs, { communityId, events });
+                break;
+
+            case `cyber.domain->newusername`:
+                await this._profile.handleUsername(actionArgs, { communityId });
                 break;
 
             default:
