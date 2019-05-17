@@ -138,7 +138,7 @@ class AbstractContent extends BasicController {
             modelObject.username =
                 profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
         } else {
-            Logger.error(`populateUser - unknown user - ${modelObject.userId}`);
+            Logger.warn(`populateUser - unknown user - ${modelObject.userId}`);
             modelObject.avatarUrl = null;
             modelObject.username = modelObject.userId;
         }
