@@ -205,6 +205,11 @@ getSubscriptions:                // Получить подписки польз
         ]
     sequenceKey <string/null>    // Идентификатор пагинации для получения следующего контента
     limit <number>(10)           // Количество элементов
+    app <string>('cyber')        // Тип приложения / домена
+        [
+          cyber                  // CyberWay
+        | gls                    // Golos
+        ]
 
 getSubscribers:                  // Получить подписчиков пользователя
     userId <string>              // Идентификатор пользователя
@@ -215,6 +220,11 @@ getSubscribers:                  // Получить подписчиков по
         ]
     sequenceKey <string/null>    // Идентификатор пагинации для получения следующего контента
     limit <number>(10)           // Количество элементов
+    app <string>('cyber')        // Тип приложения / домена
+        [
+          cyber                  // CyberWay
+        | gls                    // Golos
+        ]
 
 getHashTagTop:                   // Получение топа хеш-тегов
     communityId <string>         // Идентификатор комьюнити

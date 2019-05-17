@@ -420,6 +420,11 @@ class Connector extends BasicConnector {
                                 type: 'string',
                                 enum: ['user', 'community'],
                             },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
                         },
                     },
                 },
@@ -432,6 +437,15 @@ class Connector extends BasicConnector {
                         properties: {
                             requestedUserId: {
                                 type: 'string',
+                            },
+                            type: {
+                                type: 'string',
+                                enum: ['user', 'community'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },

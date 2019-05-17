@@ -11,6 +11,7 @@ module.exports = MongoDB.makeModel(
         usernames: {
             // app -> name
             type: Object,
+            default: {},
         },
         personal: {
             cyber: {

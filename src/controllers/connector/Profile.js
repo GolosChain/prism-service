@@ -91,27 +91,29 @@ class Profile extends AbstractFeed {
         return result;
     }
 
-    async getSubscriptions({ requestedUserId, limit, sequenceKey, type }) {
+    async getSubscriptions({ requestedUserId, limit, sequenceKey, type, app }) {
         return await this._getSubscribes({
             requestedUserId,
             limit,
             sequenceKey,
             type,
             field: 'subscriptions',
+            app,
         });
     }
 
-    async getSubscribers({ requestedUserId, limit, sequenceKey, type }) {
+    async getSubscribers({ requestedUserId, limit, sequenceKey, type, app }) {
         return await this._getSubscribes({
             requestedUserId,
             limit,
             sequenceKey,
             type,
             field: 'subscribers',
+            app,
         });
     }
 
-    async _getSubscribes({ requestedUserId, limit, sequenceKey, type, field }) {
+    async _getSubscribes({ requestedUserId, limit, sequenceKey, type, field, app }) {
         const query = { userId: requestedUserId };
         const projection = { _id: false };
         const options = { lean: true };
@@ -136,6 +138,8 @@ class Profile extends AbstractFeed {
         this._checkExists(modelObject);
 
         const items = modelObject[field][targetType];
+
+        await this._populateSubscribes(items, app);
 
         return this._makeSubscribesResult(items, skip, limit);
     }
@@ -175,6 +179,38 @@ class Profile extends AbstractFeed {
         if (!modelObject) {
             throw { code: 404, message: 'Not found' };
         }
+    }
+
+    async _populateSubscribes(userIds, app) {
+        for (let i = 0; i < userIds.length; i++) {
+            userIds[i] = await this._getSubscribeUserData(userIds[i], app);
+        }
+    }
+
+    async _getSubscribeUserData(userId, app) {
+        const model = await Model.findOne({ userId }, { usernames: true, personal: true });
+
+        if (!model) {
+            return {
+                userId,
+                username: userId,
+                avatarUrl: null,
+            };
+        }
+
+        const names = model.usernames;
+        const username = names[app] || names['gls'] || userId;
+        const personal = model.personal[app] || model.personal[app];
+        let avatarUrl = null;
+
+        if (personal) {
+            avatarUrl = personal.avatarUrl;
+        }
+
+        return {
+            username,
+            avatarUrl,
+        };
     }
 }
 
