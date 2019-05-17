@@ -2,6 +2,15 @@ const Abstract = require('./Abstract');
 const ProfileModel = require('../../models/Profile');
 
 class Profile extends Abstract {
+    async handleUsername({ owner: userId, name: username }, { communityId }) {
+        const profile = await ProfileModel.findOne({ userId });
+
+        profile.usernames = profile.usernames || {};
+        profile.usernames[communityId] = username;
+
+        await profile.save();
+    }
+
     async handleCreate({ name: userId }, { blockTime }) {
         if (await ProfileModel.findOne({ userId })) {
             return;
