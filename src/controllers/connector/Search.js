@@ -5,11 +5,16 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BasicController = core.controllers.Basic;
 const env = require('../../data/env');
-const esclient = new elasticsearch.Client({
-    host: env.GLS_SEARCH_CONNECTION_STRING,
-});
 
 class Search extends BasicController {
+    constructor(...args) {
+        super(...args);
+
+        this._esclient = new elasticsearch.Client({
+            host: env.GLS_SEARCH_CONNECTION_STRING,
+        });
+    }
+
     async search({ where, text, field, limit, offset, type }) {
         type = this._parseType(type);
         field = this._parseField(field);
@@ -31,7 +36,7 @@ class Search extends BasicController {
             .build();
 
         try {
-            const result = await esclient.search({
+            const result = await this._esclient.search({
                 index: where,
                 body,
             });
