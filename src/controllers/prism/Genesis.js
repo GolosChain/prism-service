@@ -50,9 +50,9 @@ class Genesis {
         parent_author: parentAuthor,
     }) {
         if (parentAuthor) {
-            await this._handlePost({ userId, permlink, title, body, tags, votes });
-        } else {
             await this._handleComment({ userId, permlink, title, body, votes });
+        } else {
+            await this._handlePost({ userId, permlink, title, body, tags, votes });
         }
     }
 

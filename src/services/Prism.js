@@ -24,9 +24,9 @@ class Prism extends BasicService {
         const lastBlock = await this._getLastBlockNum();
         const subscriber = new BlockSubscribe(lastBlock + 1);
 
-        subscriber.on('block', this._handleBlock.bind(this));
+        subscriber.eachBlock(this._handleBlock.bind(this));
+        subscriber.eachGenesisData(this._handleGenesisData.bind(this));
         subscriber.on('fork', this._handleFork.bind(this));
-        subscriber.on('genesisData', this._handleGenesisData.bind(this));
 
         try {
             await subscriber.start();
