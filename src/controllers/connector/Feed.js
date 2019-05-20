@@ -180,32 +180,84 @@ class Feed extends AbstractFeed {
 
     _prepareMobile(modelObjects) {
         for (const modelObject of modelObjects) {
-            const chunks = modelObject.content.body.mobile;
-            let image;
-
-            for (let i = 0; i < chunks.length; i++) {
-                if (chunks[i].type === 'image') {
-                    image = chunks[i];
-                    break;
-                }
-            }
-
-            modelObject.content.body.mobilePreview = [
-                {
-                    type: 'text',
-                    content: modelObject.content.body.preview,
-                },
-            ];
-
-            if (image) {
-                modelObject.content.body.mobilePreview.push(image);
-            } else if (modelObject.embeds) {
-                // TODO -
-            }
-
-            delete modelObject.content.body.preview;
-            delete modelObject.content.body.mobile;
+            this._applyMobilePreview(modelObject);
         }
+    }
+
+    _applyMobilePreview(modelObject) {
+        const body = modelObject.content.body;
+
+        body.mobilePreview = [
+            {
+                type: 'text',
+                content: body.preview,
+            },
+        ];
+
+        this._tryAddMobileImageFromContent(modelObject) ||
+            this._tryAddMobileImageFromEmbeds(modelObject);
+
+        delete body.preview;
+        delete body.mobile;
+    }
+
+    _findMobileImage(chunks) {
+        for (let i = 0; i < chunks.length; i++) {
+            if (chunks[i].type === 'image') {
+                return chunks[i];
+            }
+        }
+
+        return null;
+    }
+
+    _extractEmbedsThumbnail(embeds) {
+        if (embeds && embeds.result && embeds.result.thumbnail_url) {
+            return {
+                src: embeds.result.thumbnail_url,
+                width: embeds.result.thumbnail_width || null,
+                height: embeds.result.thumbnail_height || null,
+            };
+        }
+
+        return null;
+    }
+
+    _tryAddMobileImageFromContent(modelObject) {
+        const body = modelObject.content.body;
+        const image = this._findMobileImage(body.mobile);
+
+        if (image) {
+            body.mobilePreview.push({
+                type: 'image',
+                src: image.src,
+                width: image.width || null,
+                height: image.height || null,
+            });
+
+            return true;
+        }
+
+        return false;
+    }
+
+    _tryAddMobileImageFromEmbeds(modelObject) {
+        const body = modelObject.content.body;
+        const embeds = modelObject.embeds;
+        const embedsImage = this._extractEmbedsThumbnail(embeds);
+
+        if (embedsImage) {
+            body.mobilePreview.push({
+                type: 'image',
+                src: embedsImage.src,
+                width: embedsImage.width,
+                height: embedsImage.height,
+            });
+
+            return true;
+        }
+
+        return false;
     }
 
     _getSequenceKey(models, { sortBy, limit }, meta) {
