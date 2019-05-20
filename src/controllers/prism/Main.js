@@ -118,6 +118,14 @@ class Main {
                 await this._leader.unregister(actionArgs, { communityId });
                 break;
 
+            case `${communityId}.ctrl->TODO1`:
+                await this._leader.activate(actionArgs, { communityId });
+                break;
+
+            case `${communityId}.ctrl->TODO2`:
+                await this._leader.deactivate(actionArgs, { communityId });
+                break;
+
             case `${communityId}.ctrl->votewitness`:
                 await this._leader.vote(actionArgs, { communityId, events });
                 break;

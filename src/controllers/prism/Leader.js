@@ -20,6 +20,14 @@ class Leader extends Abstract {
         await this._updateLeaderWithUpsert(communityId, userId, action);
     }
 
+    async activate({}, { communityId }) {
+        // TODO -
+    }
+
+    async deactivate({}, { communityId }) {
+        // TODO -
+    }
+
     async vote({ voter, witness: leader }, { communityId, events }) {
         const model = await this._getLeaderModelForUpdate(communityId, leader);
 
