@@ -190,19 +190,21 @@ class Feed extends AbstractFeed {
                 }
             }
 
+            modelObject.content.body.mobilePreview = [
+                {
+                    type: 'text',
+                    content: modelObject.content.body.preview,
+                },
+            ];
+
             if (image) {
-                modelObject.content.body.mobilePreview = [
-                    {
-                        type: 'text',
-                        content: modelObject.content.body.preview,
-                    },
-                    image,
-                ];
+                modelObject.content.body.mobilePreview.push(image);
             } else if (modelObject.embeds) {
                 // TODO -
             }
 
             delete modelObject.content.body.preview;
+            delete modelObject.content.body.mobile;
         }
     }
 
