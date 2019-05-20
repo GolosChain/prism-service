@@ -57,8 +57,8 @@ class Profile extends Abstract {
         personal.biography = or(personal.biography, meta.about);
         contacts.facebook = or(contacts.facebook, meta.facebook);
         contacts.telegram = or(contacts.telegram, meta.telegram);
-        contacts.whatsApp = or(contacts.whatsApp, 'WAIT FOR BLOCKCHAIN');
-        contacts.weChat = or(contacts.weChat, 'WAIT FOR BLOCKCHAIN');
+        contacts.whatsApp = or(contacts.whatsApp, '');
+        contacts.weChat = or(contacts.weChat, '');
 
         await profile.save();
     }
