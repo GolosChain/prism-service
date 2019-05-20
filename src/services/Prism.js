@@ -16,6 +16,9 @@ class Prism extends BasicService {
     }
 
     async start() {
+        this._blockInProcessing = false;
+        this._genesisDataInProcessing = false;
+        this._blockQueue = [];
         this._recentTransactions = new Set();
         this._currentBlockNum = 0;
         this._mainPrismController = new MainPrismController({ connector: this._connector });
@@ -24,9 +27,16 @@ class Prism extends BasicService {
         const lastBlock = await this._getLastBlockNum();
         const subscriber = new BlockSubscribe(lastBlock + 1);
 
-        subscriber.eachBlock(this._handleBlock.bind(this));
+        this._inGenesis = lastBlock === 0;
+
+        if (!env.GLS_USE_GENESIS) {
+            this._inGenesis = false;
+        }
+
+        subscriber.eachBlock(this._registerNewBlock.bind(this));
         subscriber.eachGenesisData(this._handleGenesisData.bind(this));
         subscriber.on('fork', this._handleFork.bind(this));
+        subscriber.on('genesisDone', this._handleGenesisComplete.bind(this));
 
         try {
             await subscriber.start();
@@ -41,6 +51,27 @@ class Prism extends BasicService {
 
     hasRecentTransaction(id) {
         return this._recentTransactions.has(id);
+    }
+
+    async _registerNewBlock(block) {
+        this._blockQueue.add(block);
+        await this._handleBlockQueue(block.blockNum);
+    }
+
+    async _handleBlockQueue() {
+        if (this._inGenesis || this._genesisDataInProcessing || this._blockInProcessing) {
+            return;
+        }
+
+        this._blockInProcessing = true;
+
+        let block;
+
+        while ((block = this._blockQueue.shift())) {
+            await this._handleBlock(block);
+        }
+
+        this._blockInProcessing = false;
     }
 
     async _handleBlock(block) {
@@ -93,6 +124,13 @@ class Prism extends BasicService {
     }
 
     async _handleGenesisData(type, data) {
+        if (!this._inGenesis) {
+            Logger.warn(`Genesis off, but data transfer.`);
+            return;
+        }
+
+        this._genesisDataInProcessing = true;
+
         try {
             await this._genesisController.handle(type, data);
         } catch (error) {
@@ -100,6 +138,8 @@ class Prism extends BasicService {
             Logger.error(`Cant handle genesis data - ${error.stack}`);
             process.exit(1);
         }
+
+        this._genesisDataInProcessing = false;
     }
 
     async _getLastBlockNum() {
@@ -116,6 +156,10 @@ class Prism extends BasicService {
 
     async _setLastBlockNum(blockNum) {
         await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum: blockNum } });
+    }
+
+    async _handleGenesisComplete() {
+        this._inGenesis = false;
     }
 }
 
