@@ -3,8 +3,8 @@ const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
 class Feed extends AbstractFeed {
-    constructor({ postFeedCache }) {
-        super();
+    constructor({ postFeedCache, ...other }) {
+        super(other);
 
         this._postFeedCache = postFeedCache;
     }
@@ -112,6 +112,7 @@ class Feed extends AbstractFeed {
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects, app);
         await this._populateCommunities(modelObjects);
+        await this._populateViewCount(modelObjects);
 
         if (contentType === 'mobile') {
             this._prepareMobile(modelObjects);
