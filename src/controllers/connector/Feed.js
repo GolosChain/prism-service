@@ -202,13 +202,7 @@ class Feed extends AbstractFeed {
     }
 
     _findMobileImage(chunks) {
-        for (let i = 0; i < chunks.length; i++) {
-            if (chunks[i].type === 'image') {
-                return chunks[i];
-            }
-        }
-
-        return null;
+        return chunks.find(({ type }) => type === 'image') || null;
     }
 
     _extractEmbedsThumbnail(embeds) {
