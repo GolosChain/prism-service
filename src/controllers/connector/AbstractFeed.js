@@ -144,8 +144,8 @@ class AbstractFeed extends AbstractContent {
         for (const model of modelObjects) {
             const { contentId } = model;
             const id = `${contentId.userId}/${contentId.refBlockNum}/${contentId.permlink}`;
-            modelsById[id] = model;
 
+            modelsById[id] = model;
             model.stats.viewCount = 0;
         }
 
