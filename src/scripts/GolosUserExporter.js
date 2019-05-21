@@ -1,6 +1,4 @@
 const mongoNative = require('mongodb');
-const core = require('gls-core-service');
-const MongoDB = core.services.MongoDB;
 const ProfileModel = require('../models/Profile');
 
 class GolosUserExporter {

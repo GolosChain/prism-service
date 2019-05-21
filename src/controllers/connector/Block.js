@@ -7,7 +7,7 @@ class Block extends BasicController {
         super({ connector });
 
         this._prismService = prismService;
-        this._blockWaiters = new Map();
+        this._blockWaiters = new Set();
         this._transactionWaiters = new Map();
 
         this._prismService.on('blockDone', this._releaseBlockWaiters.bind(this));
@@ -28,7 +28,7 @@ class Block extends BasicController {
                 return;
             }
 
-            this._blockWaiters.set(Symbol(), {
+            this._blockWaiters.add({
                 resolve,
                 reject,
                 blockNum,
@@ -45,7 +45,7 @@ class Block extends BasicController {
                 return;
             }
 
-            this._transactionWaiters.set(Symbol(), {
+            this._transactionWaiters.add({
                 resolve,
                 reject,
                 transactionId,
@@ -58,16 +58,17 @@ class Block extends BasicController {
         const released = new Set();
         const waiters = this._blockWaiters;
 
-        for (const [id, { resolve, reject, blockNum, startTime }] of waiters) {
+        for (const waiter of waiters) {
+            const { resolve, reject, blockNum, startTime } = target;
             const resolved = this._tryResolveBlockWaiter(blockNum, resolve);
 
             if (resolved) {
-                released.add(id);
+                released.add(waiter);
                 continue;
             }
 
             if (this._isExpired(startTime)) {
-                released.add(id);
+                released.add(waiter);
                 this._rejectTimeout(reject);
             }
         }
@@ -121,8 +122,8 @@ class Block extends BasicController {
     }
 
     _removeReleased(waiters, released) {
-        for (const id of released) {
-            waiters.delete(id);
+        for (const waiter of released) {
+            waiters.delete(waiter);
         }
     }
 }
