@@ -8,7 +8,7 @@ class Block extends BasicController {
 
         this._prismService = prismService;
         this._blockWaiters = new Set();
-        this._transactionWaiters = new Map();
+        this._transactionWaiters = new Set();
 
         this._prismService.on('blockDone', this._releaseBlockWaiters.bind(this));
         this._prismService.on('transactionDone', this._releaseTransactionWaiters.bind(this));
