@@ -13,9 +13,6 @@ module.exports = MongoDB.makeModel(
                 type: String,
                 required: true,
             },
-            refBlockNum: {
-                type: Number,
-            },
         },
         parent: {
             post: {
@@ -26,9 +23,6 @@ module.exports = MongoDB.makeModel(
                     permlink: {
                         type: String,
                     },
-                    refBlockNum: {
-                        type: Number,
-                    },
                 },
             },
             comment: {
@@ -38,9 +32,6 @@ module.exports = MongoDB.makeModel(
                     },
                     permlink: {
                         type: String,
-                    },
-                    refBlockNum: {
-                        type: Number,
                     },
                 },
             },

@@ -13,9 +13,6 @@ module.exports = MongoDB.makeModel(
                 type: String,
                 required: true,
             },
-            refBlockNum: {
-                type: Number,
-            },
         },
         communityId: {
             type: String,

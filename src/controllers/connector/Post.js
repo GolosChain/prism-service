@@ -6,7 +6,6 @@ class Post extends AbstractContent {
         currentUserId,
         requestedUserId,
         permlink,
-        refBlockNum,
         contentType,
         username,
         app,
@@ -15,7 +14,6 @@ class Post extends AbstractContent {
             currentUserId,
             requestedUserId,
             permlink,
-            refBlockNum,
             contentType,
             username,
             app,
@@ -26,7 +24,7 @@ class Post extends AbstractContent {
         return modelObject;
     }
 
-    async getPostVotes({ requestedUserId, permlink, refBlockNum }) {
+    async getPostVotes({ requestedUserId, permlink }) {
         // TODO -
     }
 }
