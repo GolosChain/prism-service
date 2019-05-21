@@ -259,15 +259,15 @@ class Profile extends AbstractFeed {
         }
     }
 
-    async suggestNames({ value, app }) {
-        if (value.length < 2 || value.includes('@')) {
+    async suggestNames({ text, app }) {
+        if (text.length < 2 || text.includes('@')) {
             return [];
         }
 
         const results = await Model.find(
             {
                 [`usernames.${app}`]: {
-                    $regex: `^${value}`,
+                    $regex: `^${text}`,
                 },
             },
             {

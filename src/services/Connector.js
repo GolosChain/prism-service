@@ -269,9 +269,9 @@ class Connector extends BasicConnector {
                     handler: this._profile.suggestNames,
                     scope: this._profile,
                     validation: {
-                        required: ['value'],
+                        required: ['text'],
                         properties: {
-                            value: {
+                            text: {
                                 type: 'string',
                             },
                             app: {
