@@ -35,7 +35,8 @@ class Subscribe extends Abstract {
             const index = subscriptions.indexOf(pinner);
 
             if (index) {
-                data[arrayPath] = subscriptions.splice(index, 1);
+                subscriptions.splice(index, 1);
+                data[arrayPath] = subscriptions;
                 pinnerModel.markModified(`subscriptions.${arrayPath}`);
                 this._updateCount(data, countPath);
                 await pinnerModel.save();
@@ -48,7 +49,8 @@ class Subscribe extends Abstract {
             const index = subscribers.indexOf(pinning);
 
             if (index) {
-                data[arrayPath] = subscribers.splice(index, 1);
+                subscribers.splice(index, 1);
+                data[arrayPath] = subscribers;
                 pinningModel.markModified(`subscribers.${arrayPath}`);
                 this._updateCount(data, countPath);
                 await pinningModel.save();

@@ -70,7 +70,7 @@ class Vote extends AbstractContent {
         const pack = model.votes.upUserIds;
 
         if (pack.includes(userId)) {
-            pack.splice(pack.indexOf(userId));
+            pack.splice(pack.indexOf(userId), 1);
             model.markModified('votes.upUserIds');
             model.votes.upCount--;
         }
@@ -80,7 +80,7 @@ class Vote extends AbstractContent {
         const pack = model.votes.downUserIds;
 
         if (pack.includes(userId)) {
-            pack.splice(pack.indexOf(userId));
+            pack.splice(pack.indexOf(userId), 1);
             model.markModified('votes.downUserIds');
             model.votes.downCount--;
         }
