@@ -137,6 +137,26 @@ class AbstractFeed extends AbstractContent {
 
         return result;
     }
+
+    async _populateViewCount(modelObjects) {
+        const modelsById = {};
+
+        for (const model of modelObjects) {
+            const { contentId } = model;
+            const id = `${contentId.userId}/${contentId.refBlockNum}/${contentId.permlink}`;
+
+            modelsById[id] = model;
+            model.stats.viewCount = 0;
+        }
+
+        const { results } = await this.callService('meta', 'getPostsViewCount', {
+            postLinks: Object.keys(modelsById),
+        });
+
+        for (const { postLink, viewCount } of results) {
+            modelsById[postLink].stats.viewCount = viewCount;
+        }
+    }
 }
 
 module.exports = AbstractFeed;
