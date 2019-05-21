@@ -54,7 +54,7 @@ class Prism extends BasicService {
     }
 
     async _registerNewBlock(block) {
-        this._blockQueue.add(block);
+        this._blockQueue.push(block);
         await this._handleBlockQueue(block.blockNum);
     }
 
