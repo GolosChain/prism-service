@@ -258,6 +258,32 @@ class Profile extends AbstractFeed {
             item.hasSubscription = Boolean(count);
         }
     }
+
+    async suggestNames({ text, app }) {
+        if (text.length < 2 || text.includes('@')) {
+            return [];
+        }
+
+        const results = await Model.find(
+            {
+                [`usernames.${app}`]: {
+                    $regex: `^${text}`,
+                },
+            },
+            {
+                userId: true,
+                usernames: true,
+            },
+            {
+                limit: 10,
+            }
+        );
+
+        return results.map(item => ({
+            userId: item.userId,
+            username: item.usernames[app],
+        }));
+    }
 }
 
 module.exports = Profile;

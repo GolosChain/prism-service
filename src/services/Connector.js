@@ -265,6 +265,23 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                suggestNames: {
+                    handler: this._profile.suggestNames,
+                    scope: this._profile,
+                    validation: {
+                        required: ['text'],
+                        properties: {
+                            text: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
                 getNotifyMeta: {
                     handler: this._notify.getMeta,
                     scope: this._notify,
