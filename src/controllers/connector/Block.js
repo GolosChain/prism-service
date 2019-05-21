@@ -59,7 +59,7 @@ class Block extends BasicController {
         const waiters = this._blockWaiters;
 
         for (const waiter of waiters) {
-            const { resolve, reject, blockNum, startTime } = target;
+            const { resolve, reject, blockNum, startTime } = waiter;
             const resolved = this._tryResolveBlockWaiter(blockNum, resolve);
 
             if (resolved) {
@@ -89,16 +89,17 @@ class Block extends BasicController {
         const released = new Set();
         const waiters = this._transactionWaiters;
 
-        for (const [id, { resolve, reject, transactionId, startTime }] of waiters) {
+        for (const waiter of waiters) {
+            const { resolve, reject, transactionId, startTime } = waiter;
             const resolved = this._tryResolveTransactionWaiter(transactionId, resolve);
 
             if (resolved) {
-                released.add(id);
+                released.add(waiter);
                 continue;
             }
 
             if (this._isExpired(startTime)) {
-                released.add(id);
+                released.add(waiter);
                 this._rejectTimeout(reject);
             }
         }
