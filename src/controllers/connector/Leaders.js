@@ -72,9 +72,13 @@ class Leaders extends AbstractFeed {
     }
 
     async _populateUsers(modelObjects, app) {
+        const results = [];
+
         for (const modelObject of modelObjects) {
-            await this._populateUser(modelObject, app);
+            results.push(this._populateUser(modelObject, app));
         }
+
+        await Promise.all(results);
     }
 }
 
