@@ -2,6 +2,17 @@ const Abstract = require('./Abstract');
 const ProfileModel = require('../../models/Profile');
 
 class Profile extends Abstract {
+    async handleUsername({ owner: userId, name: username }, { communityId }) {
+        await ProfileModel.updateOne(
+            { userId },
+            {
+                $set: {
+                    [`usernames.${communityId}`]: username,
+                },
+            }
+        );
+    }
+
     async handleCreate({ name: userId }, { blockTime }) {
         if (await ProfileModel.findOne({ userId })) {
             return;
@@ -9,11 +20,9 @@ class Profile extends Abstract {
 
         await ProfileModel.create({
             userId,
-            username: userId, // TODO Change after MVP
             registration: {
                 time: blockTime,
             },
-            subscriptions: ['gls'], // TODO Change after MVP
         });
     }
 
@@ -48,8 +57,8 @@ class Profile extends Abstract {
         personal.biography = or(personal.biography, meta.about);
         contacts.facebook = or(contacts.facebook, meta.facebook);
         contacts.telegram = or(contacts.telegram, meta.telegram);
-        contacts.whatsApp = or(contacts.whatsApp, 'WAIT FOR BLOCKCHAIN');
-        contacts.weChat = or(contacts.weChat, 'WAIT FOR BLOCKCHAIN');
+        contacts.whatsApp = or(contacts.whatsApp, '');
+        contacts.weChat = or(contacts.weChat, '');
 
         await profile.save();
     }

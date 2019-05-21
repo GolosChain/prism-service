@@ -15,7 +15,6 @@ module.exports = MongoDB.makeModel(
             },
             refBlockNum: {
                 type: Number,
-                required: true,
             },
         },
         parent: {
@@ -132,10 +131,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'contentId.userId': 1,
                     'contentId.permlink': 1,
-                    'contentId.refBlockNum': 1,
-                },
-                options: {
-                    unique: true,
                 },
             },
             // Post comments, sorted by time
@@ -143,7 +138,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'parent.post.contentId.userId': 1,
                     'parent.post.contentId.permlink': 1,
-                    'parent.post.contentId.refBlockNum': 1,
                     'ordering.byTime': 1,
                 },
                 options: {

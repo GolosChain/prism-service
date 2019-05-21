@@ -15,7 +15,6 @@ module.exports = MongoDB.makeModel(
             },
             refBlockNum: {
                 type: Number,
-                required: true,
             },
         },
         communityId: {
@@ -114,6 +113,7 @@ module.exports = MongoDB.makeModel(
         meta: {
             time: {
                 type: Date,
+                default: new Date(),
             },
         },
     },
@@ -124,10 +124,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'contentId.userId': 1,
                     'contentId.permlink': 1,
-                    'contentId.refBlockNum': 1,
-                },
-                options: {
-                    unique: true,
                 },
             },
             // Community/Subscriptions feed

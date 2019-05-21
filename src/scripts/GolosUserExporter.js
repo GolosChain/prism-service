@@ -1,6 +1,4 @@
 const mongoNative = require('mongodb');
-const core = require('gls-core-service');
-const MongoDB = core.services.MongoDB;
 const ProfileModel = require('../models/Profile');
 
 class GolosUserExporter {
@@ -22,7 +20,7 @@ class GolosUserExporter {
 
         ProfileModel.updateOne(
             { userId: document.owner },
-            { userId: document.owner, username: `${document.name}@golos` },
+            { userId: document.owner, usernames: { gls: document.name } },
             { upsert: true }
         ).catch(error => {
             Logger.error(`GOLOS Export users error - ${error}`);

@@ -25,7 +25,7 @@ class Post extends AbstractContent {
                 time: blockTime,
             },
         });
-        await this._updateUserPostsCount(contentId.userId, 1);
+        await this.updateUserPostsCount(contentId.userId, 1);
     }
 
     async handleUpdate(content) {
@@ -53,7 +53,7 @@ class Post extends AbstractContent {
         const contentId = this._extractContentId(content);
 
         await PostModel.deleteOne({ contentId });
-        await this._updateUserPostsCount(contentId.userId, -1);
+        await this.updateUserPostsCount(contentId.userId, -1);
     }
 }
 

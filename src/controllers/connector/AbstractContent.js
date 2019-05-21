@@ -6,8 +6,16 @@ const ProfileModel = require('../../models/Profile');
 class AbstractContent extends BasicController {
     async _getContent(
         Model,
-        { currentUserId, requestedUserId, permlink, refBlockNum, contentType }
+        { currentUserId, requestedUserId, permlink, refBlockNum, contentType, username, app }
     ) {
+        if (!requestedUserId && !username) {
+            throw { code: 400, message: 'Invalid user identification' };
+        }
+
+        if (!requestedUserId) {
+            requestedUserId = this._getUserIdByName(username, app);
+        }
+
         const modelObject = await Model.findOne(
             {
                 contentId: {
@@ -21,11 +29,11 @@ class AbstractContent extends BasicController {
         );
 
         if (!modelObject) {
-            throw { code: 404, message: 'Not found' };
+            this._throwNotFound();
         }
 
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
-        await this._populateAuthors([modelObject]);
+        await this._populateAuthors([modelObject], app);
 
         return modelObject;
     }
@@ -98,27 +106,41 @@ class AbstractContent extends BasicController {
         return { hasUpVote: Boolean(upVoteCount), hasDownVote: Boolean(downVoteCount) };
     }
 
-    async _populateAuthors(modelObjects) {
-        await this._populateWithCache(modelObjects, this._populateAuthor);
+    async _populateAuthors(modelObjects, app) {
+        await this._populateWithCache(modelObjects, this._populateAuthor, app);
     }
 
-    async _populateAuthor(modelObject, authors) {
+    async _populateAuthor(modelObject, authors, app) {
         const id = modelObject.contentId.userId;
 
         if (authors.has(id)) {
             modelObject.author = authors.get(id);
         } else {
-            const profile = await ProfileModel.findOne(
-                { userId: id },
-                { username: true, _id: false }
-            );
+            const user = { userId: id };
+            await this._populateUser(user, app);
+            modelObject.author = user;
+        }
+    }
 
-            if (profile) {
-                modelObject.author = { userId: id, username: profile.username };
-            } else {
-                Logger.error(`Feed - unknown user - ${id}`);
-                modelObject.author = { userId: id, username: id };
-            }
+    async _populateUser(modelObject, app) {
+        const profile = await ProfileModel.findOne(
+            { userId: modelObject.userId },
+            { _id: false, usernames: true, [`personal.${app}.avatarUrl`]: true },
+            { lean: true }
+        );
+
+        if (profile) {
+            profile.personal = profile.personal || {};
+            profile.personal[app] = profile.personal[app] || {};
+            profile.usernames = profile.usernames || {};
+
+            modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
+            modelObject.username =
+                profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
+        } else {
+            Logger.warn(`populateUser - unknown user - ${modelObject.userId}`);
+            modelObject.avatarUrl = null;
+            modelObject.username = modelObject.userId;
         }
     }
 
@@ -136,7 +158,7 @@ class AbstractContent extends BasicController {
             modelObject.community = {
                 id: 'gls',
                 name: 'GOLOS',
-                avatarUrl: 'none', // TODO Set before MVP
+                avatarUrl: null, // TODO Set before MVP
             };
 
             communities.set(id, modelObject.community);
@@ -145,11 +167,11 @@ class AbstractContent extends BasicController {
         delete modelObject.communityId;
     }
 
-    async _populateWithCache(modelObjects, method) {
+    async _populateWithCache(modelObjects, method, ...args) {
         const cacheMap = new Map();
 
         for (const modelObject of modelObjects) {
-            await method.call(this, modelObject, cacheMap);
+            await method.call(this, modelObject, cacheMap, ...args);
         }
     }
 
@@ -167,6 +189,30 @@ class AbstractContent extends BasicController {
         ) {
             delete modelObject.parent.comment;
         }
+    }
+
+    async _tryApplyUserIdByName(params) {
+        if (!params.requestedUserId && params.username) {
+            params.requestedUserId = this._getUserIdByName(params.username, params.app);
+        }
+    }
+
+    async _getUserIdByName(username, app) {
+        const profile = await ProfileModel.findOne(
+            { [`usernames.${app}`]: username },
+            { userId: true, _id: false },
+            { lean: true }
+        );
+
+        if (!profile) {
+            this._throwNotFound();
+        }
+
+        return profile.userId;
+    }
+
+    _throwNotFound() {
+        throw { code: 404, message: 'Not found' };
     }
 }
 

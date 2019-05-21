@@ -9,12 +9,38 @@ const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
 
 class AbstractContent extends Abstract {
+    async updateUserPostsCount(userId, increment) {
+        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
+    }
+
+    extractContentObjectFromGenesis(genesisContent) {
+        return {
+            title: this._extractTitle(genesisContent),
+            body: {
+                preview: this._extractBodyPreview(genesisContent),
+                full: this._extractBodyFull(genesisContent),
+                mobile: this._extractBodyMobile(genesisContent),
+                raw: this._extractBodyRaw(genesisContent),
+            },
+            metadata: {},
+            embeds: [],
+        };
+    }
+
     _extractTitle(content) {
-        return this._contentUtil.sanitize(content.headermssg);
+        if (content.headermssg) {
+            return this._contentUtil.sanitize(content.headermssg);
+        } else {
+            return this._contentUtil.sanitize(content.title);
+        }
     }
 
     _extractBodyRaw(content) {
-        return content.bodymssg;
+        if (content.bodymssg) {
+            return content.bodymssg;
+        } else {
+            return content.body;
+        }
     }
 
     _extractBodyFull(content) {
@@ -212,10 +238,6 @@ class AbstractContent extends Abstract {
             metadata,
             embeds,
         };
-    }
-
-    async _updateUserPostsCount(userId, increment) {
-        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
     }
 }
 

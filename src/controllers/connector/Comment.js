@@ -7,13 +7,23 @@ const PostModel = require('../../models/Post');
 const UNKNOWN_PLACEHOLDER = '-';
 
 class Comment extends AbstractFeed {
-    async getComment({ currentUserId, requestedUserId, permlink, refBlockNum, contentType }) {
+    async getComment({
+        currentUserId,
+        requestedUserId,
+        permlink,
+        refBlockNum,
+        contentType,
+        username,
+        app,
+    }) {
         const modelObject = await this._getContent(CommentModel, {
             currentUserId,
             requestedUserId,
             permlink,
             refBlockNum,
             contentType,
+            username,
+            app,
         });
 
         this._removeEmptyParents(modelObject);
@@ -22,21 +32,29 @@ class Comment extends AbstractFeed {
     }
 
     async getComments(params) {
+        await this._tryApplyUserIdByName(params);
+
         if (params.type === 'replies' && !params.requestedUserId) {
             throw { code: 400, message: 'Invalid userId' };
         }
 
-        const { type, fullQuery, currentUserId, sortBy, limit } = await this._prepareQuery(params);
+        const { type, fullQuery, currentUserId, sortBy, limit, app } = await this._prepareQuery(
+            params
+        );
         const modelObjects = await CommentModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
         }
 
-        await this._populate(modelObjects, currentUserId, type);
+        await this._populate(modelObjects, currentUserId, type, app);
         this._removeEmptyParentsForAll(modelObjects);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit });
+    }
+
+    getCommentVotes({ requestedUserId, permlink, refBlockNum }) {
+        // TODO -
     }
 
     async _prepareQuery(params) {
@@ -50,6 +68,7 @@ class Comment extends AbstractFeed {
             refBlockNum,
             type,
             contentType,
+            app,
         } = this._normalizeParams(params);
 
         const query = {};
@@ -73,9 +92,9 @@ class Comment extends AbstractFeed {
         options.sort = { 'ordering.byTime': direction };
     }
 
-    async _populate(modelObjects, currentUserId, type) {
+    async _populate(modelObjects, currentUserId, type, app) {
         await this._tryApplyVotesForModels({ Model: CommentModel, modelObjects, currentUserId });
-        await this._populateAuthors(modelObjects);
+        await this._populateAuthors(modelObjects, app);
 
         if (type === 'user' || type === 'replies') {
             await this._populateUserCommentsMetaForModels(modelObjects);

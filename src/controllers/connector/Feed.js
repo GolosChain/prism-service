@@ -10,7 +10,17 @@ class Feed extends AbstractFeed {
     }
 
     async getFeed(params) {
-        const { fullQuery, currentUserId, sortBy, meta, limit } = await this._prepareQuery(params);
+        await this._tryApplyUserIdByName(params);
+
+        const {
+            fullQuery,
+            currentUserId,
+            sortBy,
+            meta,
+            limit,
+            contentType,
+            app,
+        } = await this._prepareQuery(params);
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -18,7 +28,7 @@ class Feed extends AbstractFeed {
         }
 
         modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
-        await this._populate(modelObjects, currentUserId);
+        await this._populate(modelObjects, currentUserId, contentType, app);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
     }
@@ -35,16 +45,20 @@ class Feed extends AbstractFeed {
             communityId,
             tags,
             contentType,
+            app,
         } = this._normalizeParams(params);
 
         const query = {};
         const projection = {
             'content.body.full': false,
-            'content.body.mobile': false,
         };
         const options = { lean: true };
         const fullQuery = { query, projection, options };
         const meta = {};
+
+        if (contentType !== 'mobile') {
+            projection['content.body.mobile'] = false;
+        }
 
         await this._applyFeedTypeConditions(fullQuery, {
             type,
@@ -58,7 +72,7 @@ class Feed extends AbstractFeed {
             meta
         );
 
-        return { fullQuery, currentUserId, sortBy, meta, limit };
+        return { fullQuery, currentUserId, sortBy, meta, limit, contentType, app };
     }
 
     _applySortingAndSequence(
@@ -94,10 +108,14 @@ class Feed extends AbstractFeed {
         options.sort = { _id: direction };
     }
 
-    async _populate(modelObjects, currentUserId) {
+    async _populate(modelObjects, currentUserId, contentType, app) {
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
-        await this._populateAuthors(modelObjects);
+        await this._populateAuthors(modelObjects, app);
         await this._populateCommunities(modelObjects);
+
+        if (contentType === 'mobile') {
+            this._prepareMobile(modelObjects);
+        }
     }
 
     _normalizeParams({
@@ -158,6 +176,82 @@ class Feed extends AbstractFeed {
         }
 
         query['communityId'] = { $in: model.subscriptions.communityIds };
+    }
+
+    _prepareMobile(modelObjects) {
+        for (const modelObject of modelObjects) {
+            this._applyMobilePreview(modelObject);
+        }
+    }
+
+    _applyMobilePreview(modelObject) {
+        const body = modelObject.content.body;
+
+        body.mobilePreview = [
+            {
+                type: 'text',
+                content: body.preview,
+            },
+        ];
+
+        this._tryAddMobileImageFromContent(modelObject) ||
+            this._tryAddMobileImageFromEmbeds(modelObject);
+
+        delete body.preview;
+        delete body.mobile;
+    }
+
+    _findMobileImage(chunks) {
+        return chunks.find(({ type }) => type === 'image') || null;
+    }
+
+    _extractEmbedsThumbnail(embeds) {
+        if (embeds && embeds.result && embeds.result.thumbnail_url) {
+            return {
+                src: embeds.result.thumbnail_url,
+                width: embeds.result.thumbnail_width || null,
+                height: embeds.result.thumbnail_height || null,
+            };
+        }
+
+        return null;
+    }
+
+    _tryAddMobileImageFromContent(modelObject) {
+        const body = modelObject.content.body;
+        const image = this._findMobileImage(body.mobile);
+
+        if (image) {
+            body.mobilePreview.push({
+                type: 'image',
+                src: image.src,
+                width: image.width || null,
+                height: image.height || null,
+            });
+
+            return true;
+        }
+
+        return false;
+    }
+
+    _tryAddMobileImageFromEmbeds(modelObject) {
+        const body = modelObject.content.body;
+        const embeds = modelObject.embeds;
+        const embedsImage = this._extractEmbedsThumbnail(embeds);
+
+        if (embedsImage) {
+            body.mobilePreview.push({
+                type: 'image',
+                src: embedsImage.src,
+                width: embedsImage.width,
+                height: embedsImage.height,
+            });
+
+            return true;
+        }
+
+        return false;
     }
 
     _getSequenceKey(models, { sortBy, limit }, meta) {

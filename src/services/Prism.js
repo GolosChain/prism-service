@@ -4,6 +4,7 @@ const BlockSubscribe = core.services.BlockSubscribe;
 const Logger = core.utils.Logger;
 const env = require('../data/env');
 const MainPrismController = require('../controllers/prism/Main');
+const GenesisController = require('../controllers/prism/Genesis');
 const ServiceMetaModel = require('../models/ServiceMeta');
 const RevertTraceModel = require('../models/RevertTrace');
 
@@ -18,11 +19,13 @@ class Prism extends BasicService {
         this._recentTransactions = new Set();
         this._currentBlockNum = 0;
         this._mainPrismController = new MainPrismController({ connector: this._connector });
+        this._genesisController = new GenesisController();
 
         const lastBlock = await this._getLastBlockNum();
         const subscriber = new BlockSubscribe(lastBlock + 1);
 
-        subscriber.on('block', this._handleBlock.bind(this));
+        subscriber.eachBlock(this._handleBlock.bind(this));
+        subscriber.eachGenesisData(this._handleGenesisData.bind(this));
         subscriber.on('fork', this._handleFork.bind(this));
 
         try {
@@ -85,6 +88,16 @@ class Prism extends BasicService {
         } catch (error) {
             Logger.error(`Critical error!`);
             Logger.error(`Cant revert on fork - ${error.stack}`);
+            process.exit(1);
+        }
+    }
+
+    async _handleGenesisData(type, data) {
+        try {
+            await this._genesisController.handle(type, data);
+        } catch (error) {
+            Logger.error(`Critical error!`);
+            Logger.error(`Cant handle genesis data - ${error.stack}`);
             process.exit(1);
         }
     }
