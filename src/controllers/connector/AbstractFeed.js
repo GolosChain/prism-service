@@ -1,3 +1,5 @@
+const core = require('gls-core-service');
+const Logger = core.utils.Logger;
 const AbstractContent = require('./AbstractContent');
 
 class AbstractFeed extends AbstractContent {
@@ -149,12 +151,20 @@ class AbstractFeed extends AbstractContent {
             model.stats.viewCount = 0;
         }
 
-        const { results } = await this.callService('meta', 'getPostsViewCount', {
-            postLinks: Object.keys(modelsById),
-        });
+        try {
+            const { results } = await this.callService('meta', 'getPostsViewCount', {
+                postLinks: Object.keys(modelsById),
+            });
 
-        for (const { postLink, viewCount } of results) {
-            modelsById[postLink].stats.viewCount = viewCount;
+            for (const { postLink, viewCount } of results) {
+                modelsById[postLink].stats.viewCount = viewCount;
+            }
+        } catch (error) {
+            Logger.warn('Cant connect to MetaService');
+
+            for (const model of modelObjects) {
+                model.stats.viewCount = 0;
+            }
         }
     }
 }
