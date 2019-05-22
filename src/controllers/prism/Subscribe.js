@@ -11,7 +11,8 @@ class Subscribe extends Abstract {
             const data = pinnerModel.subscriptions;
 
             data[arrayPath].push(pinning);
-            this._updateCount(data, countPath);
+            data[countPath] = data[arrayPath].length;
+
             await pinnerModel.save();
         }
 
@@ -19,7 +20,8 @@ class Subscribe extends Abstract {
             const data = pinningModel.subscribers;
 
             data[arrayPath].push(pinner);
-            this._updateCount(data, countPath);
+            data[countPath] = data[arrayPath].length;
+
             await pinningModel.save();
         }
     }
@@ -34,11 +36,11 @@ class Subscribe extends Abstract {
             const subscriptions = data[arrayPath];
             const index = subscriptions.indexOf(pinner);
 
-            if (index) {
+            if (index !== -1) {
                 subscriptions.splice(index, 1);
                 data[arrayPath] = subscriptions;
+                data[countPath] = data[arrayPath].length;
                 pinnerModel.markModified(`subscriptions.${arrayPath}`);
-                this._updateCount(data, countPath);
                 await pinnerModel.save();
             }
         }
@@ -48,19 +50,14 @@ class Subscribe extends Abstract {
             const subscribers = data[arrayPath];
             const index = subscribers.indexOf(pinning);
 
-            if (index) {
+            if (index !== -1) {
                 subscribers.splice(index, 1);
                 data[arrayPath] = subscribers;
+                data[countPath] = data[arrayPath].length;
                 pinningModel.markModified(`subscribers.${arrayPath}`);
-                this._updateCount(data, countPath);
                 await pinningModel.save();
             }
         }
-    }
-
-    _updateCount(data, countPath) {
-        data[countPath] = data[countPath] || 0;
-        data[countPath]++;
     }
 
     async _getSubscriptionsProfile(userId) {
