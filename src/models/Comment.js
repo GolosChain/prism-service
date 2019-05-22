@@ -83,9 +83,17 @@ module.exports = MongoDB.makeModel(
             },
         },
         payout: {
+            done: {
+                type: Boolean,
+                default: false,
+            },
             rShares: {
                 type: Number,
                 default: 0,
+            },
+            value: {
+                type: Object,
+                default: {},
             },
         },
         votes: {

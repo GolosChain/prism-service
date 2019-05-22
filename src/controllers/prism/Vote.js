@@ -7,8 +7,8 @@ const ProfileModel = require('../../models/Profile');
 const WilsonScoring = require('../../utils/WilsonScoring');
 
 class Vote extends AbstractContent {
-    async handleUpVote(content) {
-        const model = await this._getModelWithVotes(content);
+    async handleUpVote(content, { events }) {
+        const model = await this._getModel(content, { votes: true, payout: true });
 
         if (!model) {
             return;
@@ -16,12 +16,13 @@ class Vote extends AbstractContent {
 
         this._includeUpVote(model, content.voter);
         this._excludeDownVote(model, content.voter);
+        await this._updatePayout(model, events);
 
         await model.save();
     }
 
-    async handleDownVote(content) {
-        const model = await this._getModelWithVotes(content);
+    async handleDownVote(content, { events }) {
+        const model = await this._getModel(content, { votes: true, payout: true });
 
         if (!model) {
             return;
@@ -29,12 +30,13 @@ class Vote extends AbstractContent {
 
         this._includeDownVote(model, content.voter);
         this._excludeUpVote(model, content.voter);
+        await this._updatePayout(model, events);
 
         await model.save();
     }
 
-    async handleUnVote(content) {
-        const model = await this._getModelWithVotes(content);
+    async handleUnVote(content, { events }) {
+        const model = await this._getModel(content, { votes: true, payout: true });
 
         if (!model) {
             return;
@@ -42,6 +44,7 @@ class Vote extends AbstractContent {
 
         this._excludeUpVote(model, content.voter);
         this._excludeDownVote(model, content.voter);
+        await this._updatePayout(model, events);
 
         await model.save();
     }
@@ -97,7 +100,6 @@ class Vote extends AbstractContent {
             return;
         }
 
-        model.payout.rShares = rShares;
         model.stats = model.stats || {};
         model.stats.wilson = model.stats.wilson || {};
         model.stats.wilson.hot = WilsonScoring.calcHot(rShares, model.meta.time);
@@ -146,10 +148,6 @@ class Vote extends AbstractContent {
         await modelAuthor.save();
     }
 
-    async _getModelWithVotes(content) {
-        return await this._getModel(content, { votes: true });
-    }
-
     async _getModel(content, projection) {
         const contentId = this._extractContentId(content);
         const post = await PostModel.findOne({ contentId }, projection);
@@ -165,6 +163,33 @@ class Vote extends AbstractContent {
         }
 
         return null;
+    }
+
+    async _updatePayout(model, events) {
+        // TODO -
+    }
+
+    _calcTotalPayout({ rewardWeight, funds, sharesfn, rsharesfn }) {
+        return rewardWeight * funds * (sharesfn / rsharesfn);
+    }
+
+    _calcAuthorPayout(payout, curationPayout, benefactorPayout) {
+        return payout - curationPayout - benefactorPayout;
+    }
+
+    _calcCuratorPayout(payout, sumcuratorsw) {
+        return payout - sumcuratorsw * payout;
+    }
+
+    _calcBenefactorPayout(payout, curationPayout, percents) {
+        const payoutDiff = payout - curationPayout;
+        let result = 0;
+
+        for (const percent of percents) {
+            result += payoutDiff * percent;
+        }
+
+        return result;
     }
 }
 

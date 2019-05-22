@@ -7,14 +7,7 @@ const PostModel = require('../../models/Post');
 const UNKNOWN_PLACEHOLDER = '-';
 
 class Comment extends AbstractFeed {
-    async getComment({
-        currentUserId,
-        requestedUserId,
-        permlink,
-        contentType,
-        username,
-        app,
-    }) {
+    async getComment({ currentUserId, requestedUserId, permlink, contentType, username, app }) {
         const modelObject = await this._getContent(CommentModel, {
             currentUserId,
             requestedUserId,

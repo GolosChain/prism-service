@@ -57,6 +57,19 @@ class Main {
         const events = action.events;
 
         switch (pathName) {
+            case `cyber->newaccount`:
+                await this._profile.handleCreate(actionArgs, { blockTime });
+                break;
+
+            case `cyber.domain->newusername`:
+                await this._profile.handleUsername(actionArgs, { communityId });
+                break;
+
+            case 'cyber.token->transfer':
+                await this._post.handlePayout(actionArgs, { communityId });
+                await this._comment.handlePayout(actionArgs, { communityId });
+                break;
+
             case `${communityId}.publish->createmssg`:
                 // Warning - do not change ordering
                 await this._post.handleCreate(actionArgs, { communityId, blockTime });
@@ -78,10 +91,6 @@ class Main {
                 await this._comment.handleDelete(actionArgs);
                 break;
 
-            case `cyber->newaccount`:
-                await this._profile.handleCreate(actionArgs, { blockTime });
-                break;
-
             case `${communityId}.social->updatemeta`:
                 await this._profile.handleMeta(actionArgs);
                 break;
@@ -91,15 +100,15 @@ class Main {
                 break;
 
             case `${communityId}.publish->upvote`:
-                await this._vote.handleUpVote(actionArgs);
+                await this._vote.handleUpVote(actionArgs, { events });
                 break;
 
             case `${communityId}.publish->downvote`:
-                await this._vote.handleDownVote(actionArgs);
+                await this._vote.handleDownVote(actionArgs, { events });
                 break;
 
             case `${communityId}.publish->unvote`:
-                await this._vote.handleUnVote(actionArgs);
+                await this._vote.handleUnVote(actionArgs, { events });
                 break;
 
             case `${communityId}.social->pin`:
@@ -132,10 +141,6 @@ class Main {
 
             case `${communityId}.ctrl->unvotewitn`:
                 await this._leader.unvote(actionArgs, { communityId, events });
-                break;
-
-            case `cyber.domain->newusername`:
-                await this._profile.handleUsername(actionArgs, { communityId });
                 break;
 
             default:
