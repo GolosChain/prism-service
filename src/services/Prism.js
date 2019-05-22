@@ -97,6 +97,11 @@ class Prism extends BasicService {
         this.emit('blockDone', blockNum);
 
         for (const transaction of block.transactions) {
+            if (!transaction || !transaction.actions) {
+                Logger.warn(`Empty transaction - ${blockNum}`);
+                return;
+            }
+
             const id = transaction.id;
 
             this.emit('transactionDone', id);

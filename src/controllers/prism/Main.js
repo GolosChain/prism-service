@@ -33,6 +33,10 @@ class Main {
         for (const transaction of transactions) {
             let previous;
 
+            if (!transaction || !transaction.actions) {
+                return;
+            }
+
             for (const action of transaction.actions) {
                 await this._disperseAction(action, previous, { blockNum, blockTime });
                 previous = action;
