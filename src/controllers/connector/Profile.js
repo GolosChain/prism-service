@@ -209,9 +209,11 @@ class Profile extends AbstractFeed {
         const result = [];
 
         for (let i = 0; i < userIds.length; i++) {
-            result.push(async () => {
-                userIds[i] = await this._getSubscribeUserData(userIds[i], app);
-            });
+            result.push(
+                (async () => {
+                    userIds[i] = await this._getSubscribeUserData(userIds[i], app);
+                })()
+            );
         }
 
         await Promise.all(result);
