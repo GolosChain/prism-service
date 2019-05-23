@@ -1,5 +1,6 @@
 const AbstractFeed = require('./AbstractFeed');
 const Model = require('../../models/Profile');
+const LeaderModel = require('../../models/Leader');
 
 class Profile extends AbstractFeed {
     async getProfile({ currentUserId, requestedUserId, type, username, app }) {
@@ -47,7 +48,10 @@ class Profile extends AbstractFeed {
             modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
         delete modelObject.usernames;
 
-        await this._detectSubscription(modelObject, currentUserId, requestedUserId);
+        await Promise.all([
+            this._detectSubscription(modelObject, currentUserId, requestedUserId),
+            this._detectLeadership(modelObject),
+        ]);
 
         return modelObject;
     }
@@ -63,6 +67,23 @@ class Profile extends AbstractFeed {
         });
 
         modelObject.isSubscribed = Boolean(count);
+    }
+
+    async _detectLeadership(modelObject) {
+        const communities = await LeaderModel.find(
+            {
+                userId: modelObject.userId,
+                active: true,
+            },
+            {
+                communityId: true,
+            },
+            {
+                lean: true,
+            }
+        );
+
+        modelObject.leaderIn = communities.map(community => community.communityId);
     }
 
     async resolveProfile({ username, app }) {
