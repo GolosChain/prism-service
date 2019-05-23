@@ -16,6 +16,7 @@ const communityRegistry = [
     'gls.ctrl',
     'cyber',
     'cyber.domain',
+    'cyber.token',
 ];
 
 class Main {
@@ -71,7 +72,6 @@ class Main {
 
             case 'cyber.token->transfer':
                 await this._post.handlePayout(actionArgs, { communityId });
-                await this._comment.handlePayout(actionArgs, { communityId });
                 break;
 
             case `${communityId}.publish->createmssg`:

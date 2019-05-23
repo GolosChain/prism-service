@@ -68,10 +68,6 @@ class Comment extends AbstractContent {
         await model.remove();
     }
 
-    async handlePayout(args, { communityId }) {
-        console.log('COMM', args, communityId);
-    }
-
     async updatePostCommentsCount(model, increment) {
         await PostModel.updateOne(
             { contentId: model.parent.post.contentId },

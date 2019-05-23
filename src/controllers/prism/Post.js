@@ -55,10 +55,6 @@ class Post extends AbstractContent {
         await PostModel.deleteOne({ contentId });
         await this.updateUserPostsCount(contentId.userId, -1);
     }
-
-    async handlePayout(args, { communityId }) {
-        console.log('POST', args, communityId);
-    }
 }
 
 module.exports = Post;

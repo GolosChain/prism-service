@@ -106,13 +106,51 @@ module.exports = MongoDB.makeModel(
                 type: Boolean,
                 default: false,
             },
-            rShares: {
-                type: Number,
-                default: 0,
+            author: {
+                token: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
             },
-            value: {
-                type: Object,
-                default: {},
+            curator: {
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            benefactor: {
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
             },
         },
         meta: {

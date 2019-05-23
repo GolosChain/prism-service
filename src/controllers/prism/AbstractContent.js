@@ -9,6 +9,39 @@ const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
 
 class AbstractContent extends Abstract {
+    async handlePayout({ from, to, quantity, memo }) {
+        if (!this._isPayoutContract(from)) {
+            return;
+        }
+
+        const { userId, permlink, contentType, rewardType } = this._parsePayoutMemo(memo);
+
+        const Model = this._getPayoutModelClass(contentType);
+        if (!Model) {
+            return;
+        }
+
+        const rewardTypeKey = this._getRewardTypeKey(rewardType);
+        if (!rewardTypeKey) {
+            return;
+        }
+
+        const payoutType = this._getPayoutType(to);
+        if (!payoutType) {
+            return;
+        }
+
+        const { tokenName, tokenValue } = this._extractTokenInfo(quantity);
+        if (!tokenName) {
+            return;
+        }
+
+        await this._setPayout(
+            { userId, permlink },
+            { rewardTypeKey, payoutType, tokenName, tokenValue }
+        );
+    }
+
     async updateUserPostsCount(userId, increment) {
         await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
     }
@@ -184,13 +217,6 @@ class AbstractContent extends Abstract {
         };
     }
 
-    _isContentIdEquals(left, right) {
-        return (
-            left.userId === right.userId &&
-            left.permlink === right.permlink
-        );
-    }
-
     async _isPost(content) {
         const id = content.parent_id;
 
@@ -236,6 +262,90 @@ class AbstractContent extends Abstract {
             metadata,
             embeds,
         };
+    }
+
+    _isPayoutContract(name) {
+        // TODO Add cyber and another;
+        return name === 'gls.publish';
+    }
+
+    _parsePayoutMemo(memo) {
+        const match = memo.match(/^\w+ \w+: (.+); (\w+) \w+ \w+ (\w+) .+:(.+)/);
+
+        return {
+            userId: match[1],
+            permlink: match[4],
+            rewardType: match[2],
+            contentType: match[3],
+        };
+    }
+
+    _getRewardTypeKey(rewardType) {
+        switch (rewardType) {
+            case 'author':
+                return 'author';
+
+            case 'curator':
+                return 'curator';
+
+            case '': // TODO -
+                return 'benefactor';
+
+            default:
+                Logger.warn(`Payout - unknown reward type - ${rewardType}`);
+                return null;
+        }
+    }
+
+    _getPayoutModelClass(contentType) {
+        switch (contentType) {
+            case 'post':
+                return PostModel;
+
+            case 'comment':
+                return CommentModel;
+
+            default:
+                Logger.warn(`Payout - unknown content type - ${contentType}`);
+                return null;
+        }
+    }
+
+    _getPayoutType(target) {
+        // TODO Add cyber
+        if (target === 'gls.vesting') {
+            return 'vesting';
+        } else {
+            return 'token';
+        }
+    }
+
+    _extractTokenInfo(quantity) {
+        let [tokenValue, tokenName] = quantity.split(' ');
+
+        tokenValue = Number(tokenValue);
+
+        if (!tokenName || Number.isNaN(tokenValue)) {
+            Logger.warn(`Payout - invalid quantity - ${quantity}`);
+            return { tokenName: null, tokenValue: null };
+        }
+
+        return { tokenName, tokenValue };
+    }
+
+    async _setPayout(contentId, { rewardTypeKey, payoutType, tokenName, tokenValue }) {
+        await PostModel.updateOne(
+            { contentId },
+            {
+                $set: {
+                    'payout.done': true,
+                    [`payout.${rewardTypeKey}.${payoutType}`]: {
+                        name: tokenName,
+                        value: tokenValue,
+                    },
+                },
+            }
+        );
     }
 }
 
