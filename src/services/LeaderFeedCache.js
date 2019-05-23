@@ -6,7 +6,13 @@ class LeaderFeedCache extends AbstractFeedCache {
         await super.start(new LeaderCache());
     }
 
-    getIdsWithSequenceKey({ communityId = '~all', sortBy = 'top', timeframe = 'all', sequenceKey, limit }) {
+    getIdsWithSequenceKey({
+        communityId = '~all',
+        sortBy = 'top',
+        timeframe = 'all',
+        sequenceKey,
+        limit,
+    }) {
         return super.getIdsWithSequenceKey({ communityId, sortBy, timeframe, sequenceKey, limit });
     }
 

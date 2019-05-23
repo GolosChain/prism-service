@@ -1,6 +1,5 @@
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
-const ProfileModel = require('../../models/Profile');
 
 class Leaders extends AbstractFeed {
     constructor({ leaderFeedCache }) {

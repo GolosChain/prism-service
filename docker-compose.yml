@@ -1,6 +1,5 @@
 version: '2.1'
 services:
-
   prism-mongo:
     container_name: prism-mongo
     image: mongo
@@ -25,7 +24,7 @@ services:
     ports:
       - 127.0.0.1:9200:9200
     environment:
-      "discovery.type": "single-node"
+      'discovery.type': 'single-node'
 
   prism-node:
     container_name: prism-node
