@@ -43,15 +43,13 @@ class Profile extends AbstractFeed {
         modelObject.stats = modelObject.stats || { reputation: 0, postsCount: 0, commentsCount: 0 };
         modelObject.registration = modelObject.registration || { time: new Date(0) };
         modelObject.personal = (modelObject.personal || {})[type] || {};
+        modelObject.leaderIn = modelObject.leaderIn || [];
         modelObject.usernames = modelObject.usernames || {};
         modelObject.username =
             modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
         delete modelObject.usernames;
 
-        await Promise.all([
-            this._detectSubscription(modelObject, currentUserId, requestedUserId),
-            this._detectLeadership(modelObject),
-        ]);
+        await this._detectSubscription(modelObject, currentUserId, requestedUserId);
 
         return modelObject;
     }
@@ -67,23 +65,6 @@ class Profile extends AbstractFeed {
         });
 
         modelObject.isSubscribed = Boolean(count);
-    }
-
-    async _detectLeadership(modelObject) {
-        const communities = await LeaderModel.find(
-            {
-                userId: modelObject.userId,
-                active: true,
-            },
-            {
-                communityId: true,
-            },
-            {
-                lean: true,
-            }
-        );
-
-        modelObject.leaderIn = communities.map(community => community.communityId);
     }
 
     async resolveProfile({ username, app }) {

@@ -2,6 +2,7 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
 const LeaderModel = require('../../models/Leader');
+const ProfileModel = require('../../models/Profile');
 
 class Leader extends Abstract {
     async register({ witness: userId, url }, { communityId }) {
@@ -12,6 +13,7 @@ class Leader extends Abstract {
         }
 
         await this._updateLeaderWithUpsert(communityId, userId, action);
+        await this._updateProfile(userId);
     }
 
     async unregister({ witness: userId }, { communityId }) {
@@ -19,14 +21,18 @@ class Leader extends Abstract {
             userId,
             communityId,
         });
+
+        await this._updateProfile(userId);
     }
 
     async activate({ witness: userId }, { communityId }) {
         await this._setActiveState(userId, communityId, true);
+        await this._updateProfile(userId);
     }
 
     async deactivate({ witness: userId }, { communityId }) {
         await this._setActiveState(userId, communityId, false);
+        await this._updateProfile(userId);
     }
 
     async vote({ voter, witness: leader }, { communityId, events }) {
@@ -78,6 +84,32 @@ class Leader extends Abstract {
 
     _extractLeaderRating(events) {
         return events[0].args.weight;
+    }
+
+    async _updateProfile(userId) {
+        const communities = await LeaderModel.find(
+            {
+                userId,
+                active: true,
+            },
+            {
+                communityId: true,
+            },
+            {
+                lean: true,
+            }
+        );
+
+        await ProfileModel.updateOne(
+            {
+                userId,
+            },
+            {
+                $set: {
+                    leaderIn: communities.map(community => community.communityId),
+                },
+            }
+        );
     }
 }
 
