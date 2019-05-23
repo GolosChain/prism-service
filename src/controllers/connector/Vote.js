@@ -70,7 +70,7 @@ class Vote extends AbstractFeed {
 
         await this._populateVoters(items, app);
 
-        return this._makePaginalResult(items, skip, limit);
+        return this._makeArrayPaginationResult(items, skip, limit);
     }
 
     _getVotesTargetType(type) {

@@ -173,12 +173,36 @@ getNotifyMeta:                // Получение мета-данных для
         permlink <string>     // Пермлинк контента
 
 getPostVotes:                 // Получение списка голосов за пост
+    sequenceKey <string/null> // Идентификатор пагинации для получения следующего контента
+    limit <number>(10)        // Количество элементов
     userId <string>           // Идентификатор пользователя
     permlink <string>         // Пермлинк поста
+    type <string>             // Тип запрашиваемых голосов
+         [
+           like               // Лайки
+         | dislike            // Дизлайка
+         ]
+    app <string>('cyber')     // Тип приложения / домена
+        [
+          cyber               // CyberWay
+        | gls                 // Golos
+        ]
 
 getCommentVotes:              // Получение списка голосов за коммент
+    sequenceKey <string/null> // Идентификатор пагинации для получения следующего контента
+    limit <number>(10)        // Количество элементов
     userId <string>           // Идентификатор пользователя
-    permlink <string>         // Пермлинк коммента
+    permlink <string>         // Пермлинк комментария
+    type <string>             // Тип запрашиваемых голосов
+         [
+           like               // Лайки
+         | dislike            // Дизлайка
+         ]
+    app <string>('cyber')     // Тип приложения / домена
+        [
+          cyber               // CyberWay
+        | gls                 // Golos
+        ]
 
 resolveProfile:               // Резолв идентификатора пользователя и аватара по имени с доменом
     username <string>         // Имя пользователя относительно домена

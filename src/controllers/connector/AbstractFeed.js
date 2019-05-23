@@ -140,7 +140,7 @@ class AbstractFeed extends AbstractContent {
         return result;
     }
 
-    _makePaginalResult(items, skip, limit) {
+    _makeArrayPaginationResult(items, skip, limit) {
         if (!items || !items.length) {
             return {
                 items: [],
