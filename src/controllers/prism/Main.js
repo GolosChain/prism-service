@@ -104,15 +104,15 @@ class Main {
                 break;
 
             case `${communityId}.publish->upvote`:
-                await this._vote.handleUpVote(actionArgs, { events });
+                await this._vote.handleUpVote(actionArgs, { communityId, events });
                 break;
 
             case `${communityId}.publish->downvote`:
-                await this._vote.handleDownVote(actionArgs, { events });
+                await this._vote.handleDownVote(actionArgs, { communityId, events });
                 break;
 
             case `${communityId}.publish->unvote`:
-                await this._vote.handleUnVote(actionArgs, { events });
+                await this._vote.handleUnVote(actionArgs, { communityId, events });
                 break;
 
             case `${communityId}.social->pin`:

@@ -5,9 +5,10 @@ const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
 const WilsonScoring = require('../../utils/WilsonScoring');
+const PoolModel = require('../../models/Pool');
 
 class Vote extends AbstractContent {
-    async handleUpVote(content, { events }) {
+    async handleUpVote(content, { communityId, events }) {
         const model = await this._getModel(content, { votes: true, payout: true });
 
         if (!model) {
@@ -16,12 +17,12 @@ class Vote extends AbstractContent {
 
         this._includeUpVote(model, content.voter);
         this._excludeDownVote(model, content.voter);
-        await this._updatePayout(model, events);
+        await this._updatePayout(model, communityId, events);
 
         await model.save();
     }
 
-    async handleDownVote(content, { events }) {
+    async handleDownVote(content, { communityId, events }) {
         const model = await this._getModel(content, { votes: true, payout: true });
 
         if (!model) {
@@ -30,12 +31,12 @@ class Vote extends AbstractContent {
 
         this._includeDownVote(model, content.voter);
         this._excludeUpVote(model, content.voter);
-        await this._updatePayout(model, events);
+        await this._updatePayout(model, communityId, events);
 
         await model.save();
     }
 
-    async handleUnVote(content, { events }) {
+    async handleUnVote(content, { communityId, events }) {
         const model = await this._getModel(content, { votes: true, payout: true });
 
         if (!model) {
@@ -44,7 +45,7 @@ class Vote extends AbstractContent {
 
         this._excludeUpVote(model, content.voter);
         this._excludeDownVote(model, content.voter);
-        await this._updatePayout(model, events);
+        await this._updatePayout(model, communityId, events);
 
         await model.save();
     }
@@ -165,8 +166,52 @@ class Vote extends AbstractContent {
         return null;
     }
 
-    async _updatePayout(model, events) {
+    async _updatePayout(model, communityId, events) {
+        const { postState, poolState, voteState } = this._getPayoutEventsData(events);
+
+        await this._actualizePoolState(poolState, communityId);
+
         // TODO -
+    }
+
+    _getPayoutEventsData(events) {
+        let postState;
+        let poolState;
+        let voteState;
+
+        for (const event of events) {
+            switch (true) {
+                case event.event === 'poststate':
+                    postState = event.args;
+                    continue;
+
+                case event.event === 'poolstate':
+                    poolState = event.args;
+                    continue;
+
+                case event.event === 'votestate':
+                    voteState = event.args;
+            }
+        }
+
+        return { postState, poolState, voteState };
+    }
+
+    async _actualizePoolState(poolState, communityId) {
+        const fundsValueRaw = poolState.funds;
+        const tokens = fundsValueRaw.split(' ')[0];
+
+        await PoolModel.updateOne(
+            { communityId },
+            {
+                $set: {
+                    fundsValue: Number(tokens),
+                    rShares: Number(poolState.rshares),
+                    rSharesFn: Number(poolState.rsharesfn),
+                },
+            },
+            { upsert: true }
+        );
     }
 
     _calcTotalPayout({ rewardWeight, funds, sharesfn, rsharesfn }) {
