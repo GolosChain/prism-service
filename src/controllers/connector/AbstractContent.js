@@ -64,8 +64,8 @@ class AbstractContent extends BasicController {
 
         return {
             'content.body.preview': false,
-            'votes.upUserIds': false,
-            'votes.downUserIds': false,
+            'votes.upVotes': false,
+            'votes.downVotes': false,
             _id: false,
             __v: false,
             createdAt: false,
@@ -101,11 +101,11 @@ class AbstractContent extends BasicController {
     async _detectVotes(Model, contentId, currentUserId) {
         const upVoteCount = await Model.countDocuments({
             contentId,
-            'votes.upUserIds': currentUserId,
+            'votes.upVotes.userId': currentUserId,
         });
         const downVoteCount = await Model.countDocuments({
             contentId,
-            'votes.downUserIds': currentUserId,
+            'votes.downVotes.userId': currentUserId,
         });
 
         return { hasUpVote: Boolean(upVoteCount), hasDownVote: Boolean(downVoteCount) };
@@ -134,19 +134,20 @@ class AbstractContent extends BasicController {
             { lean: true }
         );
 
-        if (profile) {
-            profile.personal = profile.personal || {};
-            profile.personal[app] = profile.personal[app] || {};
-            profile.usernames = profile.usernames || {};
-
-            modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
-            modelObject.username =
-                profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
-        } else {
+        if (!profile) {
             Logger.warn(`populateUser - unknown user - ${modelObject.userId}`);
             modelObject.avatarUrl = null;
             modelObject.username = modelObject.userId;
+            return;
         }
+
+        profile.personal = profile.personal || {};
+        profile.personal[app] = profile.personal[app] || {};
+        profile.usernames = profile.usernames || {};
+
+        modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
+        modelObject.username =
+            profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
     }
 
     async _populateCommunities(modelObjects) {

@@ -166,7 +166,7 @@ class Profile extends AbstractFeed {
         await this._populateSubscribes(items, app);
         await this._populateSelfSubscribed(items, currentUserId, markAllAsSubscribed);
 
-        return this._makeSubscribesResult(items, skip, limit);
+        return this._makeArrayPaginationResult(items, skip, limit);
     }
 
     _getSubscribesTargetType(type) {
@@ -177,27 +177,6 @@ class Profile extends AbstractFeed {
             default:
                 return 'userIds';
         }
-    }
-
-    _makeSubscribesResult(items, skip, limit) {
-        if (!items || !items.length) {
-            return {
-                items: [],
-                sequenceKey: null,
-            };
-        }
-
-        if (items.length < limit) {
-            return {
-                items,
-                sequenceKey: null,
-            };
-        }
-
-        return {
-            items,
-            sequenceKey: this._packSequenceKey(skip + limit),
-        };
     }
 
     _checkExists(modelObject) {
