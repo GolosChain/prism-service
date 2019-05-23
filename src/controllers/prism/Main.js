@@ -45,7 +45,7 @@ class Main {
         }
     }
 
-    async _disperseAction(action, previous = { args: {} }, { blockNum, blockTime }) {
+    async _disperseAction(action, previous = { args: {} }, { blockTime }) {
         if (!action) {
             Logger.error('Empty transaction! But continue.');
             return;

@@ -1,6 +1,5 @@
 const AbstractFeed = require('./AbstractFeed');
 const Model = require('../../models/Profile');
-const LeaderModel = require('../../models/Leader');
 
 class Profile extends AbstractFeed {
     async getProfile({ currentUserId, requestedUserId, type, username, app }) {

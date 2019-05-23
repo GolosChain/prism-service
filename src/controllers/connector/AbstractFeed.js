@@ -1,5 +1,3 @@
-const core = require('gls-core-service');
-const Logger = core.utils.Logger;
 const AbstractContent = require('./AbstractContent');
 
 class AbstractFeed extends AbstractContent {
