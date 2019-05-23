@@ -131,11 +131,11 @@ class Main {
                 await this._leader.unregister(actionArgs, { communityId });
                 break;
 
-            case `${communityId}.ctrl->TODO1`:
+            case `${communityId}.ctrl->startwitness`:
                 await this._leader.activate(actionArgs, { communityId });
                 break;
 
-            case `${communityId}.ctrl->TODO2`:
+            case `${communityId}.ctrl->stopwitness`:
                 await this._leader.deactivate(actionArgs, { communityId });
                 break;
 

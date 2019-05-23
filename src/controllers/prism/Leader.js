@@ -15,17 +15,18 @@ class Leader extends Abstract {
     }
 
     async unregister({ witness: userId }, { communityId }) {
-        const action = { $set: { communityId, userId, active: false } };
-
-        await this._updateLeaderWithUpsert(communityId, userId, action);
+        await LeaderModel.remove({
+            userId,
+            communityId,
+        });
     }
 
-    async activate({}, { communityId }) {
-        // TODO -
+    async activate({ witness: userId }, { communityId }) {
+        await this._setActiveState(userId, communityId, true);
     }
 
-    async deactivate({}, { communityId }) {
-        // TODO -
+    async deactivate({ witness: userId }, { communityId }) {
+        await this._setActiveState(userId, communityId, false);
     }
 
     async vote({ voter, witness: leader }, { communityId, events }) {
@@ -62,6 +63,17 @@ class Leader extends Abstract {
 
     async _updateLeaderWithUpsert(communityId, userId, action) {
         await LeaderModel.updateOne({ communityId, userId }, action, { upsert: true });
+    }
+
+    async _setActiveState(userId, communityId, active) {
+        await LeaderModel.updateOne(
+            { communityId, userId },
+            {
+                $set: {
+                    active,
+                },
+            }
+        );
     }
 
     _extractLeaderRating(events) {
