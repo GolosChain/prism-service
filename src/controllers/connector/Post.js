@@ -19,10 +19,6 @@ class Post extends AbstractContent {
 
         return modelObject;
     }
-
-    async getPostVotes({ requestedUserId, permlink }) {
-        // TODO -
-    }
 }
 
 module.exports = Post;

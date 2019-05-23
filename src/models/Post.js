@@ -70,15 +70,35 @@ module.exports = MongoDB.makeModel(
             },
         },
         votes: {
-            upUserIds: {
-                type: [String],
+            upVotes: {
+                type: [
+                    {
+                        userId: {
+                            type: String,
+                        },
+                        weight: {
+                            type: Number,
+                        },
+                    },
+                ],
+                default: [],
             },
             upCount: {
                 type: Number,
                 default: 0,
             },
-            downUserIds: {
-                type: [String],
+            downVotes: {
+                type: [
+                    {
+                        userId: {
+                            type: String,
+                        },
+                        weight: {
+                            type: Number,
+                        },
+                    },
+                ],
+                default: [],
             },
             downCount: {
                 type: Number,

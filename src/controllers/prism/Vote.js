@@ -14,7 +14,7 @@ class Vote extends AbstractContent {
             return;
         }
 
-        this._includeUpVote(model, content.voter);
+        this._includeUpVote(model, { userId: content.voter, weight: content.weight });
         this._excludeDownVote(model, content.voter);
         await this._updatePayout(model, events);
 
@@ -28,7 +28,7 @@ class Vote extends AbstractContent {
             return;
         }
 
-        this._includeDownVote(model, content.voter);
+        this._includeDownVote(model, { userId: content.voter, weight: content.weight });
         this._excludeUpVote(model, content.voter);
         await this._updatePayout(model, events);
 
@@ -49,42 +49,44 @@ class Vote extends AbstractContent {
         await model.save();
     }
 
-    _includeUpVote(model, userId) {
-        const pack = model.votes.upUserIds;
+    _includeUpVote(model, vote) {
+        const pack = model.votes.upVotes || [];
 
-        if (!pack.includes(userId)) {
-            pack.push(userId);
-            model.markModified('votes.upUserIds');
+        if (!pack.find(item => item.userId === item.userId)) {
+            pack.push(vote);
+            model.markModified('votes.upVotes');
             model.votes.upCount++;
         }
     }
 
-    _includeDownVote(model, userId) {
-        const pack = model.votes.downUserIds;
+    _includeDownVote(model, vote) {
+        const pack = model.votes.downVotes || [];
 
-        if (!pack.includes(userId)) {
-            pack.push(userId);
-            model.markModified('votes.downUserIds');
+        if (!pack.find(item => item.userId === vote.userId)) {
+            pack.push(vote);
+            model.markModified('votes.downVotes');
             model.votes.downCount++;
         }
     }
 
     _excludeUpVote(model, userId) {
-        const pack = model.votes.upUserIds;
+        const pack = model.votes.upVotes || [];
 
-        if (pack.includes(userId)) {
-            pack.splice(pack.indexOf(userId), 1);
-            model.markModified('votes.upUserIds');
+        const index = pack.findIndex(item => item.userId === userId);
+        if (index !== -1) {
+            pack.splice(index, 1);
+            model.markModified('votes.upVotes');
             model.votes.upCount--;
         }
     }
 
     _excludeDownVote(model, userId) {
-        const pack = model.votes.downUserIds;
+        const pack = model.votes.downVotes || [];
 
-        if (pack.includes(userId)) {
-            pack.splice(pack.indexOf(userId), 1);
-            model.markModified('votes.downUserIds');
+        const index = pack.findIndex(item => item.userId === userId);
+        if (index !== -1) {
+            pack.splice(index, 1);
+            model.markModified('votes.downVotes');
             model.votes.downCount--;
         }
     }

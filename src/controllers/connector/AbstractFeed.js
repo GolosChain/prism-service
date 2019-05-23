@@ -26,8 +26,8 @@ class AbstractFeed extends AbstractContent {
         options.limit = limit;
         projection.__v = false;
         projection.updatedAt = false;
-        projection['votes.upUserIds'] = false;
-        projection['votes.downUserIds'] = false;
+        projection['votes.upVotes'] = false;
+        projection['votes.downVotes'] = false;
         projection['stats.wilson'] = false;
 
         switch (contentType) {
@@ -138,6 +138,27 @@ class AbstractFeed extends AbstractContent {
         }
 
         return result;
+    }
+
+    _makePaginalResult(items, skip, limit) {
+        if (!items || !items.length) {
+            return {
+                items: [],
+                sequenceKey: null,
+            };
+        }
+
+        if (items.length < limit) {
+            return {
+                items,
+                sequenceKey: null,
+            };
+        }
+
+        return {
+            items,
+            sequenceKey: this._packSequenceKey(skip + limit),
+        };
     }
 }
 

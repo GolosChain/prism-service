@@ -10,6 +10,7 @@ const HashTag = require('../controllers/connector/HashTag');
 const Leaders = require('../controllers/connector/Leaders');
 const Block = require('../controllers/connector/Block');
 const Search = require('../controllers/connector/Search');
+const Vote = require('../controllers/connector/Vote');
 
 class Connector extends BasicConnector {
     constructor({ postFeedCache, leaderFeedCache, prism }) {
@@ -26,6 +27,7 @@ class Connector extends BasicConnector {
         this._leaders = new Leaders({ leaderFeedCache, ...linking });
         this._block = new Block({ prismService: prism, ...linking });
         this._search = new Search(linking);
+        this._vote = new Vote(linking);
     }
 
     async start() {
@@ -362,31 +364,57 @@ class Connector extends BasicConnector {
                     },
                 },
                 getPostVotes: {
-                    handler: this._post.getPostVotes,
-                    scope: this._post,
+                    handler: this._vote.getPostVotes,
+                    scope: this._vote,
+                    inherits: ['feedPagination'],
                     validation: {
-                        required: ['requestedUserId', 'permlink'],
+                        required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
                             requestedUserId: {
                                 type: 'string',
                             },
                             permlink: {
                                 type: 'string',
+                            },
+                            type: {
+                                type: 'string',
+                                enum: ['like', 'dislike'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },
                 },
                 getCommentVotes: {
-                    handler: this._comment.getCommentVotes,
-                    scope: this._comment,
+                    handler: this._vote.getCommentVotes,
+                    scope: this._vote,
+                    inherits: ['feedPagination'],
                     validation: {
-                        required: ['requestedUserId', 'permlink'],
+                        required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
                             requestedUserId: {
                                 type: 'string',
                             },
                             permlink: {
                                 type: 'string',
+                            },
+                            type: {
+                                type: 'string',
+                                enum: ['like', 'dislike'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },

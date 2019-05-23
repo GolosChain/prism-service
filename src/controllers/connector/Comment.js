@@ -44,10 +44,6 @@ class Comment extends AbstractFeed {
         return this._makeFeedResult(modelObjects, { sortBy, limit });
     }
 
-    getCommentVotes({ requestedUserId, permlink }) {
-        // TODO -
-    }
-
     async _prepareQuery(params) {
         const {
             sortBy,
