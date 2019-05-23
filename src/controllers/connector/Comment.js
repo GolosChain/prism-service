@@ -93,6 +93,11 @@ class Comment extends AbstractFeed {
 
     async _populateUserCommentsMetaForModels(modelObjects) {
         for (const modelObject of modelObjects) {
+            if (!modelObject.parent) {
+                Logger.warn(`Empty parent - ${JSON.stringify(modelObject.contentId)}`);
+                continue;
+            }
+
             if (modelObject.parent.comment && modelObject.parent.comment.contentId) {
                 await this._populateUserParentCommentMeta(modelObject);
             } else {
