@@ -121,6 +121,10 @@ module.exports = MongoDB.makeModel(
                 default: 0,
             },
         },
+        leaderIn: {
+            type: [String],
+            default: [],
+        },
     },
     {
         index: [

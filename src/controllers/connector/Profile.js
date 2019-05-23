@@ -1,5 +1,6 @@
 const AbstractFeed = require('./AbstractFeed');
 const Model = require('../../models/Profile');
+const LeaderModel = require('../../models/Leader');
 
 class Profile extends AbstractFeed {
     async getProfile({ currentUserId, requestedUserId, type, username, app }) {
@@ -42,6 +43,7 @@ class Profile extends AbstractFeed {
         modelObject.stats = modelObject.stats || { reputation: 0, postsCount: 0, commentsCount: 0 };
         modelObject.registration = modelObject.registration || { time: new Date(0) };
         modelObject.personal = (modelObject.personal || {})[type] || {};
+        modelObject.leaderIn = modelObject.leaderIn || [];
         modelObject.usernames = modelObject.usernames || {};
         modelObject.username =
             modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
