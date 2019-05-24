@@ -13,12 +13,13 @@ class Comment extends AbstractContent {
         this._contentUtil = new Content();
     }
 
-    async handleCreate(content, { blockTime }) {
+    async handleCreate(content, { communityId, blockTime }) {
         if (!(await this._isComment(content))) {
             return;
         }
 
         const model = new CommentModel({
+            communityId,
             contentId: this._extractContentId(content),
             content: await this._extractContentObject(content),
             meta: {

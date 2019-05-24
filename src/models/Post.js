@@ -172,6 +172,23 @@ module.exports = MongoDB.makeModel(
                     },
                 },
             },
+            meta: {
+                rewardWeight: {
+                    type: Number,
+                },
+                sharesFn: {
+                    type: Number,
+                },
+                sumCuratorSw: {
+                    type: Number,
+                },
+                benefactorPercents: {
+                    type: [Number],
+                },
+                tokenProp: {
+                    type: Number,
+                },
+            },
         },
         meta: {
             time: {

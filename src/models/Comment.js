@@ -14,6 +14,9 @@ module.exports = MongoDB.makeModel(
                 required: true,
             },
         },
+        communityId: {
+            type: String,
+        },
         parent: {
             post: {
                 contentId: {
@@ -131,6 +134,23 @@ module.exports = MongoDB.makeModel(
                         type: String,
                         default: null,
                     },
+                },
+            },
+            meta: {
+                rewardWeight: {
+                    type: Number,
+                },
+                sharesFn: {
+                    type: Number,
+                },
+                sumCuratorSw: {
+                    type: Number,
+                },
+                benefactorPercents: {
+                    type: [Number],
+                },
+                tokenProp: {
+                    type: Number,
                 },
             },
         },

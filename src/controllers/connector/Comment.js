@@ -40,6 +40,7 @@ class Comment extends AbstractFeed {
 
         await this._populate(modelObjects, currentUserId, type, app);
         this._removeEmptyParentsForAll(modelObjects);
+        await this._applyPayouts(modelObjects);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit });
     }

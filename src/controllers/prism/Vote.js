@@ -201,42 +201,22 @@ class Vote extends AbstractContent {
 
     async _actualizePoolState(poolState, communityId) {
         const fundsValueRaw = poolState.funds;
-        const tokens = fundsValueRaw.split(' ')[0];
+        const [value, name] = fundsValueRaw.split(' ');
 
         await PoolModel.updateOne(
             { communityId },
             {
                 $set: {
-                    fundsValue: Number(tokens),
+                    funds: {
+                        name: name,
+                        value: Number(value),
+                    },
                     rShares: Number(poolState.rshares),
                     rSharesFn: Number(poolState.rsharesfn),
                 },
             },
             { upsert: true }
         );
-    }
-
-    _calcTotalPayout({ rewardWeight, funds, sharesfn, rsharesfn }) {
-        return rewardWeight * funds * (sharesfn / rsharesfn);
-    }
-
-    _calcAuthorPayout(payout, curationPayout, benefactorPayout) {
-        return payout - curationPayout - benefactorPayout;
-    }
-
-    _calcCuratorPayout(payout, sumcuratorsw) {
-        return payout - sumcuratorsw * payout;
-    }
-
-    _calcBenefactorPayout(payout, curationPayout, percents) {
-        const payoutDiff = payout - curationPayout;
-        let result = 0;
-
-        for (const percent of percents) {
-            result += payoutDiff * percent;
-        }
-
-        return result;
     }
 }
 

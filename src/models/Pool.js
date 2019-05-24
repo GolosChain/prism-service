@@ -8,8 +8,13 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        fundsValue: {
-            type: Number,
+        funds: {
+            name: {
+                type: String,
+            },
+            value: {
+                type: Number,
+            },
         },
         rShares: {
             type: Number,

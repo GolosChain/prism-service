@@ -2,6 +2,7 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BasicController = core.controllers.Basic;
 const ProfileModel = require('../../models/Profile');
+const PoolModel = require('../../models/Pool');
 
 class AbstractContent extends BasicController {
     async _getContent(
@@ -247,6 +248,111 @@ class AbstractContent extends BasicController {
                 model.stats.viewCount = 0;
             }
         }
+    }
+
+    async _applyPayouts(modelObjects, communityId) {
+        const getPool = this._makePoolGetter();
+
+        for (const modelObject of modelObjects) {
+            if (modelObject.payout.done) {
+                return;
+            }
+
+            const pool = await getPool(communityId);
+
+            if (!pool) {
+                continue;
+            }
+
+            this._applyPayout(modelObject, pool);
+        }
+    }
+
+    _makePoolGetter() {
+        const cache = new Map();
+
+        return async communityId => {
+            if (cache.has(communityId)) {
+                return cache.get(communityId);
+            }
+
+            const pool = await PoolModel.findOne(
+                { communityId },
+                { funds: true, rShares: true, rSharesFn: true },
+                { lean: true }
+            );
+
+            if (!pool) {
+                Logger.warn(`Unknown Pool - ${communityId}`);
+                return null;
+            }
+
+            cache.set(communityId, pool);
+        };
+    }
+
+    _applyPayout(modelObject, pool) {
+        const payoutMeta = modelObject.payout.meta;
+        const totalPayout = this._calcTotalPayout({
+            rewardWeight: payoutMeta.rewardWeight,
+            funds: pool.funds.value,
+            sharesFn: payoutMeta.sharesFn,
+            rSharesFn: pool.rSharesFn,
+        });
+        const curationPayout = this._calcCuratorPayout({
+            totalPayout,
+            sumCuratorSw: payoutMeta.sumCuratorSw,
+        });
+        const benefactorPayout = this._calcBenefactorPayout({
+            totalPayout,
+            curationPayout,
+            percents: payoutMeta.benefactorPercents,
+        });
+        const { tokens: authorTokenPayout, vesting: authorVestingPayout } = this._calcAuthorPayout({
+            totalPayout,
+            curationPayout,
+            benefactorPayout,
+            tokenProp: payoutMeta.tokenProp,
+        });
+
+        const payout = modelObject.payout;
+        const name = pool.funds.name;
+
+        payout.author.token.name = name;
+        payout.author.token.value = authorTokenPayout;
+        payout.author.vesting.name = name;
+        payout.author.vesting.value = authorVestingPayout;
+        payout.curator.vesting.name = name;
+        payout.curator.vesting.value = curationPayout;
+        payout.benefactor.vesting.name = name;
+        payout.benefactor.vesting.value = benefactorPayout;
+    }
+
+    _calcTotalPayout({ rewardWeight, funds, sharesFn, rSharesFn }) {
+        return rewardWeight * funds * (sharesFn / rSharesFn);
+    }
+
+    _calcAuthorPayout({ totalPayout, curationPayout, benefactorPayout, tokenProp }) {
+        const total = totalPayout - curationPayout - benefactorPayout;
+        const tokens = total * tokenProp;
+        const vesting = total - tokens;
+
+        return { tokens, vesting };
+    }
+
+    _calcCuratorPayout({ totalPayout, sumCuratorSw }) {
+        return totalPayout - sumCuratorSw * totalPayout;
+    }
+
+    _calcBenefactorPayout({ totalPayout, curationPayout, percents }) {
+        const payoutDiff = totalPayout - curationPayout;
+        let result = 0;
+
+        for (const percent of percents) {
+            result += payoutDiff * percent;
+        }
+
+        return result;
     }
 }
 
