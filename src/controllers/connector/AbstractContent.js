@@ -254,7 +254,7 @@ class AbstractContent extends BasicController {
         const getPool = this._makePoolGetter();
 
         for (const modelObject of modelObjects) {
-            if (modelObject.payout.done) {
+            if (modelObject.payout.done || !modelObject.payout.meta) {
                 return;
             }
 
