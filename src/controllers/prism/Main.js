@@ -67,7 +67,7 @@ class Main {
                 break;
 
             case `cyber.domain->newusername`:
-                await this._profile.handleUsername(actionArgs, { communityId });
+                await this._profile.handleUsername(actionArgs);
                 break;
 
             case 'cyber.token->transfer':
