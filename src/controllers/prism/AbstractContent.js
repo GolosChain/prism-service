@@ -14,7 +14,15 @@ class AbstractContent extends Abstract {
             return;
         }
 
-        const { userId, permlink, contentType, rewardType } = this._parsePayoutMemo(memo);
+        const payoutType = this._getPayoutType(to);
+        if (!payoutType) {
+            return;
+        }
+
+        const { userId, permlink, contentType, rewardType } = this._parsePayoutMemo(
+            memo,
+            payoutType
+        );
 
         const Model = this._getPayoutModelClass(contentType);
         if (!Model) {
@@ -23,11 +31,6 @@ class AbstractContent extends Abstract {
 
         const rewardTypeKey = this._getRewardTypeKey(rewardType);
         if (!rewardTypeKey) {
-            return;
-        }
-
-        const payoutType = this._getPayoutType(to);
-        if (!payoutType) {
             return;
         }
 
@@ -265,19 +268,29 @@ class AbstractContent extends Abstract {
     }
 
     _isPayoutContract(name) {
-        // TODO Add cyber and another;
-        return name === 'gls.publish';
+        return name.split('.')[1] === 'publish';
     }
 
-    _parsePayoutMemo(memo) {
-        const match = memo.match(/^\w+ \w+: (.+); (\w+) \w+ \w+ (\w+) .+:(.+)/);
+    _parsePayoutMemo(memo, payoutType) {
+        if (payoutType === 'vesting') {
+            const match = memo.match(/^\w+ \w+: (.+); (\w+) \w+ \w+ (\w+) .+:(.+)$/);
 
-        return {
-            userId: match[1],
-            permlink: match[4],
-            rewardType: match[2],
-            contentType: match[3],
-        };
+            return {
+                userId: match[1],
+                permlink: match[4],
+                rewardType: match[2],
+                contentType: match[3],
+            };
+        } else {
+            const match = memo.match(/^\w+ \w+ (\w+) (.+):(.+)/);
+
+            return {
+                userId: match[2],
+                permlink: match[3],
+                rewardType: 'author',
+                contentType: match[1],
+            };
+        }
     }
 
     _getRewardTypeKey(rewardType) {
@@ -288,7 +301,7 @@ class AbstractContent extends Abstract {
             case 'curator':
                 return 'curator';
 
-            case '': // TODO -
+            case 'benefeciary':
                 return 'benefactor';
 
             default:
@@ -312,8 +325,7 @@ class AbstractContent extends Abstract {
     }
 
     _getPayoutType(target) {
-        // TODO Add cyber
-        if (target === 'gls.vesting') {
+        if (target.split('.')[1] === 'vesting') {
             return 'vesting';
         } else {
             return 'token';
