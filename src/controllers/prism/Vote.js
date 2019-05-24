@@ -147,7 +147,7 @@ class Vote extends AbstractContent {
             return;
         }
 
-        modelAuthor.stats.reputation += rShares;
+        modelAuthor.stats.reputation += Number(rShares);
         await modelAuthor.save();
     }
 
