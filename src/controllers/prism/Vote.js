@@ -9,7 +9,7 @@ const PoolModel = require('../../models/Pool');
 
 class Vote extends AbstractContent {
     async handleUpVote(content, { communityId, events }) {
-        const model = await this._getModel(content, { votes: true, payout: true });
+        const model = await this._getModel(content);
 
         if (!model) {
             return;
@@ -23,7 +23,7 @@ class Vote extends AbstractContent {
     }
 
     async handleDownVote(content, { communityId, events }) {
-        const model = await this._getModel(content, { votes: true, payout: true });
+        const model = await this._getModel(content);
 
         if (!model) {
             return;
@@ -37,7 +37,7 @@ class Vote extends AbstractContent {
     }
 
     async handleUnVote(content, { communityId, events }) {
-        const model = await this._getModel(content, { votes: true, payout: true });
+        const model = await this._getModel(content);
 
         if (!model) {
             return;
@@ -134,15 +134,17 @@ class Vote extends AbstractContent {
         await modelAuthor.save();
     }
 
-    async _getModel(content, projection) {
+    async _getModel(content) {
         const contentId = this._extractContentId(content);
-        const post = await PostModel.findOne({ contentId }, projection);
+        const query = { contentId };
+        const projection = { votes: true, payout: true, meta: true, stats: true };
+        const post = await PostModel.findOne(query, projection);
 
         if (post) {
             return post;
         }
 
-        const comment = await CommentModel.findOne({ contentId }, projection);
+        const comment = await CommentModel.findOne(query, projection);
 
         if (comment) {
             return comment;
@@ -203,11 +205,12 @@ class Vote extends AbstractContent {
     }
 
     _addPayoutScoring(model, postState) {
-        const rShares = postState.netshares;
+        const rShares = Number(postState.netshares);
 
-        model.payout.rShares = rShares;
-        model.stats.wilson.hot = WilsonScoring.calcHot(rShares, model.meta.time);
-        model.stats.wilson.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
+        model.stats = model.stats || {};
+        model.stats.rShares = rShares;
+        model.stats.hot = WilsonScoring.calcHot(rShares, model.meta.time);
+        model.stats.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
     }
 
     _addPayoutMeta(model, postState) {

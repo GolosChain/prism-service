@@ -110,15 +110,17 @@ module.exports = MongoDB.makeModel(
                 type: Number,
                 default: 0,
             },
-            wilson: {
-                hot: {
-                    type: Number,
-                    default: 0,
-                },
-                trending: {
-                    type: Number,
-                    default: 0,
-                },
+            rShares: {
+                type: Number,
+                default: 0
+            },
+            hot: {
+                type: Number,
+                default: 0,
+            },
+            trending: {
+                type: Number,
+                default: 0,
             },
         },
         payout: {
@@ -230,19 +232,19 @@ module.exports = MongoDB.makeModel(
             // Shares feed
             {
                 fields: {
-                    'payout.rShares': 1,
+                    'stats.rShares': 1,
                 },
             },
             // Actual feed
             {
                 fields: {
-                    'stats.wilson.hot': 1,
+                    'stats.hot': 1,
                 },
             },
             // Popular feed
             {
                 fields: {
-                    'stats.wilson.trending': 1,
+                    'stats.trending': 1,
                 },
             },
         ],
