@@ -172,8 +172,7 @@ class Vote extends AbstractContent {
         const { postState, poolState, voteState } = this._getPayoutEventsData(events);
 
         await this._actualizePoolState(poolState, communityId);
-
-        // TODO -
+        await this._addPayoutMeta(model, postState, voteState);
     }
 
     _getPayoutEventsData(events) {
@@ -217,6 +216,15 @@ class Vote extends AbstractContent {
             },
             { upsert: true }
         );
+    }
+
+    async _addPayoutMeta(model, postState, poolState) {
+        // TODO -
+        const meta = model.payout.meta;
+
+        meta.rewardWeight = 0;
+        meta.sharesFn = Number(postState.sharesfn);
+        meta.sumCuratorSw = Number(postState.sumcuratorsw);
     }
 }
 

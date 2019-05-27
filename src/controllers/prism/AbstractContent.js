@@ -359,6 +359,12 @@ class AbstractContent extends Abstract {
             }
         );
     }
+
+    _extractBenefactorPercents(content) {
+        const percents = content.beneficiaries || [];
+
+        return percents.map(value => value.weight);
+    }
 }
 
 module.exports = AbstractContent;

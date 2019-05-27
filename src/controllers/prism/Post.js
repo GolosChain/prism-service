@@ -24,6 +24,12 @@ class Post extends AbstractContent {
             meta: {
                 time: blockTime,
             },
+            payout: {
+                meta: {
+                    tokenProp: Number(content.tokenprop),
+                    benefactorPercents: this._extractBenefactorPercents(content),
+                },
+            },
         });
         await this.updateUserPostsCount(contentId.userId, 1);
     }
