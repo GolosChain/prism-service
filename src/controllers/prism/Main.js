@@ -100,7 +100,7 @@ class Main {
                 break;
 
             case `${communityId}.social->changereput`:
-                await this._vote.handleReputation(actionArgs, previousArgs);
+                await this._vote.handleReputation(actionArgs);
                 break;
 
             case `${communityId}.publish->upvote`:
