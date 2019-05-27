@@ -222,6 +222,24 @@ module.exports = MongoDB.makeModel(
                     'meta.time': -1,
                 },
             },
+            // Shares feed
+            {
+                fields: {
+                    'payout.rShares': 1,
+                },
+            },
+            // Actual feed
+            {
+                fields: {
+                    'stats.wilson.hot': 1,
+                },
+            },
+            // Popular feed
+            {
+                fields: {
+                    'stats.wilson.trending': 1,
+                },
+            },
         ],
     }
 );
