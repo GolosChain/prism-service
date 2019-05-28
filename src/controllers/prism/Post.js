@@ -61,6 +61,23 @@ class Post extends AbstractContent {
         await PostModel.deleteOne({ contentId });
         await this.updateUserPostsCount(contentId.userId, -1);
     }
+
+    async handleRepost({ rebloger: userId, ...content }, { communityId, blockTime }) {
+        await PostModel.create({
+            communityId,
+            contentId: this._extractContentId(content),
+            repost: {
+                isRepost: true,
+                userId,
+                body: {
+                    raw: this._extractBodyRaw(content),
+                },
+            },
+            meta: {
+                time: blockTime,
+            },
+        });
+    }
 }
 
 module.exports = Post;

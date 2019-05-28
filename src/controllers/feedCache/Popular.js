@@ -6,6 +6,8 @@ class Popular extends Abstract {
     async getFor(communityId, timeframe) {
         const { query, projection, options } = this._getDefaultRequestOptions(communityId);
 
+        query['repost.isRepost'] = { $ne: true };
+
         this._applyTimeCond(query, options, timeframe);
 
         const modelObjects = await PostModel.find(query, projection, options);

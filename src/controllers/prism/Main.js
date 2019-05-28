@@ -147,6 +147,10 @@ class Main {
                 await this._leader.unvote(actionArgs, { communityId, events });
                 break;
 
+            case `${communityId}.publish->reblog`:
+                await this._post.handleRepost(actionArgs, { communityId, blockTime });
+                break;
+
             default:
             // unknown action, do nothing
         }
