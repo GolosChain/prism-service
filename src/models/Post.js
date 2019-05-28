@@ -4,6 +4,20 @@ const MongoDB = core.services.MongoDB;
 module.exports = MongoDB.makeModel(
     'Post',
     {
+        repost: {
+            isRepost: {
+                type: Boolean,
+                default: false,
+            },
+            userId: {
+                type: String,
+            },
+            body: {
+                raw: {
+                    type: String,
+                },
+            },
+        },
         contentId: {
             userId: {
                 type: String,
@@ -112,7 +126,7 @@ module.exports = MongoDB.makeModel(
             },
             rShares: {
                 type: Number,
-                default: 0
+                default: 0,
             },
             hot: {
                 type: Number,
@@ -209,6 +223,7 @@ module.exports = MongoDB.makeModel(
             // Default
             {
                 fields: {
+                    'repost.isRepost': 1,
                     'contentId.userId': 1,
                     'contentId.permlink': 1,
                 },
@@ -229,21 +244,30 @@ module.exports = MongoDB.makeModel(
                     'meta.time': -1,
                 },
             },
+            {
+                fields: {
+                    'repost.userId': 1,
+                    'meta.time': -1,
+                },
+            },
             // Shares feed
             {
                 fields: {
+                    'repost.isRepost': 1,
                     'stats.rShares': 1,
                 },
             },
             // Actual feed
             {
                 fields: {
+                    'repost.isRepost': 1,
                     'stats.hot': 1,
                 },
             },
             // Popular feed
             {
                 fields: {
+                    'repost.isRepost': 1,
                     'stats.trending': 1,
                 },
             },
