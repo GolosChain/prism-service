@@ -30,7 +30,7 @@ class Feed extends AbstractFeed {
 
         modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
 
-        await this._populate({ modelObjects, currentUserId, contentType, app, type });
+        await this._populate({ modelObjects, currentUserId, contentType, app, type, fullQuery });
         await this._applyPayouts(modelObjects);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
@@ -111,7 +111,7 @@ class Feed extends AbstractFeed {
         options.sort = { _id: direction };
     }
 
-    async _populate({ modelObjects, currentUserId, contentType, app, type }) {
+    async _populate({ modelObjects, currentUserId, contentType, app, type, fullQuery }) {
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects, app);
         await this._populateCommunities(modelObjects);
@@ -121,8 +121,8 @@ class Feed extends AbstractFeed {
             this._prepareMobile(modelObjects);
         }
 
-        if (type === 'byUser' || type === 'community') {
-            // TODO Populate repost
+        if (type === 'byUser' || type === 'subscriptions') {
+            await this._populateReposts(modelObjects, fullQuery.projection);
         }
     }
 
