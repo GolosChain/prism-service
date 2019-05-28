@@ -1,5 +1,6 @@
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
+const ProposalModel = require('../../models/Proposal');
 
 class Leaders extends AbstractFeed {
     constructor({ leaderFeedCache }) {
@@ -78,6 +79,64 @@ class Leaders extends AbstractFeed {
         }
 
         await Promise.all(results);
+    }
+
+    async getProposals({ communityId, limit, sequenceKey, app }) {
+        const query = {
+            communityId,
+        };
+
+        if (sequenceKey) {
+            const lastId = this._unpackSequenceKey(sequenceKey);
+
+            query._id = {
+                $gt: lastId,
+            };
+        }
+
+        const items = await ProposalModel.find(
+            query,
+            {
+                userId: 1,
+                proposalId: 1,
+                code: 1,
+                action: 1,
+                expiration: 1,
+                'changes.structureName': 1,
+                'changes.values': 1,
+            },
+            { lean: true, limit }
+        );
+
+        const users = [];
+
+        for (const item of items) {
+            const user = {
+                userId: item.userId,
+            };
+
+            users.push(user);
+
+            item.author = user;
+        }
+
+        await this._populateUsers(users, app);
+
+        let resultSequenceKey = null;
+
+        if (items.length === limit) {
+            resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
+        }
+
+        for (const item of items) {
+            delete item._id;
+            delete item.userId;
+        }
+
+        return {
+            items,
+            sequenceKey: resultSequenceKey,
+        };
     }
 }
 

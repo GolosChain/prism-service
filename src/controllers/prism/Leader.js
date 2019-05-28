@@ -1,10 +1,28 @@
+const { JsonRpc, Api } = require('cyberwayjs');
+const fetch = require('node-fetch');
+const { TextEncoder, TextDecoder } = require('text-encoding');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
+const env = require('../../data/env');
 const Abstract = require('./Abstract');
 const LeaderModel = require('../../models/Leader');
 const ProfileModel = require('../../models/Profile');
+const ProposalModel = require('../../models/Proposal');
 
 class Leader extends Abstract {
+    constructor(...args) {
+        super(...args);
+
+        const rpc = new JsonRpc(env.GLS_CYBERWAY_CONNECT, { fetch });
+
+        this._api = new Api({
+            rpc,
+            signatureProvider: null,
+            textDecoder: new TextDecoder(),
+            textEncoder: new TextEncoder(),
+        });
+    }
+
     async register({ witness: userId, url }, { communityId }) {
         const action = { $set: { communityId, userId, active: true } };
 
@@ -111,6 +129,44 @@ class Leader extends Abstract {
                 },
             }
         );
+    }
+
+    async handleNewProposal(proposal) {
+        const { proposer, proposal_name: proposalId, trx } = proposal;
+
+        if (trx.actions.length !== 1) {
+            return;
+        }
+
+        const action = trx.actions[0];
+
+        if (action.name !== 'setparams') {
+            return;
+        }
+
+        const [communityId, type] = action.account.split('.');
+
+        if (!['publish'].includes(type)) {
+            return;
+        }
+
+        const expiration = new Date(trx.expiration + 'Z');
+        const [{ data }] = await this._api.deserializeActions(trx.actions);
+
+        const proposalModel = new ProposalModel({
+            communityId,
+            userId: proposer,
+            proposalId,
+            code: action.account,
+            action: action.name,
+            expiration: expiration,
+            changes: data.params.map(([structureName, values]) => ({
+                structureName,
+                values,
+            })),
+        });
+
+        await proposalModel.save();
     }
 }
 
