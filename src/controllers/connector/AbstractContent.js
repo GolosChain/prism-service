@@ -256,7 +256,7 @@ class AbstractContent extends BasicController {
     }
 
     async _populateRepost(modelObject, resolvedPosts, projection) {
-        if (!modelObject.repost.isRepost) {
+        if (!modelObject.repost || !modelObject.repost.isRepost) {
             return;
         }
 
