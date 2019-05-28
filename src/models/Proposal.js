@@ -47,7 +47,6 @@ module.exports = MongoDB.makeModel(
     {
         index: [
             {
-                // Search for change
                 fields: {
                     communityId: 1,
                 },
