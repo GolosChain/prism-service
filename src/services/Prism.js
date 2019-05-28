@@ -36,7 +36,6 @@ class Prism extends BasicService {
         subscriber.eachBlock(this._registerNewBlock.bind(this));
         subscriber.eachGenesisData(this._handleGenesisData.bind(this));
         subscriber.on('fork', this._handleFork.bind(this));
-        subscriber.on('genesisDone', this._handleGenesisComplete.bind(this));
 
         try {
             await subscriber.start();
@@ -92,6 +91,8 @@ class Prism extends BasicService {
     _emitHandled(block) {
         const blockNum = block.blockNum;
 
+        Logger.log('New block:', blockNum);
+
         this._currentBlockNum = blockNum;
 
         this.emit('blockDone', blockNum);
@@ -131,6 +132,13 @@ class Prism extends BasicService {
     async _handleGenesisData(type, data) {
         if (!this._inGenesis) {
             Logger.warn(`Genesis off, but data transfer.`);
+            process.exit(1);
+            return;
+        }
+
+        if (type === 'END') {
+            console.log('Genesis processing is done!');
+            this._inGenesis = false;
             return;
         }
 
@@ -161,10 +169,6 @@ class Prism extends BasicService {
 
     async _setLastBlockNum(blockNum) {
         await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum: blockNum } });
-    }
-
-    async _handleGenesisComplete() {
-        this._inGenesis = false;
     }
 }
 

@@ -17,6 +17,7 @@ const communityRegistry = [
     'cyber',
     'cyber.domain',
     'cyber.token',
+    'cyber.msig',
 ];
 
 class Main {
@@ -149,6 +150,10 @@ class Main {
 
             case `${communityId}.publish->reblog`:
                 await this._post.handleRepost(actionArgs, { communityId, blockTime });
+                break;
+
+            case 'cyber.msig->propose':
+                await this._leader.handleNewProposal(actionArgs);
                 break;
 
             default:

@@ -338,6 +338,24 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                getProposals: {
+                    handler: this._leaders.getProposals,
+                    scope: this._leaders,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: ['communityId'],
+                        properties: {
+                            communityId: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
                 waitForBlock: {
                     handler: this._block.waitForBlock,
                     scope: this._block,
