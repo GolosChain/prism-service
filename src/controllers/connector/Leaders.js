@@ -128,15 +128,13 @@ class Leaders extends AbstractFeed {
             resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
         }
 
+        for (const item of items) {
+            delete item._id;
+            delete item.userId;
+        }
+
         return {
-            items: items.map(item => ({
-                author: item.author,
-                proposalId: item.proposalId,
-                code: item.code,
-                action: item.action,
-                expiration: item.expiration,
-                changes: item.changes,
-            })),
+            items,
             sequenceKey: resultSequenceKey,
         };
     }
