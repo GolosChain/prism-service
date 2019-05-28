@@ -22,6 +22,7 @@ module.exports = MongoDB.makeModel(
         },
         votes: {
             type: [String],
+            default: [],
         },
         active: {
             type: Boolean,

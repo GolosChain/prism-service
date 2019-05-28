@@ -4,6 +4,20 @@ const MongoDB = core.services.MongoDB;
 module.exports = MongoDB.makeModel(
     'Post',
     {
+        repost: {
+            isRepost: {
+                type: Boolean,
+                default: false,
+            },
+            userId: {
+                type: String,
+            },
+            body: {
+                raw: {
+                    type: String,
+                },
+            },
+        },
         contentId: {
             userId: {
                 type: String,
@@ -11,10 +25,6 @@ module.exports = MongoDB.makeModel(
             },
             permlink: {
                 type: String,
-                required: true,
-            },
-            refBlockNum: {
-                type: Number,
                 required: true,
             },
         },
@@ -74,15 +84,35 @@ module.exports = MongoDB.makeModel(
             },
         },
         votes: {
-            upUserIds: {
-                type: [String],
+            upVotes: {
+                type: [
+                    {
+                        userId: {
+                            type: String,
+                        },
+                        weight: {
+                            type: Number,
+                        },
+                    },
+                ],
+                default: [],
             },
             upCount: {
                 type: Number,
                 default: 0,
             },
-            downUserIds: {
-                type: [String],
+            downVotes: {
+                type: [
+                    {
+                        userId: {
+                            type: String,
+                        },
+                        weight: {
+                            type: Number,
+                        },
+                    },
+                ],
+                default: [],
             },
             downCount: {
                 type: Number,
@@ -94,26 +124,97 @@ module.exports = MongoDB.makeModel(
                 type: Number,
                 default: 0,
             },
-            wilson: {
-                hot: {
-                    type: Number,
-                    default: 0,
-                },
-                trending: {
-                    type: Number,
-                    default: 0,
-                },
-            },
-        },
-        payout: {
             rShares: {
                 type: Number,
                 default: 0,
+            },
+            hot: {
+                type: Number,
+                default: 0,
+            },
+            trending: {
+                type: Number,
+                default: 0,
+            },
+        },
+        payout: {
+            done: {
+                type: Boolean,
+                default: false,
+            },
+            author: {
+                token: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            curator: {
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            benefactor: {
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            meta: {
+                rewardWeight: {
+                    type: Number,
+                    default: 10000,
+                },
+                sharesFn: {
+                    type: Number,
+                    default: 0,
+                },
+                sumCuratorSw: {
+                    type: Number,
+                    default: 0,
+                },
+                benefactorPercents: {
+                    type: [Number],
+                    default: [0],
+                },
+                tokenProp: {
+                    type: Number,
+                    default: 0,
+                },
             },
         },
         meta: {
             time: {
                 type: Date,
+                default: new Date(),
             },
         },
     },
@@ -122,12 +223,9 @@ module.exports = MongoDB.makeModel(
             // Default
             {
                 fields: {
+                    'repost.isRepost': 1,
                     'contentId.userId': 1,
                     'contentId.permlink': 1,
-                    'contentId.refBlockNum': 1,
-                },
-                options: {
-                    unique: true,
                 },
             },
             // Community/Subscriptions feed
@@ -144,6 +242,33 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'contentId.userId': 1,
                     'meta.time': -1,
+                },
+            },
+            {
+                fields: {
+                    'repost.userId': 1,
+                    'meta.time': -1,
+                },
+            },
+            // Shares feed
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'stats.rShares': 1,
+                },
+            },
+            // Actual feed
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'stats.hot': 1,
+                },
+            },
+            // Popular feed
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'stats.trending': 1,
                 },
             },
         ],

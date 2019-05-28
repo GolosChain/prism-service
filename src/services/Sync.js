@@ -4,9 +4,6 @@ const core = require('gls-core-service');
 const BasicService = core.services.Basic;
 const env = require('../data/env');
 const SyncModel = require('../models/SearchSync');
-const esclient = new elasticsearch.Client({
-    host: env.GLS_SEARCH_CONNECTION_STRING,
-});
 
 class SyncService extends BasicService {
     constructor(modelsToWatch, modelsMappers, ...args) {
@@ -14,16 +11,22 @@ class SyncService extends BasicService {
         this.modelsToWatch = modelsToWatch;
         this.modelsMappers = modelsMappers;
         this.modelsInSync = new Map();
+
+        this._esclient = new elasticsearch.Client({
+            host: env.GLS_SEARCH_CONNECTION_STRING,
+        });
     }
 
     async start() {
         await this._waitForElasticSearch();
 
         for (const model of this.modelsToWatch) {
-            const exists = await esclient.indices.exists({ index: model.modelName.toLowerCase() });
+            const exists = await this._esclient.indices.exists({
+                index: model.modelName.toLowerCase(),
+            });
 
             if (!exists) {
-                await esclient.indices.create({
+                await this._esclient.indices.create({
                     index: model.modelName.toLowerCase(),
                 });
             }
@@ -62,7 +65,7 @@ class SyncService extends BasicService {
 
     async _waitForElasticSearch(retryNum = 1, maxRetries = 10) {
         try {
-            return await esclient.ping();
+            return await this._esclient.ping();
         } catch (error) {
             if (retryNum < maxRetries) {
                 return await this._waitForElasticSearch(retryNum + 1);
@@ -73,7 +76,7 @@ class SyncService extends BasicService {
     }
 
     async _checkIndexExists({ id, index, type }) {
-        return await esclient.exists({
+        return await this._esclient.exists({
             id,
             index,
             type,
@@ -91,7 +94,7 @@ class SyncService extends BasicService {
     }
 
     async _createIndex({ index, body, type, id }) {
-        return await esclient.create({
+        return await this._esclient.create({
             index,
             body,
             type,
@@ -100,7 +103,7 @@ class SyncService extends BasicService {
     }
 
     async _updateIndex({ index, body, type, id }) {
-        return await esclient.update({
+        return await this._esclient.update({
             index,
             body: { doc: body },
             type,
@@ -109,7 +112,7 @@ class SyncService extends BasicService {
     }
 
     async _deleteIndex({ index, type, id }) {
-        return await esclient.delete({ type, index, id });
+        return await this._esclient.delete({ type, index, id });
     }
 
     _mapBody(data, modelType) {
@@ -165,7 +168,7 @@ class SyncService extends BasicService {
             .from(offset)
             .build();
 
-        const allDocsResponse = await esclient.search({
+        const allDocsResponse = await this._esclient.search({
             index: model.modelName.toLowerCase(),
             body,
         });

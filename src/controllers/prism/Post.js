@@ -24,8 +24,14 @@ class Post extends AbstractContent {
             meta: {
                 time: blockTime,
             },
+            payout: {
+                meta: {
+                    tokenProp: Number(content.tokenprop),
+                    benefactorPercents: this._extractBenefactorPercents(content),
+                },
+            },
         });
-        await this._updateUserPostsCount(contentId.userId, 1);
+        await this.updateUserPostsCount(contentId.userId, 1);
     }
 
     async handleUpdate(content) {
@@ -53,7 +59,24 @@ class Post extends AbstractContent {
         const contentId = this._extractContentId(content);
 
         await PostModel.deleteOne({ contentId });
-        await this._updateUserPostsCount(contentId.userId, -1);
+        await this.updateUserPostsCount(contentId.userId, -1);
+    }
+
+    async handleRepost({ rebloger: userId, ...content }, { communityId, blockTime }) {
+        await PostModel.create({
+            communityId,
+            contentId: this._extractContentId(content),
+            repost: {
+                isRepost: true,
+                userId,
+                body: {
+                    raw: this._extractBodyRaw(content),
+                },
+            },
+            meta: {
+                time: blockTime,
+            },
+        });
     }
 }
 

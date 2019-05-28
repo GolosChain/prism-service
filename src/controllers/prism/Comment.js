@@ -13,24 +13,31 @@ class Comment extends AbstractContent {
         this._contentUtil = new Content();
     }
 
-    async handleCreate(content, { blockTime }) {
+    async handleCreate(content, { communityId, blockTime }) {
         if (!(await this._isComment(content))) {
             return;
         }
 
         const model = new CommentModel({
+            communityId,
             contentId: this._extractContentId(content),
             content: await this._extractContentObject(content),
             meta: {
                 time: blockTime,
             },
+            payout: {
+                meta: {
+                    tokenProp: Number(content.tokenprop),
+                    benefactorPercents: this._extractBenefactorPercents(content),
+                },
+            },
         });
 
-        await this._applyParent(model, content);
-        await this._applyOrdering(model);
+        await this.applyParentByContent(model, content);
+        await this.applyOrdering(model);
         await model.save();
-        await this._updatePostCommentsCount(model, 1);
-        await this._updateUserCommentsCount(model.contentId.userId, 1);
+        await this.updatePostCommentsCount(model, 1);
+        await this.updateUserCommentsCount(model.contentId.userId, 1);
     }
 
     async handleUpdate(content) {
@@ -63,13 +70,23 @@ class Comment extends AbstractContent {
             return;
         }
 
-        await this._updatePostCommentsCount(model, -1);
-        await this._updateUserPostsCount(model.contentId.userId, -1);
+        await this.updatePostCommentsCount(model, -1);
+        await this.updateUserPostsCount(model.contentId.userId, -1);
         await model.remove();
     }
 
-    async _applyParent(model, content) {
-        const contentId = this._extractContentIdFromId(content.parent_id);
+    async updatePostCommentsCount(model, increment) {
+        await PostModel.updateOne(
+            { contentId: model.parent.post.contentId },
+            { $inc: { 'stats.commentsCount': increment } }
+        );
+    }
+
+    async updateUserCommentsCount(userId, increment) {
+        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.commentsCount': increment } });
+    }
+
+    async applyParentById(model, contentId) {
         const post = await this._getParentPost(contentId);
 
         if (post) {
@@ -86,22 +103,13 @@ class Comment extends AbstractContent {
         }
     }
 
-    async _getParentPost(contentId) {
-        return await PostModel.findOne({ contentId }, { contentId: true });
+    async applyParentByContent(model, content) {
+        const contentId = this._extractContentIdFromId(content.parent_id);
+
+        await this.applyParentById(model, contentId);
     }
 
-    async _getParentComment(contentId) {
-        return await CommentModel.findOne({ contentId }, { contentId: true, parent: true });
-    }
-
-    async _updatePostCommentsCount(model, increment) {
-        await PostModel.updateOne(
-            { contentId: model.parent.post.contentId },
-            { $inc: { 'stats.commentsCount': increment } }
-        );
-    }
-
-    async _applyOrdering(model) {
+    async applyOrdering(model) {
         if (!model.parent.comment.contentId.userId) {
             model.ordering.byTime = Date.now().toString();
             return;
@@ -121,8 +129,12 @@ class Comment extends AbstractContent {
         model.ordering.byTime = `${parentComment.ordering.byTime}-${Date.now()}`;
     }
 
-    async _updateUserCommentsCount(userId, increment) {
-        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.commentsCount': increment } });
+    async _getParentPost(contentId) {
+        return await PostModel.findOne({ contentId }, { contentId: true });
+    }
+
+    async _getParentComment(contentId) {
+        return await CommentModel.findOne({ contentId }, { contentId: true, parent: true });
     }
 }
 

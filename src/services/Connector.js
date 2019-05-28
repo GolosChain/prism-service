@@ -10,6 +10,7 @@ const HashTag = require('../controllers/connector/HashTag');
 const Leaders = require('../controllers/connector/Leaders');
 const Block = require('../controllers/connector/Block');
 const Search = require('../controllers/connector/Search');
+const Vote = require('../controllers/connector/Vote');
 
 class Connector extends BasicConnector {
     constructor({ postFeedCache, leaderFeedCache, prism }) {
@@ -26,6 +27,7 @@ class Connector extends BasicConnector {
         this._leaders = new Leaders({ leaderFeedCache, ...linking });
         this._block = new Block({ prismService: prism, ...linking });
         this._search = new Search(linking);
+        this._vote = new Vote(linking);
     }
 
     async start() {
@@ -44,7 +46,7 @@ class Connector extends BasicConnector {
                             },
                             where: {
                                 type: 'string',
-                                enum: ['all', 'posts', 'comments', 'profiles'],
+                                enum: ['all', 'post', 'comment'],
                                 default: 'all',
                             },
                             text: {
@@ -52,15 +54,7 @@ class Connector extends BasicConnector {
                             },
                             field: {
                                 type: 'string',
-                                enum: [
-                                    'all',
-                                    'title',
-                                    'raw',
-                                    'full',
-                                    'preview',
-                                    'permlink',
-                                    'username',
-                                ],
+                                enum: ['all', 'title', 'raw', 'full', 'preview', 'permlink'],
                                 default: 'all',
                             },
                             limit: {
@@ -78,7 +72,7 @@ class Connector extends BasicConnector {
                     handler: this._post.getPost,
                     scope: this._post,
                     validation: {
-                        required: ['requestedUserId', 'permlink', 'refBlockNum'],
+                        required: ['permlink'],
                         properties: {
                             currentUserId: {
                                 type: 'string',
@@ -89,13 +83,18 @@ class Connector extends BasicConnector {
                             permlink: {
                                 type: 'string',
                             },
-                            refBlockNum: {
-                                type: 'number',
-                            },
                             contentType: {
                                 type: 'string',
                                 default: 'web',
                                 enum: ['web', 'mobile', 'raw'],
+                            },
+                            username: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },
@@ -104,7 +103,7 @@ class Connector extends BasicConnector {
                     handler: this._comment.getComment,
                     scope: this._comment,
                     validation: {
-                        required: ['requestedUserId', 'permlink', 'refBlockNum'],
+                        required: ['permlink'],
                         properties: {
                             currentUserId: {
                                 type: 'string',
@@ -115,13 +114,18 @@ class Connector extends BasicConnector {
                             permlink: {
                                 type: 'string',
                             },
-                            refBlockNum: {
-                                type: 'number',
-                            },
                             contentType: {
                                 type: 'string',
                                 default: 'web',
                                 enum: ['web', 'mobile', 'raw'],
+                            },
+                            username: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },
@@ -152,13 +156,18 @@ class Connector extends BasicConnector {
                             permlink: {
                                 type: 'string',
                             },
-                            refBlockNum: {
-                                type: 'number',
-                            },
                             contentType: {
                                 type: 'string',
                                 default: 'web',
                                 enum: ['web', 'mobile', 'raw'],
+                            },
+                            username: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },
@@ -210,6 +219,14 @@ class Connector extends BasicConnector {
                                 default: 'web',
                                 enum: ['web', 'mobile', 'raw'],
                             },
+                            username: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
                         },
                     },
                 },
@@ -217,8 +234,11 @@ class Connector extends BasicConnector {
                     handler: this._profile.getProfile,
                     scope: this._profile,
                     validation: {
-                        required: ['requestedUserId'],
+                        required: [],
                         properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
                             requestedUserId: {
                                 type: 'string',
                             },
@@ -226,6 +246,31 @@ class Connector extends BasicConnector {
                                 type: 'string',
                                 default: 'cyber',
                                 enum: ['gls', 'cyber'],
+                            },
+                            username: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
+                suggestNames: {
+                    handler: this._profile.suggestNames,
+                    scope: this._profile,
+                    validation: {
+                        required: ['text'],
+                        properties: {
+                            text: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },
@@ -249,6 +294,12 @@ class Connector extends BasicConnector {
                             },
                             contentId: {
                                 type: 'object',
+                            },
+                            username: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
                             },
                         },
                     },
@@ -279,6 +330,29 @@ class Connector extends BasicConnector {
                             communityId: {
                                 type: 'string',
                             },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
+                getProposals: {
+                    handler: this._leaders.getProposals,
+                    scope: this._leaders,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: ['communityId'],
+                        properties: {
+                            communityId: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
                         },
                     },
                 },
@@ -307,6 +381,123 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                getPostVotes: {
+                    handler: this._vote.getPostVotes,
+                    scope: this._vote,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: ['requestedUserId', 'permlink', 'type'],
+                        properties: {
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
+                            type: {
+                                type: 'string',
+                                enum: ['like', 'dislike'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
+                getCommentVotes: {
+                    handler: this._vote.getCommentVotes,
+                    scope: this._vote,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: ['requestedUserId', 'permlink', 'type'],
+                        properties: {
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
+                            type: {
+                                type: 'string',
+                                enum: ['like', 'dislike'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
+                resolveProfile: {
+                    handler: this._profile.resolveProfile,
+                    scope: this._profile,
+                    validation: {
+                        required: ['username', 'app'],
+                        properties: {
+                            username: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
+                getSubscriptions: {
+                    handler: this._profile.getSubscriptions,
+                    scope: this._profile,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: ['requestedUserId'],
+                        properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            type: {
+                                type: 'string',
+                                enum: ['user', 'community'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
+                getSubscribers: {
+                    handler: this._profile.getSubscribers,
+                    scope: this._profile,
+                    inherits: ['feedPagination'],
+                    validation: {
+                        required: ['requestedUserId'],
+                        properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            type: {
+                                type: 'string',
+                                enum: ['user', 'community'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
             },
             serverDefaults: {
                 parents: {
@@ -329,6 +520,7 @@ class Connector extends BasicConnector {
             },
             requiredClients: {
                 facade: env.GLS_FACADE_CONNECT,
+                meta: env.GLS_META_CONNECT,
             },
         });
     }

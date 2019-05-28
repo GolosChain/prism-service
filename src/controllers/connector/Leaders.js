@@ -1,5 +1,6 @@
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
+const ProposalModel = require('../../models/Proposal');
 
 class Leaders extends AbstractFeed {
     constructor({ leaderFeedCache }) {
@@ -8,7 +9,7 @@ class Leaders extends AbstractFeed {
         this._leaderFeedCache = leaderFeedCache;
     }
 
-    async getTop({ currentUserId, communityId, limit, sequenceKey }) {
+    async getTop({ currentUserId, communityId, limit, sequenceKey, app }) {
         const queryData = { communityId, sequenceKey, limit };
         const { query, projection, options, meta } = this._prepareQuery(queryData);
 
@@ -18,6 +19,7 @@ class Leaders extends AbstractFeed {
             return this._makeEmptyFeedResult();
         }
 
+        await this._populateUsers(modelObjects, app);
         await this._tryApplyVotesForModels(modelObjects, currentUserId);
         this._finalizeCachedSorting(modelObjects, query);
 
@@ -31,7 +33,10 @@ class Leaders extends AbstractFeed {
                 return;
             }
 
-            const voteCount = await LeaderModel.count({ _id, votes: currentUserId });
+            const voteCount = await LeaderModel.countDocuments({
+                _id: modelObject._id,
+                votes: currentUserId,
+            });
 
             modelObject.hasVote = Boolean(voteCount);
         }
@@ -64,6 +69,74 @@ class Leaders extends AbstractFeed {
         query._id = { $in: ids };
 
         return { query, projection, options, meta: { newSequenceKey } };
+    }
+
+    async _populateUsers(modelObjects, app) {
+        const results = [];
+
+        for (const modelObject of modelObjects) {
+            results.push(this._populateUser(modelObject, app));
+        }
+
+        await Promise.all(results);
+    }
+
+    async getProposals({ communityId, limit, sequenceKey, app }) {
+        const query = {
+            communityId,
+        };
+
+        if (sequenceKey) {
+            const lastId = this._unpackSequenceKey(sequenceKey);
+
+            query._id = {
+                $gt: lastId,
+            };
+        }
+
+        const items = await ProposalModel.find(
+            query,
+            {
+                userId: 1,
+                proposalId: 1,
+                code: 1,
+                action: 1,
+                expiration: 1,
+                'changes.structureName': 1,
+                'changes.values': 1,
+            },
+            { lean: true, limit }
+        );
+
+        const users = [];
+
+        for (const item of items) {
+            const user = {
+                userId: item.userId,
+            };
+
+            users.push(user);
+
+            item.author = user;
+        }
+
+        await this._populateUsers(users, app);
+
+        let resultSequenceKey = null;
+
+        if (items.length === limit) {
+            resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
+        }
+
+        for (const item of items) {
+            delete item._id;
+            delete item.userId;
+        }
+
+        return {
+            items,
+            sequenceKey: resultSequenceKey,
+        };
     }
 }
 

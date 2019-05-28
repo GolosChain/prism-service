@@ -7,13 +7,14 @@ const PostModel = require('../../models/Post');
 const UNKNOWN_PLACEHOLDER = '-';
 
 class Comment extends AbstractFeed {
-    async getComment({ currentUserId, requestedUserId, permlink, refBlockNum, contentType }) {
+    async getComment({ currentUserId, requestedUserId, permlink, contentType, username, app }) {
         const modelObject = await this._getContent(CommentModel, {
             currentUserId,
             requestedUserId,
             permlink,
-            refBlockNum,
             contentType,
+            username,
+            app,
         });
 
         this._removeEmptyParents(modelObject);
@@ -22,15 +23,24 @@ class Comment extends AbstractFeed {
     }
 
     async getComments(params) {
-        const { type, fullQuery, currentUserId, sortBy, limit } = await this._prepareQuery(params);
+        await this._tryApplyUserIdByName(params);
+
+        if (params.type === 'replies' && !params.requestedUserId) {
+            throw { code: 400, message: 'Invalid userId' };
+        }
+
+        const { type, fullQuery, currentUserId, sortBy, limit, app } = await this._prepareQuery(
+            params
+        );
         const modelObjects = await CommentModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
         }
 
-        await this._populate(modelObjects, currentUserId, type);
+        await this._populate(modelObjects, currentUserId, type, app);
         this._removeEmptyParentsForAll(modelObjects);
+        await this._applyPayouts(modelObjects);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit });
     }
@@ -43,9 +53,9 @@ class Comment extends AbstractFeed {
             currentUserId,
             requestedUserId,
             permlink,
-            refBlockNum,
             type,
             contentType,
+            app,
         } = this._normalizeParams(params);
 
         const query = {};
@@ -58,7 +68,7 @@ class Comment extends AbstractFeed {
         const fullQuery = { query, projection, options };
 
         this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit, contentType });
-        this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink, refBlockNum });
+        this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink });
 
         return { type, fullQuery, currentUserId, sortBy, limit };
     }
@@ -69,18 +79,23 @@ class Comment extends AbstractFeed {
         options.sort = { 'ordering.byTime': direction };
     }
 
-    async _populate(modelObjects, currentUserId, type) {
+    async _populate(modelObjects, currentUserId, type, app) {
         await this._tryApplyVotesForModels({ Model: CommentModel, modelObjects, currentUserId });
-        await this._populateAuthors(modelObjects);
+        await this._populateAuthors(modelObjects, app);
 
-        if (type === 'user') {
+        if (type === 'user' || type === 'replies') {
             await this._populateUserCommentsMetaForModels(modelObjects);
         }
     }
 
     async _populateUserCommentsMetaForModels(modelObjects) {
         for (const modelObject of modelObjects) {
-            if (modelObject.parentCommentId) {
+            if (!modelObject.parent) {
+                Logger.warn(`Empty parent - ${JSON.stringify(modelObject.contentId)}`);
+                continue;
+            }
+
+            if (modelObject.parent.comment && modelObject.parent.comment.contentId) {
                 await this._populateUserParentCommentMeta(modelObject);
             } else {
                 await this._populateUserPostMeta(modelObject);
@@ -89,31 +104,40 @@ class Comment extends AbstractFeed {
     }
 
     async _populateUserPostMeta(modelObject) {
-        const id = modelObject.parent.post.contentId;
-        const post = await PostModel.findOne(
-            { contentId: id },
-            { 'content.title': true, communityId: true }
-        );
+        let post;
+        let id;
+
+        if (modelObject.parent.post) {
+            id = modelObject.parent.post.contentId;
+            post = await PostModel.findOne(
+                { contentId: id },
+                { 'content.title': true, communityId: true }
+            );
+        }
 
         if (post) {
             modelObject.parent.post = {
                 content: { title: post.content.title },
                 communityId: post.communityId,
+                ...modelObject.parent.post,
             };
         } else {
             modelObject.parent.post = {
                 content: { title: UNKNOWN_PLACEHOLDER },
                 communityId: UNKNOWN_PLACEHOLDER,
+                ...modelObject.parent.post,
             };
 
-            Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
+            if (id) {
+                Logger.error(`Comments - unknown parent post - ${JSON.stringify(id)}`);
+            }
         }
 
         await this._populateCommunities([modelObject.parent.post]);
     }
 
     async _populateUserParentCommentMeta(modelObject) {
-        const id = modelObject.parentCommentId;
+        const id = modelObject.parent.comment.contentId;
         const comment = await CommentModel.findOne(
             { contentId: id },
             { 'content.body.preview': true, 'parent.contentId': true }
@@ -134,22 +158,19 @@ class Comment extends AbstractFeed {
         }
 
         await this._populateAuthors([modelObject.parentComment]);
-
-        delete modelObject.parentCommentId;
     }
 
-    _normalizeParams({ type, currentUserId, requestedUserId, permlink, refBlockNum, ...params }) {
+    _normalizeParams({ type, currentUserId, requestedUserId, permlink, ...params }) {
         return {
             type,
             currentUserId,
             requestedUserId,
             permlink,
-            refBlockNum,
             ...super._normalizeParams(params),
         };
     }
 
-    _applyFeedTypeConditions({ query }, { type, requestedUserId, permlink, refBlockNum }) {
+    _applyFeedTypeConditions({ query }, { type, requestedUserId, permlink }) {
         switch (type) {
             case 'user':
                 query['contentId.userId'] = requestedUserId;
@@ -166,7 +187,6 @@ class Comment extends AbstractFeed {
             default:
                 query['parent.post.contentId.userId'] = requestedUserId;
                 query['parent.post.contentId.permlink'] = permlink;
-                query['parent.post.contentId.refBlockNum'] = refBlockNum;
                 break;
         }
     }

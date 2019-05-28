@@ -8,8 +8,10 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        username: {
-            type: String,
+        usernames: {
+            // app -> name
+            type: Object,
+            default: {},
         },
         personal: {
             cyber: {
@@ -38,14 +40,30 @@ module.exports = MongoDB.makeModel(
                 },
             },
             gls: {
-                name: String,
-                gender: String,
-                about: String,
-                location: String,
-                website: String,
-                profileImage: String,
-                coverImage: String,
-                social: String,
+                name: {
+                    type: String,
+                },
+                gender: {
+                    type: String,
+                },
+                about: {
+                    type: String,
+                },
+                location: {
+                    type: String,
+                },
+                website: {
+                    type: String,
+                },
+                avatarUrl: {
+                    type: String,
+                },
+                coverUrl: {
+                    type: String,
+                },
+                social: {
+                    type: String,
+                },
             },
         },
         subscriptions: {
@@ -53,9 +71,35 @@ module.exports = MongoDB.makeModel(
                 type: [String],
                 default: [],
             },
+            usersCount: {
+                type: Number,
+                default: 0,
+            },
             communityIds: {
                 type: [String],
                 default: [],
+            },
+            communitiesCount: {
+                type: Number,
+                default: 0,
+            },
+        },
+        subscribers: {
+            userIds: {
+                type: [String],
+                default: [],
+            },
+            usersCount: {
+                type: Number,
+                default: 0,
+            },
+            communityIds: {
+                type: [String],
+                default: [],
+            },
+            communitiesCount: {
+                type: Number,
+                default: 0,
             },
         },
         registration: {
@@ -64,6 +108,10 @@ module.exports = MongoDB.makeModel(
             },
         },
         stats: {
+            reputation: {
+                type: Number,
+                default: 0,
+            },
             postsCount: {
                 type: Number,
                 default: 0,
@@ -72,6 +120,10 @@ module.exports = MongoDB.makeModel(
                 type: Number,
                 default: 0,
             },
+        },
+        leaderIn: {
+            type: [String],
+            default: [],
         },
     },
     {
@@ -83,6 +135,18 @@ module.exports = MongoDB.makeModel(
                 },
                 options: {
                     unique: true,
+                },
+            },
+            // Golos user search
+            {
+                fields: {
+                    'usernames.gls': 1,
+                },
+            },
+            // Cyber user search
+            {
+                fields: {
+                    'usernames.cyber': 1,
                 },
             },
         ],

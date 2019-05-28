@@ -1,15 +1,14 @@
-const core = require('gls-core-service');
-const BasicController = core.controllers.Basic;
+const AbstractContent = require('./AbstractContent');
 const Profile = require('../../models/Profile');
 const Post = require('../../models/Post');
 const Comment = require('../../models/Comment');
 
-class Notify extends BasicController {
-    async getMeta({ userId, communityId, postId, commentId, contentId }) {
+class Notify extends AbstractContent {
+    async getMeta({ userId, communityId, postId, commentId, contentId, username, app }) {
         const result = {};
 
         if (userId) {
-            result.user = await this._getUserData(userId);
+            result.user = await this._getUserData(userId, username, app);
         }
 
         if (communityId) {
@@ -37,20 +36,33 @@ class Notify extends BasicController {
         return result;
     }
 
-    async _getUserData(userId) {
-        const data = await Profile.findOne(
-            { userId },
-            { _id: false, username: true, 'personal.avatarUrl': true }
+    async _getUserData(userId, username, app) {
+        if (!app) {
+            throw { code: 400, message: 'app required' };
+        }
+
+        const params = { requestedUserId: userId, username, app };
+
+        await this._tryApplyUserIdByName(params);
+
+        const resolvedUserId = params.requestedUserId;
+        const profile = await Profile.findOne(
+            { userId: resolvedUserId },
+            { _id: false, usernames: true, [`personal.${app}.avatarUrl`]: true }
         );
 
-        if (!data) {
+        if (!profile) {
             throw { code: 404, message: 'User not found' };
         }
 
+        profile.personal = profile.personal || {};
+        profile.personal[app] = profile.personal[app] || {};
+        profile.usernames = profile.usernames || {};
+
         return {
-            id: userId,
-            username: data.username,
-            avatarUrl: data.personal.avatarUrl,
+            userId: resolvedUserId,
+            username: profile.usernames[app] || profile.usernames['gls'] || resolvedUserId,
+            avatarUrl: profile.personal[app].avatarUrl || null,
         };
     }
 
@@ -59,6 +71,7 @@ class Notify extends BasicController {
         return {
             id: 'gls',
             name: 'Golos',
+            avatarUrl: null,
         };
     }
 

@@ -9,12 +9,74 @@ const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
 
 class AbstractContent extends Abstract {
+    async handlePayout({ from, to, quantity, memo }) {
+        if (!this._isPayoutContract(from)) {
+            return;
+        }
+
+        const payoutType = this._getPayoutType(to);
+        if (!payoutType) {
+            return;
+        }
+
+        const { userId, permlink, contentType, rewardType } = this._parsePayoutMemo(
+            memo,
+            payoutType
+        );
+
+        const Model = this._getPayoutModelClass(contentType);
+        if (!Model) {
+            return;
+        }
+
+        const rewardTypeKey = this._getRewardTypeKey(rewardType);
+        if (!rewardTypeKey) {
+            return;
+        }
+
+        const { tokenName, tokenValue } = this._extractTokenInfo(quantity);
+        if (!tokenName) {
+            return;
+        }
+
+        await this._setPayout(
+            { userId, permlink },
+            { rewardTypeKey, payoutType, tokenName, tokenValue }
+        );
+    }
+
+    async updateUserPostsCount(userId, increment) {
+        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
+    }
+
+    extractContentObjectFromGenesis(genesisContent) {
+        return {
+            title: this._extractTitle(genesisContent),
+            body: {
+                preview: this._extractBodyPreview(genesisContent),
+                full: this._extractBodyFull(genesisContent),
+                mobile: this._extractBodyMobile(genesisContent),
+                raw: this._extractBodyRaw(genesisContent),
+            },
+            metadata: {},
+            embeds: [],
+        };
+    }
+
     _extractTitle(content) {
-        return this._contentUtil.sanitize(content.headermssg);
+        if (content.headermssg) {
+            return this._contentUtil.sanitize(content.headermssg);
+        } else {
+            return this._contentUtil.sanitize(content.title);
+        }
     }
 
     _extractBodyRaw(content) {
-        return content.bodymssg;
+        if (content.bodymssg) {
+            return content.bodymssg;
+        } else {
+            return content.body;
+        }
     }
 
     _extractBodyFull(content) {
@@ -155,16 +217,7 @@ class AbstractContent extends Abstract {
         return {
             userId: id.author,
             permlink: id.permlink,
-            refBlockNum: id.ref_block_num,
         };
-    }
-
-    _isContentIdEquals(left, right) {
-        return (
-            left.userId === right.userId &&
-            left.permlink === right.permlink &&
-            left.refBlockNum === right.refBlockNum
-        );
     }
 
     async _isPost(content) {
@@ -214,8 +267,103 @@ class AbstractContent extends Abstract {
         };
     }
 
-    async _updateUserPostsCount(userId, increment) {
-        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
+    _isPayoutContract(name) {
+        return name.split('.')[1] === 'publish';
+    }
+
+    _parsePayoutMemo(memo, payoutType) {
+        if (payoutType === 'vesting') {
+            const match = memo.match(/^\w+ \w+: (.+); (\w+) \w+ \w+ (\w+) .+:(.+)$/);
+
+            return {
+                userId: match[1],
+                permlink: match[4],
+                rewardType: match[2],
+                contentType: match[3],
+            };
+        } else {
+            const match = memo.match(/^\w+ \w+ (\w+) (.+):(.+)/);
+
+            return {
+                userId: match[2],
+                permlink: match[3],
+                rewardType: 'author',
+                contentType: match[1],
+            };
+        }
+    }
+
+    _getRewardTypeKey(rewardType) {
+        switch (rewardType) {
+            case 'author':
+                return 'author';
+
+            case 'curator':
+                return 'curator';
+
+            case 'benefeciary':
+                return 'benefactor';
+
+            default:
+                Logger.warn(`Payout - unknown reward type - ${rewardType}`);
+                return null;
+        }
+    }
+
+    _getPayoutModelClass(contentType) {
+        switch (contentType) {
+            case 'post':
+                return PostModel;
+
+            case 'comment':
+                return CommentModel;
+
+            default:
+                Logger.warn(`Payout - unknown content type - ${contentType}`);
+                return null;
+        }
+    }
+
+    _getPayoutType(target) {
+        if (target.split('.')[1] === 'vesting') {
+            return 'vesting';
+        } else {
+            return 'token';
+        }
+    }
+
+    _extractTokenInfo(quantity) {
+        let [tokenValue, tokenName] = quantity.split(' ');
+
+        tokenValue = Number(tokenValue);
+
+        if (!tokenName || Number.isNaN(tokenValue)) {
+            Logger.warn(`Payout - invalid quantity - ${quantity}`);
+            return { tokenName: null, tokenValue: null };
+        }
+
+        return { tokenName, tokenValue };
+    }
+
+    async _setPayout(contentId, { rewardTypeKey, payoutType, tokenName, tokenValue }) {
+        await PostModel.updateOne(
+            { contentId },
+            {
+                $set: {
+                    'payout.done': true,
+                    [`payout.${rewardTypeKey}.${payoutType}`]: {
+                        name: tokenName,
+                        value: tokenValue,
+                    },
+                },
+            }
+        );
+    }
+
+    _extractBenefactorPercents(content) {
+        const percents = content.beneficiaries || [];
+
+        return percents.map(value => value.weight);
     }
 }
 

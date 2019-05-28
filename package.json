@@ -4,6 +4,7 @@
   "description": "",
   "main": "./src/index.js",
   "scripts": {
+    "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -35,18 +36,21 @@
   },
   "homepage": "https://github.com/GolosChain/prism-service#readme",
   "dependencies": {
-    "gls-core-service": "^3.19.0",
     "bodybuilder": "^2.2.17",
-    "elasticsearch": "^15.4.1",
+    "cyberwayjs": "^20.0.0-beta4",
+    "elasticsearch": "^15.5.0",
+    "gls-core-service": "^3.25.0",
     "golos-js": "^0.7.7",
     "moment": "^2.24.0",
+    "mongodb": "^3.2.5",
+    "node-fetch": "^2.6.0",
     "pluralize": "^7.0.0",
+    "text-encoding": "^0.7.0",
     "then-sleep": "^1.0.1",
-    "gls-core-service": "^3.17.8",
     "uuid": "^3.3.2",
     "valid-url": "^1.0.9"
   },
   "devDependencies": {
-    "prettier": "^1.17.0"
+    "prettier": "^1.17.1"
   }
 }
