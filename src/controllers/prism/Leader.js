@@ -42,6 +42,7 @@ class Leader extends Abstract {
             Logger.warn(`Unknown leader - ${leader}`);
         }
 
+        model.votes = model.votes || [];
         model.votes.push(voter);
         model.votes = [...new Set(model.votes)];
         model.rating = this._extractLeaderRating(events);
