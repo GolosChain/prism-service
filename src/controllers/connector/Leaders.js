@@ -1,5 +1,3 @@
-const { last, omit } = require('ramda');
-
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
 const ProposalModel = require('../../models/Proposal');
@@ -89,8 +87,10 @@ class Leaders extends AbstractFeed {
         };
 
         if (sequenceKey) {
+            const lastId = this._unpackSequenceKey(sequenceKey);
+
             query._id = {
-                $gt: sequenceKey,
+                $gt: lastId,
             };
         }
 
@@ -122,9 +122,19 @@ class Leaders extends AbstractFeed {
 
         await this._populateUsers(users, app);
 
+        let resultSequenceKey = null;
+
+        if (items.length < limit) {
+            resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
+        }
+
         return {
-            items: items.map(item => omit(['_id', 'userId'], item)),
-            sequenceKey: items.length < limit ? null : last(items)._id,
+            items: items.map(item => ({
+                ...item,
+                _id: undefined,
+                userId: undefined,
+            })),
+            sequenceKey: resultSequenceKey,
         };
     }
 }

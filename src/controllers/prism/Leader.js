@@ -1,7 +1,6 @@
 const { JsonRpc, Api } = require('cyberwayjs');
 const fetch = require('node-fetch');
 const { TextEncoder, TextDecoder } = require('text-encoding');
-
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const env = require('../../data/env');
