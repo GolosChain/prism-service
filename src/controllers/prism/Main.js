@@ -16,6 +16,7 @@ const communityRegistry = [
     'gls.ctrl',
     'cyber',
     'cyber.domain',
+    'cyber.token',
 ];
 
 class Main {
@@ -33,6 +34,10 @@ class Main {
         for (const transaction of transactions) {
             let previous;
 
+            if (!transaction || !transaction.actions) {
+                return;
+            }
+
             for (const action of transaction.actions) {
                 await this._disperseAction(action, previous, { blockNum, blockTime });
                 previous = action;
@@ -40,7 +45,7 @@ class Main {
         }
     }
 
-    async _disperseAction(action, previous = { args: {} }, { blockNum, blockTime }) {
+    async _disperseAction(action, previous = { args: {} }, { blockTime }) {
         if (!action) {
             Logger.error('Empty transaction! But continue.');
             return;
@@ -57,6 +62,18 @@ class Main {
         const events = action.events;
 
         switch (pathName) {
+            case `cyber->newaccount`:
+                await this._profile.handleCreate(actionArgs, { blockTime });
+                break;
+
+            case `cyber.domain->newusername`:
+                await this._profile.handleUsername(actionArgs);
+                break;
+
+            case 'cyber.token->transfer':
+                await this._post.handlePayout(actionArgs, { communityId });
+                break;
+
             case `${communityId}.publish->createmssg`:
                 // Warning - do not change ordering
                 await this._post.handleCreate(actionArgs, { communityId, blockTime });
@@ -78,28 +95,24 @@ class Main {
                 await this._comment.handleDelete(actionArgs);
                 break;
 
-            case `cyber->newaccount`:
-                await this._profile.handleCreate(actionArgs, { blockTime });
-                break;
-
             case `${communityId}.social->updatemeta`:
                 await this._profile.handleMeta(actionArgs);
                 break;
 
             case `${communityId}.social->changereput`:
-                await this._vote.handleReputation(actionArgs, previousArgs);
+                await this._vote.handleReputation(actionArgs);
                 break;
 
             case `${communityId}.publish->upvote`:
-                await this._vote.handleUpVote(actionArgs);
+                await this._vote.handleUpVote(actionArgs, { communityId, events });
                 break;
 
             case `${communityId}.publish->downvote`:
-                await this._vote.handleDownVote(actionArgs);
+                await this._vote.handleDownVote(actionArgs, { communityId, events });
                 break;
 
             case `${communityId}.publish->unvote`:
-                await this._vote.handleUnVote(actionArgs);
+                await this._vote.handleUnVote(actionArgs, { communityId, events });
                 break;
 
             case `${communityId}.social->pin`:
@@ -118,6 +131,14 @@ class Main {
                 await this._leader.unregister(actionArgs, { communityId });
                 break;
 
+            case `${communityId}.ctrl->startwitness`:
+                await this._leader.activate(actionArgs, { communityId });
+                break;
+
+            case `${communityId}.ctrl->stopwitness`:
+                await this._leader.deactivate(actionArgs, { communityId });
+                break;
+
             case `${communityId}.ctrl->votewitness`:
                 await this._leader.vote(actionArgs, { communityId, events });
                 break;
@@ -126,8 +147,8 @@ class Main {
                 await this._leader.unvote(actionArgs, { communityId, events });
                 break;
 
-            case `cyber.domain->newusername`:
-                await this._profile.handleUsername(actionArgs, { communityId });
+            case `${communityId}.publish->reblog`:
+                await this._post.handleRepost(actionArgs, { communityId, blockTime });
                 break;
 
             default:

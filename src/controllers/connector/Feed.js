@@ -3,8 +3,8 @@ const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
 class Feed extends AbstractFeed {
-    constructor({ postFeedCache }) {
-        super();
+    constructor({ postFeedCache, ...other }) {
+        super(other);
 
         this._postFeedCache = postFeedCache;
     }
@@ -20,6 +20,7 @@ class Feed extends AbstractFeed {
             limit,
             contentType,
             app,
+            type,
         } = await this._prepareQuery(params);
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
@@ -28,7 +29,9 @@ class Feed extends AbstractFeed {
         }
 
         modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
-        await this._populate(modelObjects, currentUserId, contentType, app);
+
+        await this._populate({ modelObjects, currentUserId, contentType, app, type, fullQuery });
+        await this._applyPayouts(modelObjects);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
     }
@@ -72,7 +75,7 @@ class Feed extends AbstractFeed {
             meta
         );
 
-        return { fullQuery, currentUserId, sortBy, meta, limit, contentType, app };
+        return { fullQuery, currentUserId, sortBy, meta, limit, contentType, app, type };
     }
 
     _applySortingAndSequence(
@@ -108,13 +111,18 @@ class Feed extends AbstractFeed {
         options.sort = { _id: direction };
     }
 
-    async _populate(modelObjects, currentUserId, contentType, app) {
+    async _populate({ modelObjects, currentUserId, contentType, app, type, fullQuery }) {
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects, app);
         await this._populateCommunities(modelObjects);
+        await this._populateViewCount(modelObjects);
 
         if (contentType === 'mobile') {
             this._prepareMobile(modelObjects);
+        }
+
+        if (type === 'byUser' || type === 'subscriptions') {
+            await this._populateReposts(modelObjects, fullQuery.projection);
         }
     }
 
@@ -145,17 +153,26 @@ class Feed extends AbstractFeed {
         return { type, currentUserId, requestedUserId, communityId, tags, ...params };
     }
 
-    async _applyFeedTypeConditions({ query }, { type, requestedUserId, communityId, tags }) {
+    async _applyFeedTypeConditions(
+        { query, projection },
+        { type, requestedUserId, communityId, tags }
+    ) {
         switch (type) {
             case 'subscriptions':
                 await this._applyUserSubscriptions(query, requestedUserId);
                 break;
 
             case 'byUser':
-                query['contentId.userId'] = requestedUserId;
+                query.$or = [
+                    { 'contentId.userId': requestedUserId },
+                    { 'repost.userId': requestedUserId },
+                ];
                 break;
 
             case 'community':
+                query['repost.isRepost'] = { $ne: true };
+                projection.repost = false;
+
                 if (tags) {
                     query['content.tags'] = { $in: tags };
                 }

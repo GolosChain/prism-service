@@ -13,9 +13,9 @@ module.exports = MongoDB.makeModel(
                 type: String,
                 required: true,
             },
-            refBlockNum: {
-                type: Number,
-            },
+        },
+        communityId: {
+            type: String,
         },
         parent: {
             post: {
@@ -26,9 +26,6 @@ module.exports = MongoDB.makeModel(
                     permlink: {
                         type: String,
                     },
-                    refBlockNum: {
-                        type: Number,
-                    },
                 },
             },
             comment: {
@@ -38,9 +35,6 @@ module.exports = MongoDB.makeModel(
                     },
                     permlink: {
                         type: String,
-                    },
-                    refBlockNum: {
-                        type: Number,
                     },
                 },
             },
@@ -91,22 +85,128 @@ module.exports = MongoDB.makeModel(
                 ],
             },
         },
-        payout: {
+        stats: {
+            commentsCount: {
+                type: Number,
+                default: 0,
+            },
             rShares: {
+                type: Number,
+                default: 0
+            },
+            hot: {
+                type: Number,
+                default: 0,
+            },
+            trending: {
                 type: Number,
                 default: 0,
             },
         },
+        payout: {
+            done: {
+                type: Boolean,
+                default: false,
+            },
+            author: {
+                token: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            curator: {
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            benefactor: {
+                vesting: {
+                    value: {
+                        type: Number,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            meta: {
+                rewardWeight: {
+                    type: Number,
+                    default: 10000,
+                },
+                sharesFn: {
+                    type: Number,
+                    default: 0,
+                },
+                sumCuratorSw: {
+                    type: Number,
+                    default: 0,
+                },
+                benefactorPercents: {
+                    type: [Number],
+                    default: [0],
+                },
+                tokenProp: {
+                    type: Number,
+                    default: 0,
+                },
+            },
+        },
         votes: {
-            upUserIds: {
-                type: [String],
+            upVotes: {
+                type: [
+                    {
+                        userId: {
+                            type: String,
+                        },
+                        weight: {
+                            type: Number,
+                        },
+                    },
+                ],
+                default: [],
             },
             upCount: {
                 type: Number,
                 default: 0,
             },
-            downUserIds: {
-                type: [String],
+            downVotes: {
+                type: [
+                    {
+                        userId: {
+                            type: String,
+                        },
+                        weight: {
+                            type: Number,
+                        },
+                    },
+                ],
+                default: [],
             },
             downCount: {
                 type: Number,
@@ -150,6 +250,24 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'contentId.userId': 1,
                     'meta.time': 1,
+                },
+            },
+            // Shares feed
+            {
+                fields: {
+                    'stats.rShares': 1,
+                },
+            },
+            // Actual feed
+            {
+                fields: {
+                    'stats.hot': 1,
+                },
+            },
+            // Popular feed
+            {
+                fields: {
+                    'stats.trending': 1,
                 },
             },
         ],

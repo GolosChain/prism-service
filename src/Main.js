@@ -1,7 +1,6 @@
 const core = require('gls-core-service');
 const stats = core.utils.statsClient;
 const BasicMain = core.services.BasicMain;
-const Logger = core.utils.Logger;
 const env = require('./data/env');
 const Prism = require('./services/Prism');
 const Connector = require('./services/Connector');
@@ -12,7 +11,6 @@ const Sync = require('./services/Sync');
 const ServiceMetaModel = require('./models/ServiceMeta');
 const Post = require('./models/Post');
 const Comment = require('./models/Comment');
-const Profile = require('./models/Profile');
 const GolosUserExporter = require('./scripts/GolosUserExporter');
 
 class Main extends BasicMain {

@@ -1,6 +1,5 @@
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
-const ProfileModel = require('../../models/Profile');
 
 class Leaders extends AbstractFeed {
     constructor({ leaderFeedCache }) {
@@ -33,7 +32,7 @@ class Leaders extends AbstractFeed {
                 return;
             }
 
-            const voteCount = await LeaderModel.count({
+            const voteCount = await LeaderModel.countDocuments({
                 _id: modelObject._id,
                 votes: currentUserId,
             });

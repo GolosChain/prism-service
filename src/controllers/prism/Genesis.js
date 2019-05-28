@@ -93,18 +93,19 @@ class Genesis {
 
     _applyVotes(model, votes) {
         model.votes = {
-            upUserIds: [],
+            upVotes: [],
             upCount: 0,
-            downUserIds: [],
+            downVotes: [],
             downCount: 0,
         };
 
         for (const { voter: userId, weight } of votes) {
+            const vote = { userId, weight }
             if (weight > 0) {
-                model.votes.upUserIds.push(userId);
+                model.votes.upVotes.push(vote);
                 model.votes.upCount++;
             } else if (weight < 0) {
-                model.votes.downUserIds.push(userId);
+                model.votes.downVotes.push(vote);
                 model.votes.downCount++;
             }
         }

@@ -42,6 +42,7 @@ class Profile extends AbstractFeed {
         modelObject.stats = modelObject.stats || { reputation: 0, postsCount: 0, commentsCount: 0 };
         modelObject.registration = modelObject.registration || { time: new Date(0) };
         modelObject.personal = (modelObject.personal || {})[type] || {};
+        modelObject.leaderIn = modelObject.leaderIn || [];
         modelObject.usernames = modelObject.usernames || {};
         modelObject.username =
             modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
@@ -165,7 +166,7 @@ class Profile extends AbstractFeed {
         await this._populateSubscribes(items, app);
         await this._populateSelfSubscribed(items, currentUserId, markAllAsSubscribed);
 
-        return this._makeSubscribesResult(items, skip, limit);
+        return this._makeArrayPaginationResult(items, skip, limit);
     }
 
     _getSubscribesTargetType(type) {
@@ -178,27 +179,6 @@ class Profile extends AbstractFeed {
         }
     }
 
-    _makeSubscribesResult(items, skip, limit) {
-        if (!items || !items.length) {
-            return {
-                items: [],
-                sequenceKey: null,
-            };
-        }
-
-        if (items.length < limit) {
-            return {
-                items,
-                sequenceKey: null,
-            };
-        }
-
-        return {
-            items,
-            sequenceKey: this._packSequenceKey(skip + limit),
-        };
-    }
-
     _checkExists(modelObject) {
         if (!modelObject) {
             throw { code: 404, message: 'Not found' };
@@ -209,9 +189,11 @@ class Profile extends AbstractFeed {
         const result = [];
 
         for (let i = 0; i < userIds.length; i++) {
-            result.push(async () => {
-                userIds[i] = await this._getSubscribeUserData(userIds[i], app);
-            });
+            result.push(
+                (async () => {
+                    userIds[i] = await this._getSubscribeUserData(userIds[i], app);
+                })()
+            );
         }
 
         await Promise.all(result);
@@ -263,6 +245,32 @@ class Profile extends AbstractFeed {
 
             item.hasSubscription = Boolean(count);
         }
+    }
+
+    async suggestNames({ text, app }) {
+        if (text.length < 2 || text.includes('@')) {
+            return [];
+        }
+
+        const results = await Model.find(
+            {
+                [`usernames.${app}`]: {
+                    $regex: `^${text}`,
+                },
+            },
+            {
+                userId: true,
+                usernames: true,
+            },
+            {
+                limit: 10,
+            }
+        );
+
+        return results.map(item => ({
+            userId: item.userId,
+            username: item.usernames[app],
+        }));
     }
 }
 

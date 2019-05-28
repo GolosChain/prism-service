@@ -4,6 +4,7 @@
   "description": "",
   "main": "./src/index.js",
   "scripts": {
+    "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -40,7 +41,7 @@
     "gls-core-service": "^3.25.0",
     "golos-js": "^0.7.7",
     "moment": "^2.24.0",
-    "mongodb": "^3.2.4",
+    "mongodb": "^3.2.5",
     "pluralize": "^7.0.0",
     "then-sleep": "^1.0.1",
     "uuid": "^3.3.2",

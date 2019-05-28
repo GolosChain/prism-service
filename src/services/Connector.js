@@ -10,6 +10,7 @@ const HashTag = require('../controllers/connector/HashTag');
 const Leaders = require('../controllers/connector/Leaders');
 const Block = require('../controllers/connector/Block');
 const Search = require('../controllers/connector/Search');
+const Vote = require('../controllers/connector/Vote');
 
 class Connector extends BasicConnector {
     constructor({ postFeedCache, leaderFeedCache, prism }) {
@@ -26,6 +27,7 @@ class Connector extends BasicConnector {
         this._leaders = new Leaders({ leaderFeedCache, ...linking });
         this._block = new Block({ prismService: prism, ...linking });
         this._search = new Search(linking);
+        this._vote = new Vote(linking);
     }
 
     async start() {
@@ -70,7 +72,7 @@ class Connector extends BasicConnector {
                     handler: this._post.getPost,
                     scope: this._post,
                     validation: {
-                        required: ['permlink', 'refBlockNum'],
+                        required: ['permlink'],
                         properties: {
                             currentUserId: {
                                 type: 'string',
@@ -80,9 +82,6 @@ class Connector extends BasicConnector {
                             },
                             permlink: {
                                 type: 'string',
-                            },
-                            refBlockNum: {
-                                type: 'number',
                             },
                             contentType: {
                                 type: 'string',
@@ -104,7 +103,7 @@ class Connector extends BasicConnector {
                     handler: this._comment.getComment,
                     scope: this._comment,
                     validation: {
-                        required: ['permlink', 'refBlockNum'],
+                        required: ['permlink'],
                         properties: {
                             currentUserId: {
                                 type: 'string',
@@ -114,9 +113,6 @@ class Connector extends BasicConnector {
                             },
                             permlink: {
                                 type: 'string',
-                            },
-                            refBlockNum: {
-                                type: 'number',
                             },
                             contentType: {
                                 type: 'string',
@@ -159,9 +155,6 @@ class Connector extends BasicConnector {
                             },
                             permlink: {
                                 type: 'string',
-                            },
-                            refBlockNum: {
-                                type: 'number',
                             },
                             contentType: {
                                 type: 'string',
@@ -265,6 +258,23 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                suggestNames: {
+                    handler: this._profile.suggestNames,
+                    scope: this._profile,
+                    validation: {
+                        required: ['text'],
+                        properties: {
+                            text: {
+                                type: 'string',
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                },
                 getNotifyMeta: {
                     handler: this._notify.getMeta,
                     scope: this._notify,
@@ -354,10 +364,11 @@ class Connector extends BasicConnector {
                     },
                 },
                 getPostVotes: {
-                    handler: this._post.getPostVotes,
-                    scope: this._post,
+                    handler: this._vote.getPostVotes,
+                    scope: this._vote,
+                    inherits: ['feedPagination'],
                     validation: {
-                        required: ['requestedUserId', 'permlink', 'refBlockNum'],
+                        required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
                             requestedUserId: {
                                 type: 'string',
@@ -365,17 +376,24 @@ class Connector extends BasicConnector {
                             permlink: {
                                 type: 'string',
                             },
-                            refBlockNum: {
-                                type: 'number',
+                            type: {
+                                type: 'string',
+                                enum: ['like', 'dislike'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },
                 },
                 getCommentVotes: {
-                    handler: this._comment.getCommentVotes,
-                    scope: this._comment,
+                    handler: this._vote.getCommentVotes,
+                    scope: this._vote,
+                    inherits: ['feedPagination'],
                     validation: {
-                        required: ['requestedUserId', 'permlink', 'refBlockNum'],
+                        required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
                             requestedUserId: {
                                 type: 'string',
@@ -383,8 +401,14 @@ class Connector extends BasicConnector {
                             permlink: {
                                 type: 'string',
                             },
-                            refBlockNum: {
-                                type: 'number',
+                            type: {
+                                type: 'string',
+                                enum: ['like', 'dislike'],
+                            },
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
                             },
                         },
                     },
@@ -478,6 +502,7 @@ class Connector extends BasicConnector {
             },
             requiredClients: {
                 facade: env.GLS_FACADE_CONNECT,
+                meta: env.GLS_META_CONNECT,
             },
         });
     }

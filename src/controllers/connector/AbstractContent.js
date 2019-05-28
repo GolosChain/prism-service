@@ -2,11 +2,13 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BasicController = core.controllers.Basic;
 const ProfileModel = require('../../models/Profile');
+const PostModel = require('../../models/Post');
+const PoolModel = require('../../models/Pool');
 
 class AbstractContent extends BasicController {
     async _getContent(
         Model,
-        { currentUserId, requestedUserId, permlink, refBlockNum, contentType, username, app }
+        { currentUserId, requestedUserId, permlink, contentType, username, app }
     ) {
         if (!requestedUserId && !username) {
             throw { code: 400, message: 'Invalid user identification' };
@@ -21,7 +23,6 @@ class AbstractContent extends BasicController {
                 contentId: {
                     userId: requestedUserId,
                     permlink,
-                    refBlockNum,
                 },
             },
             this._makeContentProjection(contentType),
@@ -65,8 +66,8 @@ class AbstractContent extends BasicController {
 
         return {
             'content.body.preview': false,
-            'votes.upUserIds': false,
-            'votes.downUserIds': false,
+            'votes.upVotes': false,
+            'votes.downVotes': false,
             _id: false,
             __v: false,
             createdAt: false,
@@ -100,8 +101,14 @@ class AbstractContent extends BasicController {
     }
 
     async _detectVotes(Model, contentId, currentUserId) {
-        const upVoteCount = await Model.count({ contentId, 'votes.upUserIds': currentUserId });
-        const downVoteCount = await Model.count({ contentId, 'votes.downUserIds': currentUserId });
+        const upVoteCount = await Model.countDocuments({
+            contentId,
+            'votes.upVotes.userId': currentUserId,
+        });
+        const downVoteCount = await Model.countDocuments({
+            contentId,
+            'votes.downVotes.userId': currentUserId,
+        });
 
         return { hasUpVote: Boolean(upVoteCount), hasDownVote: Boolean(downVoteCount) };
     }
@@ -129,19 +136,20 @@ class AbstractContent extends BasicController {
             { lean: true }
         );
 
-        if (profile) {
-            profile.personal = profile.personal || {};
-            profile.personal[app] = profile.personal[app] || {};
-            profile.usernames = profile.usernames || {};
-
-            modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
-            modelObject.username =
-                profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
-        } else {
+        if (!profile) {
             Logger.warn(`populateUser - unknown user - ${modelObject.userId}`);
             modelObject.avatarUrl = null;
             modelObject.username = modelObject.userId;
+            return;
         }
+
+        profile.personal = profile.personal || {};
+        profile.personal[app] = profile.personal[app] || {};
+        profile.usernames = profile.usernames || {};
+
+        modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
+        modelObject.username =
+            profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
     }
 
     async _populateCommunities(modelObjects) {
@@ -213,6 +221,181 @@ class AbstractContent extends BasicController {
 
     _throwNotFound() {
         throw { code: 404, message: 'Not found' };
+    }
+
+    async _populateViewCount(modelObjects) {
+        const modelsById = {};
+
+        for (const model of modelObjects) {
+            const { contentId } = model;
+            const id = `${contentId.userId}/${contentId.permlink}`;
+
+            modelsById[id] = model;
+            model.stats.viewCount = 0;
+        }
+
+        try {
+            const { results } = await this.callService('meta', 'getPostsViewCount', {
+                postLinks: Object.keys(modelsById),
+            });
+
+            for (const { postLink, viewCount } of results) {
+                modelsById[postLink].stats.viewCount = viewCount;
+            }
+        } catch (error) {
+            Logger.warn('Cant connect to MetaService');
+
+            for (const model of modelObjects) {
+                model.stats.viewCount = 0;
+            }
+        }
+    }
+
+    async _populateReposts(modelObjects, projection) {
+        await this._populateWithCache(modelObjects, this._populateRepost, projection);
+    }
+
+    async _populateRepost(modelObject, resolvedPosts, projection) {
+        if (!modelObject.repost || !modelObject.repost.isRepost) {
+            return;
+        }
+
+        const contentId = modelObject.contentId;
+        const post = await this._getRepostPost(contentId, resolvedPosts, projection);
+
+        if (!post) {
+            return;
+        }
+
+        for (const key of Object.keys(modelObject)) {
+            if (key !== 'repost') {
+                modelObject[key] = post[key];
+            }
+        }
+    }
+
+    async _getRepostPost(contentId, resolvedPosts, projection) {
+        let post;
+
+        if (resolvedPosts.has(contentId)) {
+            post = resolvedPosts.get(contentId);
+        } else {
+            post = await PostModel.findOne({ contentId }, projection, { lean: true });
+
+            if (!post) {
+                Logger.warn(`Repost - unknown post - ${JSON.stringify(contentId)}`);
+                return null;
+            }
+
+            resolvedPosts.set(contentId, post);
+        }
+
+        return post;
+    }
+
+    async _applyPayouts(modelObjects, communityId) {
+        const getPool = this._makePoolGetter();
+
+        for (const modelObject of modelObjects) {
+            if (modelObject.payout.done || !modelObject.payout.meta) {
+                return;
+            }
+
+            const pool = await getPool(communityId);
+
+            if (!pool) {
+                continue;
+            }
+
+            this._applyPayout(modelObject, pool);
+        }
+    }
+
+    _makePoolGetter() {
+        const cache = new Map();
+
+        return async communityId => {
+            if (cache.has(communityId)) {
+                return cache.get(communityId);
+            }
+
+            const pool = await PoolModel.findOne(
+                { communityId },
+                { funds: true, rShares: true, rSharesFn: true },
+                { lean: true }
+            );
+
+            if (!pool) {
+                Logger.warn(`Unknown Pool - ${communityId}`);
+                return null;
+            }
+
+            cache.set(communityId, pool);
+        };
+    }
+
+    _applyPayout(modelObject, pool) {
+        const payoutMeta = modelObject.payout.meta;
+        const totalPayout = this._calcTotalPayout({
+            rewardWeight: payoutMeta.rewardWeight,
+            funds: pool.funds.value,
+            sharesFn: payoutMeta.sharesFn,
+            rSharesFn: pool.rSharesFn,
+        });
+        const curationPayout = this._calcCuratorPayout({
+            totalPayout,
+            sumCuratorSw: payoutMeta.sumCuratorSw,
+        });
+        const benefactorPayout = this._calcBenefactorPayout({
+            totalPayout,
+            curationPayout,
+            percents: payoutMeta.benefactorPercents,
+        });
+        const { tokens: authorTokenPayout, vesting: authorVestingPayout } = this._calcAuthorPayout({
+            totalPayout,
+            curationPayout,
+            benefactorPayout,
+            tokenProp: payoutMeta.tokenProp,
+        });
+
+        const payout = modelObject.payout;
+        const name = pool.funds.name;
+
+        payout.author.token.name = name;
+        payout.author.token.value = authorTokenPayout;
+        payout.author.vesting.name = name;
+        payout.author.vesting.value = authorVestingPayout;
+        payout.curator.vesting.name = name;
+        payout.curator.vesting.value = curationPayout;
+        payout.benefactor.vesting.name = name;
+        payout.benefactor.vesting.value = benefactorPayout;
+    }
+
+    _calcTotalPayout({ rewardWeight, funds, sharesFn, rSharesFn }) {
+        return rewardWeight * funds * (sharesFn / rSharesFn);
+    }
+
+    _calcAuthorPayout({ totalPayout, curationPayout, benefactorPayout, tokenProp }) {
+        const total = totalPayout - curationPayout - benefactorPayout;
+        const tokens = total * tokenProp;
+        const vesting = total - tokens;
+
+        return { tokens, vesting };
+    }
+
+    _calcCuratorPayout({ totalPayout, sumCuratorSw }) {
+        return totalPayout - sumCuratorSw * totalPayout;
+    }
+
+    _calcBenefactorPayout({ totalPayout, curationPayout, percents }) {
+        const payoutDiff = totalPayout - curationPayout;
+        let result = 0;
+
+        for (const percent of percents) {
+            result += payoutDiff * percent;
+        }
+
+        return result;
     }
 }
 
