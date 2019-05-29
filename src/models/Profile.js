@@ -13,6 +13,12 @@ module.exports = MongoDB.makeModel(
             type: Object,
             default: {},
         },
+        chargers: {
+            likes: {
+                type: Number,
+                default: 0,
+            },
+        },
         personal: {
             cyber: {
                 avatarUrl: {

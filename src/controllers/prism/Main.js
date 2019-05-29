@@ -17,7 +17,7 @@ const communityRegistry = [
     'cyber',
     'cyber.domain',
     'cyber.token',
-];
+    'gls.charge',
 
 class Main {
     constructor({ connector }) {
@@ -51,7 +51,10 @@ class Main {
             return;
         }
 
+        console.log([action.code, action.action].join('->'));
+
         if (!communityRegistry.includes(action.receiver)) {
+            console.warn('unknown receiver', action.receiver);
             return;
         }
 
@@ -62,6 +65,9 @@ class Main {
         const events = action.events;
 
         switch (pathName) {
+            case `${communityId}.charge->chargestate`:
+                console.log(JSON.stringify(actionArgs, null, 4));
+                break;
             case `cyber->newaccount`:
                 await this._profile.handleCreate(actionArgs, { blockTime });
                 break;
