@@ -92,7 +92,7 @@ module.exports = MongoDB.makeModel(
             },
             rShares: {
                 type: Number,
-                default: 0
+                default: 0,
             },
             hot: {
                 type: Number,
