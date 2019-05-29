@@ -323,7 +323,8 @@ class Feed extends AbstractFeed {
                 if (!fullQuery.query['content.tags']) {
                     return this._finalizeCachedSorting(modelObjects, fullQuery.query);
                 }
-                break;
+
+                return modelObjects;
 
             default:
                 return modelObjects;
