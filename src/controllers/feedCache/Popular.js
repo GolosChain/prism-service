@@ -60,7 +60,7 @@ class Popular extends Abstract {
 
     _applySortByRShares(options) {
         options.sort = options.sort || {};
-        options.sort['payout.rShares'] = -1;
+        options.sort['stats.rShares'] = -1;
     }
 
     _applySortByWilson(options, type) {
