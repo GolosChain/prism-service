@@ -115,6 +115,7 @@ class Feed extends AbstractFeed {
                         meta,
                     });
                 }
+                break;
         }
     }
 
@@ -303,13 +304,13 @@ class Feed extends AbstractFeed {
             case 'popular':
                 if (!tags || !tags.length) {
                     return this._getCachedSequenceKey(models, limit, meta);
-                } else {
-                    sequenceKey = Number(sequenceKey) || 0;
-
-                    const arrayResult = this._makeArrayPaginationResult(models, sequenceKey, limit);
-
-                    return arrayResult.sequenceKey;
                 }
+
+                sequenceKey = Number(sequenceKey) || 0;
+
+                const arrayResult = this._makeArrayPaginationResult(models, sequenceKey, limit);
+
+                return arrayResult.sequenceKey;
 
             default:
                 return origin;
@@ -322,6 +323,8 @@ class Feed extends AbstractFeed {
                 if (!fullQuery.query['content.tags']) {
                     return this._finalizeCachedSorting(modelObjects, fullQuery.query);
                 }
+                break;
+
             default:
                 return modelObjects;
         }
