@@ -53,13 +53,28 @@ class Main extends BasicMain {
     }
 
     async boot() {
+        await this._setDbQueryMemoryLimit();
+        await this._tryRestoreGolosUsers();
+        await this._initMetadata();
+    }
+
+    async _setDbQueryMemoryLimit() {
+        await Post.db.db.command({
+            setParameter: 1,
+            internalQueryExecMaxBlockingSortBytes: env.GLS_MAX_QUERY_MEMORY_LIMIT,
+        });
+    }
+
+    async _tryRestoreGolosUsers() {
         if (env.GLS_EXPORT_GOLOS_USERS) {
             await new GolosUserExporter().exportUsers(
                 this._mongoDb,
                 env.GLS_EXPORT_GOLOS_USERS_CONNECT
             );
         }
+    }
 
+    async _initMetadata() {
         if ((await ServiceMetaModel.countDocuments()) === 0) {
             const model = new ServiceMetaModel();
 
