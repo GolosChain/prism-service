@@ -21,6 +21,8 @@ class Feed extends AbstractFeed {
             contentType,
             app,
             type,
+            tags,
+            sequenceKey,
         } = await this._prepareQuery(params);
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
@@ -33,7 +35,7 @@ class Feed extends AbstractFeed {
         await this._populate({ modelObjects, currentUserId, contentType, app, type, fullQuery });
         await this._applyPayouts(modelObjects);
 
-        return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
+        return this._makeFeedResult(modelObjects, { sortBy, limit, tags, sequenceKey }, meta);
     }
 
     async _prepareQuery(params) {
@@ -71,16 +73,27 @@ class Feed extends AbstractFeed {
         });
         this._applySortingAndSequence(
             fullQuery,
-            { type, sortBy, timeframe, sequenceKey, limit, contentType },
+            { type, sortBy, timeframe, sequenceKey, limit, contentType, tags },
             meta
         );
 
-        return { fullQuery, currentUserId, sortBy, meta, limit, contentType, app, type };
+        return {
+            fullQuery,
+            currentUserId,
+            sortBy,
+            meta,
+            limit,
+            contentType,
+            app,
+            type,
+            tags,
+            sequenceKey,
+        };
     }
 
     _applySortingAndSequence(
         { query, projection, options },
-        { type, sortBy, timeframe, sequenceKey, limit, contentType },
+        { type, sortBy, timeframe, sequenceKey, limit, contentType, tags },
         meta
     ) {
         super._applySortingAndSequence(
@@ -90,19 +103,38 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                const { ids, newSequenceKey } = this._postFeedCache.getIdsWithSequenceKey({
-                    communityId: query.communityId,
-                    sortBy,
-                    timeframe,
-                    sequenceKey,
-                    limit,
-                });
-
-                delete query.communityId;
-                meta.newSequenceKey = newSequenceKey;
-                query._id = { $in: ids };
+                if (tags) {
+                    this._applyPopularSortingByTags({ options, sequenceKey });
+                } else {
+                    this._applyCachedPopularSorting({
+                        query,
+                        sortBy,
+                        timeframe,
+                        sequenceKey,
+                        limit,
+                        meta,
+                    });
+                }
                 break;
         }
+    }
+
+    _applyCachedPopularSorting({ query, sortBy, timeframe, sequenceKey, limit, meta }) {
+        const { ids, newSequenceKey } = this._postFeedCache.getIdsWithSequenceKey({
+            communityId: query.communityId,
+            sortBy,
+            timeframe,
+            sequenceKey,
+            limit,
+        });
+
+        delete query.communityId;
+        meta.newSequenceKey = newSequenceKey;
+        query._id = { $in: ids };
+    }
+
+    _applyPopularSortingByTags({ options, sequenceKey }) {
+        options.skip = Number(sequenceKey) || 0;
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {
@@ -139,12 +171,6 @@ class Feed extends AbstractFeed {
             ...params,
             ...super._normalizeParams({ sortBy, ...params }),
         };
-
-        sortBy = params.sortBy;
-
-        if (sortBy === 'popular' && (type !== 'community' || tags)) {
-            throw { code: 400, message: `Invalid sorting for - ${type}` };
-        }
 
         if (tags && !Array.isArray(tags)) {
             throw { code: 400, message: 'Invalid tags param' };
@@ -271,12 +297,20 @@ class Feed extends AbstractFeed {
         return false;
     }
 
-    _getSequenceKey(models, { sortBy, limit }, meta) {
+    _getSequenceKey(models, { sortBy, limit, tags, sequenceKey }, meta) {
         const origin = super._getSequenceKey(models, sortBy);
 
         switch (sortBy) {
             case 'popular':
-                return this._getCachedSequenceKey(models, limit, meta);
+                if (!tags || !tags.length) {
+                    return this._getCachedSequenceKey(models, limit, meta);
+                }
+
+                sequenceKey = Number(sequenceKey) || 0;
+
+                const arrayResult = this._makeArrayPaginationResult(models, sequenceKey, limit);
+
+                return arrayResult.sequenceKey;
 
             default:
                 return origin;
@@ -286,7 +320,12 @@ class Feed extends AbstractFeed {
     _finalizeSorting(modelObjects, sortBy, fullQuery) {
         switch (sortBy) {
             case 'popular':
-                return this._finalizeCachedSorting(modelObjects, fullQuery.query);
+                if (!fullQuery.query['content.tags']) {
+                    return this._finalizeCachedSorting(modelObjects, fullQuery.query);
+                }
+
+                return modelObjects;
+
             default:
                 return modelObjects;
         }
