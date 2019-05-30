@@ -54,8 +54,12 @@ class Profile extends AbstractFeed {
     }
 
     async getChargers({ userId }) {
-        const profile = await Model.findOne({ userId });
-        return profile.toObject().chargers;
+        const profile = await Model.findOne(
+            { userId },
+            { chargers: true, _id: false },
+            { lean: true }
+        );
+        return profile.chargers;
     }
 
     async _detectSubscription(modelObject, currentUserId, requestedUserId) {
