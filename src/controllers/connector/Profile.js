@@ -41,7 +41,7 @@ class Profile extends AbstractFeed {
         };
         modelObject.stats = modelObject.stats || { reputation: 0, postsCount: 0, commentsCount: 0 };
         modelObject.registration = modelObject.registration || { time: new Date(0) };
-        modelObject.personal = (modelObject.personal || {})[type] || {};
+        modelObject.personal = (modelObject.personal || {})[app] || {};
         modelObject.leaderIn = modelObject.leaderIn || [];
         modelObject.usernames = modelObject.usernames || {};
         modelObject.username =

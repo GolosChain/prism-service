@@ -240,10 +240,6 @@ class Connector extends BasicConnector {
                             app: {
                                 type: 'app',
                             },
-                            // deprecated
-                            type: {
-                                type: 'app',
-                            },
                         },
                     },
                 },

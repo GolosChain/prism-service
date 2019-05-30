@@ -1,3 +1,5 @@
+const core = require('gls-core-service');
+const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
 const ProfileModel = require('../../models/Profile');
 
@@ -14,7 +16,10 @@ class Profile extends Abstract {
     }
 
     async handleCreate({ name: userId }, { blockTime }) {
-        if (await ProfileModel.findOne({ userId })) {
+        const modelsAlready = await ProfileModel.count({ userId });
+
+        if (modelsAlready > 0) {
+            Logger.warn(`Duplicate user creation - ${userId}`);
             return;
         }
 
@@ -27,7 +32,7 @@ class Profile extends Abstract {
     }
 
     async handleMeta({ account: userId, meta }) {
-        const profile = await ProfileModel.findOne({ userId });
+        const profile = await ProfileModel.findOne({ userId }, { personal: true });
 
         if (!profile) {
             return;
