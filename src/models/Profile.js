@@ -14,7 +14,19 @@ module.exports = MongoDB.makeModel(
             default: {},
         },
         chargers: {
-            likes: {
+            votes: {
+                type: Number,
+                default: 0,
+            },
+            posts: {
+                type: Number,
+                default: 0,
+            },
+            comments: {
+                type: Number,
+                default: 0,
+            },
+            postbw: {
                 type: Number,
                 default: 0,
             },

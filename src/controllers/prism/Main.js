@@ -64,8 +64,13 @@ class Main {
         const events = action.events;
 
         switch (pathName) {
-            case `${communityId}.charge->chargestate`:
-                console.log(JSON.stringify(actionArgs, null, 4));
+            case `${communityId}.charge->use`:
+                const chargeStateEvents = events.filter(event => {
+                    if (event.event === 'chargestate') return event;
+                });
+                for (const chargeState of chargeStateEvents) {
+                    await this._profile.handleChargeState(chargeState.args);
+                }
                 break;
             case `cyber->newaccount`:
                 await this._profile.handleCreate(actionArgs, { blockTime });
@@ -105,7 +110,7 @@ class Main {
                 break;
 
             case `${communityId}.social->changereput`:
-                await this._vote.handleReputation(actionArgs);
+                await this._vote.handleReputation(actionArgs, previousArgs);
                 break;
 
             case `${communityId}.publish->upvote`:

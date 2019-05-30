@@ -63,6 +63,37 @@ class Profile extends Abstract {
         await profile.save();
     }
 
+    async handleChargeState({ user, charge_symbol, token_code, charge_id, last_update, value }) {
+        // TODO: решить, как обрабатывать charge_symbol, token_code, last_update
+
+        let chargeType;
+        switch (charge_id) {
+            case 0:
+                chargeType = 'posts';
+                break;
+            case 1:
+                chargeType = 'comments';
+                break;
+            case 2:
+                chargeType = 'votes';
+                break;
+            case 3:
+                chargeType = 'postbw';
+                break;
+            default:
+                return;
+        }
+
+        const chargePercent = (10000 - value) / 100;
+
+        await ProfileModel.updateOne(
+            {
+                userId: user,
+            },
+            { $set: { [`chargers.${chargeType}`]: chargePercent } }
+        );
+    }
+
     _currentOrNew(currentValue, newValue) {
         if (newValue === null || newValue === undefined) {
             return currentValue;
