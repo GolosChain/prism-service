@@ -92,9 +92,7 @@ class Connector extends BasicConnector {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -123,9 +121,7 @@ class Connector extends BasicConnector {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -165,9 +161,7 @@ class Connector extends BasicConnector {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -223,9 +217,7 @@ class Connector extends BasicConnector {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -242,18 +234,15 @@ class Connector extends BasicConnector {
                             requestedUserId: {
                                 type: 'string',
                             },
-                            type: {
-                                type: 'string',
-                                default: 'cyber',
-                                enum: ['gls', 'cyber'],
-                            },
                             username: {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
+                            },
+                            // deprecated
+                            type: {
+                                type: 'app',
                             },
                         },
                     },
@@ -268,9 +257,7 @@ class Connector extends BasicConnector {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -299,7 +286,7 @@ class Connector extends BasicConnector {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
+                                type: 'app',
                             },
                         },
                     },
@@ -331,9 +318,7 @@ class Connector extends BasicConnector {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -399,9 +384,7 @@ class Connector extends BasicConnector {
                                 enum: ['like', 'dislike'],
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -424,9 +407,7 @@ class Connector extends BasicConnector {
                                 enum: ['like', 'dislike'],
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -441,9 +422,7 @@ class Connector extends BasicConnector {
                                 type: 'string',
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -466,9 +445,7 @@ class Connector extends BasicConnector {
                                 enum: ['user', 'community'],
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -491,9 +468,7 @@ class Connector extends BasicConnector {
                                 enum: ['user', 'community'],
                             },
                             app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                                type: 'app',
                             },
                         },
                     },
@@ -515,6 +490,13 @@ class Connector extends BasicConnector {
                                 },
                             },
                         },
+                    },
+                },
+                validationTypes: {
+                    app: {
+                        type: 'string',
+                        enum: ['cyber', 'gls'],
+                        default: 'cyber',
                     },
                 },
             },

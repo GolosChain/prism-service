@@ -100,7 +100,8 @@ class Genesis {
         };
 
         for (const { voter: userId, weight } of votes) {
-            const vote = { userId, weight }
+            const vote = { userId, weight };
+
             if (weight > 0) {
                 model.votes.upVotes.push(vote);
                 model.votes.upCount++;
