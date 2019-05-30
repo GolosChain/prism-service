@@ -384,50 +384,62 @@ class Connector extends BasicConnector {
                     },
                     appSpecify: {
                         validation: {
-                            app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
+                            properties: {
+                                app: {
+                                    type: 'string',
+                                    enum: ['cyber', 'gls'],
+                                    default: 'cyber',
+                                },
                             },
                         },
                     },
                     userByName: {
                         validation: {
-                            username: {
-                                type: 'string',
+                            properties: {
+                                username: {
+                                    type: 'string',
+                                },
                             },
                         },
                     },
                     contentId: {
                         validation: {
-                            requestedUserId: {
-                                type: 'string',
-                            },
-                            permlink: {
-                                type: 'string',
+                            properties: {
+                                requestedUserId: {
+                                    type: 'string',
+                                },
+                                permlink: {
+                                    type: 'string',
+                                },
                             },
                         },
                     },
                     contentType: {
                         validation: {
-                            contentType: {
-                                type: 'string',
-                                default: 'web',
-                                enum: ['web', 'mobile', 'raw'],
+                            properties: {
+                                contentType: {
+                                    type: 'string',
+                                    default: 'web',
+                                    enum: ['web', 'mobile', 'raw'],
+                                },
                             },
                         },
                     },
                     userRelativity: {
                         validation: {
-                            currentUserId: {
-                                type: 'string',
+                            properties: {
+                                currentUserId: {
+                                    type: 'string',
+                                },
                             },
                         },
                     },
                     optionalUserRelativity: {
                         validation: {
-                            currentUserId: {
-                                type: ['string', 'null'],
+                            properties: {
+                                currentUserId: {
+                                    type: ['string', 'null'],
+                                },
                             },
                         },
                     },
