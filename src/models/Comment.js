@@ -85,6 +85,24 @@ module.exports = MongoDB.makeModel(
                 ],
             },
         },
+        stats: {
+            commentsCount: {
+                type: Number,
+                default: 0,
+            },
+            rShares: {
+                type: Number,
+                default: 0,
+            },
+            hot: {
+                type: Number,
+                default: 0,
+            },
+            trending: {
+                type: Number,
+                default: 0,
+            },
+        },
         payout: {
             done: {
                 type: Boolean,
@@ -139,18 +157,23 @@ module.exports = MongoDB.makeModel(
             meta: {
                 rewardWeight: {
                     type: Number,
+                    default: 10000,
                 },
                 sharesFn: {
                     type: Number,
+                    default: 0,
                 },
                 sumCuratorSw: {
                     type: Number,
+                    default: 0,
                 },
                 benefactorPercents: {
                     type: [Number],
+                    default: [0],
                 },
                 tokenProp: {
                     type: Number,
+                    default: 0,
                 },
             },
         },
@@ -227,6 +250,24 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'contentId.userId': 1,
                     'meta.time': 1,
+                },
+            },
+            // Shares feed
+            {
+                fields: {
+                    'stats.rShares': 1,
+                },
+            },
+            // Actual feed
+            {
+                fields: {
+                    'stats.hot': 1,
+                },
+            },
+            // Popular feed
+            {
+                fields: {
+                    'stats.trending': 1,
                 },
             },
         ],

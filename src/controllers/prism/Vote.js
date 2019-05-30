@@ -9,7 +9,7 @@ const PoolModel = require('../../models/Pool');
 
 class Vote extends AbstractContent {
     async handleUpVote(content, { communityId, events }) {
-        const model = await this._getModel(content, { votes: true, payout: true });
+        const model = await this._getModel(content);
 
         if (!model) {
             return;
@@ -23,7 +23,7 @@ class Vote extends AbstractContent {
     }
 
     async handleDownVote(content, { communityId, events }) {
-        const model = await this._getModel(content, { votes: true, payout: true });
+        const model = await this._getModel(content);
 
         if (!model) {
             return;
@@ -37,7 +37,7 @@ class Vote extends AbstractContent {
     }
 
     async handleUnVote(content, { communityId, events }) {
-        const model = await this._getModel(content, { votes: true, payout: true });
+        const model = await this._getModel(content);
 
         if (!model) {
             return;
@@ -92,25 +92,8 @@ class Vote extends AbstractContent {
         }
     }
 
-    async handleReputation({ voter, author, rshares: rShares }, content) {
-        const model = await this._getModel(content, {
-            payout: true,
-            'meta.time': true,
-            stats: true,
-        });
-
-        if (!model) {
-            return;
-        }
-
-        model.stats = model.stats || {};
-        model.stats.wilson = model.stats.wilson || {};
-        model.stats.wilson.hot = WilsonScoring.calcHot(rShares, model.meta.time);
-        model.stats.wilson.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
-
+    async handleReputation({ voter, author, rshares: rShares }) {
         await this._updateProfileReputation(voter, author, rShares);
-
-        await model.save();
     }
 
     async _updateProfileReputation(voter, author, rShares) {
@@ -151,15 +134,17 @@ class Vote extends AbstractContent {
         await modelAuthor.save();
     }
 
-    async _getModel(content, projection) {
+    async _getModel(content) {
         const contentId = this._extractContentId(content);
-        const post = await PostModel.findOne({ contentId }, projection);
+        const query = { contentId };
+        const projection = { votes: true, payout: true, meta: true, stats: true };
+        const post = await PostModel.findOne(query, projection);
 
         if (post) {
             return post;
         }
 
-        const comment = await CommentModel.findOne({ contentId }, projection);
+        const comment = await CommentModel.findOne(query, projection);
 
         if (comment) {
             return comment;
@@ -169,11 +154,11 @@ class Vote extends AbstractContent {
     }
 
     async _updatePayout(model, communityId, events) {
-        const { postState, poolState, voteState } = this._getPayoutEventsData(events);
+        const { postState, poolState } = this._getPayoutEventsData(events);
 
         await this._actualizePoolState(poolState, communityId);
-
-        // TODO -
+        this._addPayoutScoring(model, postState);
+        this._addPayoutMeta(model, postState);
     }
 
     _getPayoutEventsData(events) {
@@ -217,6 +202,23 @@ class Vote extends AbstractContent {
             },
             { upsert: true }
         );
+    }
+
+    _addPayoutScoring(model, postState) {
+        const rShares = Number(postState.netshares);
+
+        model.stats = model.stats || {};
+        model.stats.rShares = rShares;
+        model.stats.hot = WilsonScoring.calcHot(rShares, model.meta.time);
+        model.stats.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
+    }
+
+    _addPayoutMeta(model, postState) {
+        const meta = model.payout.meta;
+
+        meta.rewardWeight = 0;
+        meta.sharesFn = Number(postState.sharesfn);
+        meta.sumCuratorSw = Number(postState.sumcuratorsw);
     }
 }
 

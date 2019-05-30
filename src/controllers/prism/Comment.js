@@ -25,6 +25,12 @@ class Comment extends AbstractContent {
             meta: {
                 time: blockTime,
             },
+            payout: {
+                meta: {
+                    tokenProp: Number(content.tokenprop),
+                    benefactorPercents: this._extractBenefactorPercents(content),
+                },
+            },
         });
 
         await this.applyParentByContent(model, content);

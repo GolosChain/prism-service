@@ -2,6 +2,7 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BasicController = core.controllers.Basic;
 const ProfileModel = require('../../models/Profile');
+const PostModel = require('../../models/Post');
 const PoolModel = require('../../models/Pool');
 
 class AbstractContent extends BasicController {
@@ -248,6 +249,48 @@ class AbstractContent extends BasicController {
                 model.stats.viewCount = 0;
             }
         }
+    }
+
+    async _populateReposts(modelObjects, projection) {
+        await this._populateWithCache(modelObjects, this._populateRepost, projection);
+    }
+
+    async _populateRepost(modelObject, resolvedPosts, projection) {
+        if (!modelObject.repost || !modelObject.repost.isRepost) {
+            return;
+        }
+
+        const contentId = modelObject.contentId;
+        const post = await this._getRepostPost(contentId, resolvedPosts, projection);
+
+        if (!post) {
+            return;
+        }
+
+        for (const key of Object.keys(modelObject)) {
+            if (key !== 'repost') {
+                modelObject[key] = post[key];
+            }
+        }
+    }
+
+    async _getRepostPost(contentId, resolvedPosts, projection) {
+        let post;
+
+        if (resolvedPosts.has(contentId)) {
+            post = resolvedPosts.get(contentId);
+        } else {
+            post = await PostModel.findOne({ contentId }, projection, { lean: true });
+
+            if (!post) {
+                Logger.warn(`Repost - unknown post - ${JSON.stringify(contentId)}`);
+                return null;
+            }
+
+            resolvedPosts.set(contentId, post);
+        }
+
+        return post;
     }
 
     async _applyPayouts(modelObjects, communityId) {

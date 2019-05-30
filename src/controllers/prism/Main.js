@@ -18,6 +18,8 @@ const communityRegistry = [
     'cyber.domain',
     'cyber.token',
     'gls.charge',
+    'cyber.msig',
+];
 
 class Main {
     constructor({ connector }) {
@@ -51,10 +53,7 @@ class Main {
             return;
         }
 
-        console.log([action.code, action.action].join('->'));
-
         if (!communityRegistry.includes(action.receiver)) {
-            console.warn('unknown receiver', action.receiver);
             return;
         }
 
@@ -106,7 +105,7 @@ class Main {
                 break;
 
             case `${communityId}.social->changereput`:
-                await this._vote.handleReputation(actionArgs, previousArgs);
+                await this._vote.handleReputation(actionArgs);
                 break;
 
             case `${communityId}.publish->upvote`:
@@ -151,6 +150,14 @@ class Main {
 
             case `${communityId}.ctrl->unvotewitn`:
                 await this._leader.unvote(actionArgs, { communityId, events });
+                break;
+
+            case `${communityId}.publish->reblog`:
+                await this._post.handleRepost(actionArgs, { communityId, blockTime });
+                break;
+
+            case 'cyber.msig->propose':
+                await this._leader.handleNewProposal(actionArgs);
                 break;
 
             default:

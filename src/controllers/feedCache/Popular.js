@@ -6,6 +6,8 @@ class Popular extends Abstract {
     async getFor(communityId, timeframe) {
         const { query, projection, options } = this._getDefaultRequestOptions(communityId);
 
+        query['repost.isRepost'] = { $ne: true };
+
         this._applyTimeCond(query, options, timeframe);
 
         const modelObjects = await PostModel.find(query, projection, options);
@@ -58,7 +60,7 @@ class Popular extends Abstract {
 
     _applySortByRShares(options) {
         options.sort = options.sort || {};
-        options.sort['payout.rShares'] = -1;
+        options.sort['stats.rShares'] = -1;
     }
 
     _applySortByWilson(options, type) {
