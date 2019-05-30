@@ -392,33 +392,43 @@ class Connector extends BasicConnector {
                         },
                     },
                     userByName: {
-                        username: {
-                            type: 'string',
+                        validation: {
+                            username: {
+                                type: 'string',
+                            },
                         },
                     },
                     contentId: {
-                        requestedUserId: {
-                            type: 'string',
-                        },
-                        permlink: {
-                            type: 'string',
+                        validation: {
+                            requestedUserId: {
+                                type: 'string',
+                            },
+                            permlink: {
+                                type: 'string',
+                            },
                         },
                     },
                     contentType: {
-                        contentType: {
-                            type: 'string',
-                            default: 'web',
-                            enum: ['web', 'mobile', 'raw'],
+                        validation: {
+                            contentType: {
+                                type: 'string',
+                                default: 'web',
+                                enum: ['web', 'mobile', 'raw'],
+                            },
                         },
                     },
                     userRelativity: {
-                        currentUserId: {
-                            type: 'string',
+                        validation: {
+                            currentUserId: {
+                                type: 'string',
+                            },
                         },
                     },
                     optionalUserRelativity: {
-                        currentUserId: {
-                            type: ['string', 'null'],
+                        validation: {
+                            currentUserId: {
+                                type: ['string', 'null'],
+                            },
                         },
                     },
                 },
