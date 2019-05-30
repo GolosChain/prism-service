@@ -71,65 +71,44 @@ class Connector extends BasicConnector {
                 getPost: {
                     handler: this._post.getPost,
                     scope: this._post,
+                    inherits: [
+                        'appSpecify',
+                        'userByName',
+                        'contentId',
+                        'contentType',
+                        'userRelativity',
+                    ],
                     validation: {
                         required: ['permlink'],
-                        properties: {
-                            currentUserId: {
-                                type: 'string',
-                            },
-                            requestedUserId: {
-                                type: 'string',
-                            },
-                            permlink: {
-                                type: 'string',
-                            },
-                            contentType: {
-                                type: 'string',
-                                default: 'web',
-                                enum: ['web', 'mobile', 'raw'],
-                            },
-                            username: {
-                                type: 'string',
-                            },
-                            app: {
-                                type: 'app',
-                            },
-                        },
+                        properties: {},
                     },
                 },
                 getComment: {
                     handler: this._comment.getComment,
                     scope: this._comment,
+                    inherits: [
+                        'appSpecify',
+                        'userByName',
+                        'contentId',
+                        'contentType',
+                        'userRelativity',
+                    ],
                     validation: {
                         required: ['permlink'],
-                        properties: {
-                            currentUserId: {
-                                type: 'string',
-                            },
-                            requestedUserId: {
-                                type: 'string',
-                            },
-                            permlink: {
-                                type: 'string',
-                            },
-                            contentType: {
-                                type: 'string',
-                                default: 'web',
-                                enum: ['web', 'mobile', 'raw'],
-                            },
-                            username: {
-                                type: 'string',
-                            },
-                            app: {
-                                type: 'app',
-                            },
-                        },
+                        properties: {},
                     },
                 },
                 getComments: {
                     handler: this._comment.getComments,
                     scope: this._comment,
-                    inherits: ['feedPagination'],
+                    inherits: [
+                        'feedPagination',
+                        'appSpecify',
+                        'userByName',
+                        'contentId',
+                        'contentType',
+                        'optionalUserRelativity',
+                    ],
                     validation: {
                         required: [],
                         properties: {
@@ -143,33 +122,19 @@ class Connector extends BasicConnector {
                                 enum: ['time', 'timeDesc'],
                                 default: 'time',
                             },
-                            currentUserId: {
-                                type: ['string', 'null'],
-                            },
-                            requestedUserId: {
-                                type: 'string',
-                            },
-                            permlink: {
-                                type: 'string',
-                            },
-                            contentType: {
-                                type: 'string',
-                                default: 'web',
-                                enum: ['web', 'mobile', 'raw'],
-                            },
-                            username: {
-                                type: 'string',
-                            },
-                            app: {
-                                type: 'app',
-                            },
                         },
                     },
                 },
                 getFeed: {
                     handler: this._feed.getFeed,
                     scope: this._feed,
-                    inherits: ['feedPagination'],
+                    inherits: [
+                        'feedPagination',
+                        'appSpecify',
+                        'userByName',
+                        'contentType',
+                        'optionalUserRelativity',
+                    ],
                     validation: {
                         required: [],
                         properties: {
@@ -196,9 +161,6 @@ class Connector extends BasicConnector {
                                 ],
                                 default: 'day',
                             },
-                            currentUserId: {
-                                type: ['string', 'null'],
-                            },
                             requestedUserId: {
                                 type: 'string',
                             },
@@ -208,37 +170,18 @@ class Connector extends BasicConnector {
                             tags: {
                                 type: 'array',
                             },
-                            contentType: {
-                                type: 'string',
-                                default: 'web',
-                                enum: ['web', 'mobile', 'raw'],
-                            },
-                            username: {
-                                type: 'string',
-                            },
-                            app: {
-                                type: 'app',
-                            },
                         },
                     },
                 },
                 getProfile: {
                     handler: this._profile.getProfile,
                     scope: this._profile,
+                    inherits: ['appSpecify', 'userByName', 'userRelativity'],
                     validation: {
                         required: [],
                         properties: {
-                            currentUserId: {
-                                type: 'string',
-                            },
                             requestedUserId: {
                                 type: 'string',
-                            },
-                            username: {
-                                type: 'string',
-                            },
-                            app: {
-                                type: 'app',
                             },
                         },
                     },
@@ -246,14 +189,12 @@ class Connector extends BasicConnector {
                 suggestNames: {
                     handler: this._profile.suggestNames,
                     scope: this._profile,
+                    inherits: ['appSpecify'],
                     validation: {
                         required: ['text'],
                         properties: {
                             text: {
                                 type: 'string',
-                            },
-                            app: {
-                                type: 'app',
                             },
                         },
                     },
@@ -261,6 +202,7 @@ class Connector extends BasicConnector {
                 getNotifyMeta: {
                     handler: this._notify.getMeta,
                     scope: this._notify,
+                    inherits: ['appSpecify', 'userByName'],
                     validation: {
                         properties: {
                             userId: {
@@ -277,12 +219,6 @@ class Connector extends BasicConnector {
                             },
                             contentId: {
                                 type: 'object',
-                            },
-                            username: {
-                                type: 'string',
-                            },
-                            app: {
-                                type: 'app',
                             },
                         },
                     },
@@ -303,18 +239,12 @@ class Connector extends BasicConnector {
                 getLeadersTop: {
                     handler: this._leaders.getTop,
                     scope: this._leaders,
-                    inherits: ['feedPagination'],
+                    inherits: ['feedPagination', 'appSpecify', 'userRelativity'],
                     validation: {
                         required: ['communityId'],
                         properties: {
-                            currentUserId: {
-                                type: 'string',
-                            },
                             communityId: {
                                 type: 'string',
-                            },
-                            app: {
-                                type: 'app',
                             },
                         },
                     },
@@ -322,17 +252,12 @@ class Connector extends BasicConnector {
                 getProposals: {
                     handler: this._leaders.getProposals,
                     scope: this._leaders,
-                    inherits: ['feedPagination'],
+                    inherits: ['feedPagination', 'appSpecify'],
                     validation: {
                         required: ['communityId'],
                         properties: {
                             communityId: {
                                 type: 'string',
-                            },
-                            app: {
-                                type: 'string',
-                                enum: ['cyber', 'gls'],
-                                default: 'cyber',
                             },
                         },
                     },
@@ -365,7 +290,7 @@ class Connector extends BasicConnector {
                 getPostVotes: {
                     handler: this._vote.getPostVotes,
                     scope: this._vote,
-                    inherits: ['feedPagination'],
+                    inherits: ['feedPagination', 'appSpecify'],
                     validation: {
                         required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
@@ -378,9 +303,6 @@ class Connector extends BasicConnector {
                             type: {
                                 type: 'string',
                                 enum: ['like', 'dislike'],
-                            },
-                            app: {
-                                type: 'app',
                             },
                         },
                     },
@@ -388,22 +310,13 @@ class Connector extends BasicConnector {
                 getCommentVotes: {
                     handler: this._vote.getCommentVotes,
                     scope: this._vote,
-                    inherits: ['feedPagination'],
+                    inherits: ['feedPagination', 'appSpecify'],
                     validation: {
                         required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
-                            requestedUserId: {
-                                type: 'string',
-                            },
-                            permlink: {
-                                type: 'string',
-                            },
                             type: {
                                 type: 'string',
                                 enum: ['like', 'dislike'],
-                            },
-                            app: {
-                                type: 'app',
                             },
                         },
                     },
@@ -411,37 +324,25 @@ class Connector extends BasicConnector {
                 resolveProfile: {
                     handler: this._profile.resolveProfile,
                     scope: this._profile,
+                    inherits: ['appSpecify', 'userByName'],
                     validation: {
                         required: ['username', 'app'],
-                        properties: {
-                            username: {
-                                type: 'string',
-                            },
-                            app: {
-                                type: 'app',
-                            },
-                        },
+                        properties: {},
                     },
                 },
                 getSubscriptions: {
                     handler: this._profile.getSubscriptions,
                     scope: this._profile,
-                    inherits: ['feedPagination'],
+                    inherits: ['feedPagination', 'appSpecify', 'userRelativity'],
                     validation: {
                         required: ['requestedUserId'],
                         properties: {
-                            currentUserId: {
-                                type: 'string',
-                            },
                             requestedUserId: {
                                 type: 'string',
                             },
                             type: {
                                 type: 'string',
                                 enum: ['user', 'community'],
-                            },
-                            app: {
-                                type: 'app',
                             },
                         },
                     },
@@ -449,22 +350,16 @@ class Connector extends BasicConnector {
                 getSubscribers: {
                     handler: this._profile.getSubscribers,
                     scope: this._profile,
-                    inherits: ['feedPagination'],
+                    inherits: ['feedPagination', 'appSpecify', 'userRelativity'],
                     validation: {
                         required: ['requestedUserId'],
                         properties: {
-                            currentUserId: {
-                                type: 'string',
-                            },
                             requestedUserId: {
                                 type: 'string',
                             },
                             type: {
                                 type: 'string',
                                 enum: ['user', 'community'],
-                            },
-                            app: {
-                                type: 'app',
                             },
                         },
                     },
@@ -487,12 +382,44 @@ class Connector extends BasicConnector {
                             },
                         },
                     },
-                },
-                validationTypes: {
-                    app: {
-                        type: 'string',
-                        enum: ['cyber', 'gls'],
-                        default: 'cyber',
+                    appSpecify: {
+                        validation: {
+                            app: {
+                                type: 'string',
+                                enum: ['cyber', 'gls'],
+                                default: 'cyber',
+                            },
+                        },
+                    },
+                    userByName: {
+                        username: {
+                            type: 'string',
+                        },
+                    },
+                    contentId: {
+                        requestedUserId: {
+                            type: 'string',
+                        },
+                        permlink: {
+                            type: 'string',
+                        },
+                    },
+                    contentType: {
+                        contentType: {
+                            type: 'string',
+                            default: 'web',
+                            enum: ['web', 'mobile', 'raw'],
+                        },
+                    },
+                    userRelativity: {
+                        currentUserId: {
+                            type: 'string',
+                        },
+                    },
+                    optionalUserRelativity: {
+                        currentUserId: {
+                            type: ['string', 'null'],
+                        },
                     },
                 },
             },
