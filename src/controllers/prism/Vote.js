@@ -216,7 +216,6 @@ class Vote extends AbstractContent {
     _addPayoutMeta(model, postState) {
         const meta = model.payout.meta;
 
-        meta.rewardWeight = 0;
         meta.sharesFn = Number(postState.sharesfn);
         meta.sumCuratorSw = Number(postState.sumcuratorsw);
     }
