@@ -247,6 +247,18 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                getChargers: {
+                    handler: this._profile.getChargers,
+                    scope: this._profile,
+                    validation: {
+                        required: ['userId'],
+                        properties: {
+                            userId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
                 suggestNames: {
                     handler: this._profile.suggestNames,
                     scope: this._profile,

@@ -17,6 +17,7 @@ const communityRegistry = [
     'cyber',
     'cyber.domain',
     'cyber.token',
+    'gls.charge',
     'cyber.msig',
 ];
 
@@ -63,6 +64,10 @@ class Main {
         const events = action.events;
 
         switch (pathName) {
+            case `${communityId}.charge->use`:
+                await this._profile.handleChargeState(events);
+
+                break;
             case `cyber->newaccount`:
                 await this._profile.handleCreate(actionArgs, { blockTime });
                 break;

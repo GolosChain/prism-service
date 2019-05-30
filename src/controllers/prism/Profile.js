@@ -63,6 +63,49 @@ class Profile extends Abstract {
         await profile.save();
     }
 
+    async handleChargeState(chargeStateEvents) {
+        chargeStateEvents = chargeStateEvents.filter(event => event.event === 'chargestate');
+        for (const chargeStateEvent of chargeStateEvents) {
+            const {
+                user,
+                charge_symbol: chargeSymbol,
+                token_code: tokenCode,
+                charge_id: chargeId,
+                last_update: lastUpdate,
+                value,
+            } = chargeStateEvent.args;
+            // TODO: решить, как обрабатывать charge_symbol, token_code, last_update
+
+            let chargeType;
+
+            switch (chargeId) {
+                case 0:
+                    chargeType = 'posts';
+                    break;
+                case 1:
+                    chargeType = 'comments';
+                    break;
+                case 2:
+                    chargeType = 'votes';
+                    break;
+                case 3:
+                    chargeType = 'postbw';
+                    break;
+                default:
+                    return;
+            }
+
+            const chargePercent = (10000 - value) / 100;
+
+            await ProfileModel.updateOne(
+                {
+                    userId: user,
+                },
+                { $set: { [`chargers.${chargeType}`]: chargePercent } }
+            );
+        }
+    }
+
     _currentOrNew(currentValue, newValue) {
         if (newValue === null || newValue === undefined) {
             return currentValue;
