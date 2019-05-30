@@ -78,7 +78,7 @@ class Profile extends AbstractFeed {
     async resolveProfile({ username, app }) {
         const modelObject = await Model.findOne(
             { [`usernames.${app}`]: username },
-            { userId: true, usernames: true, personal: true },
+            { userId: true, usernames: true, personal: true, chargers: true },
             { lean: true }
         );
 
