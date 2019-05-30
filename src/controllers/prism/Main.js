@@ -65,9 +65,7 @@ class Main {
 
         switch (pathName) {
             case `${communityId}.charge->use`:
-                const chargeStateEvents = events.filter(event => {
-                    if (event.event === 'chargestate') return event;
-                });
+                const chargeStateEvents = events.filter(event => event.event === 'chargestate');
                 for (const chargeState of chargeStateEvents) {
                     await this._profile.handleChargeState(chargeState.args);
                 }
