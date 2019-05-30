@@ -65,10 +65,8 @@ class Main {
 
         switch (pathName) {
             case `${communityId}.charge->use`:
-                const chargeStateEvents = events.filter(event => event.event === 'chargestate');
-                for (const chargeState of chargeStateEvents) {
-                    await this._profile.handleChargeState(chargeState.args);
-                }
+                await this._profile.handleChargeState(events);
+
                 break;
             case `cyber->newaccount`:
                 await this._profile.handleCreate(actionArgs, { blockTime });
