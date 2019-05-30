@@ -33,7 +33,10 @@ class Feed extends AbstractFeed {
         modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
 
         await this._populate({ modelObjects, currentUserId, contentType, app, type, fullQuery });
-        await this._applyPayouts(modelObjects);
+
+        const communityId = modelObjects[0].communityId || modelObjects[0].community.id;
+
+        await this._applyPayouts(modelObjects, communityId);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit, tags, sequenceKey }, meta);
     }
