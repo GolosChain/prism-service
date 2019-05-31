@@ -52,6 +52,9 @@ getProfile:                        // Получение профиля поль
           cyber                    // CyberWay
         | gls                      // Golos
         ]
+        
+getChargers:                       // Получение батареек пользователя
+    userId <string>                // Идентификатор пользователя
 
 getPost:                           // Получение конкретного поста
     currentUserId <string/null>    // Идентификатор текущего пользователя
