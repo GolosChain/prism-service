@@ -53,7 +53,7 @@ class Vote extends AbstractContent {
     async _includeUpVote(model, vote) {
         const pack = model.votes.upVotes || [];
 
-        if (!pack.find(item => item.userId === item.userId)) {
+        if (!pack.find(item => item.userId === vote.userId)) {
             await model.constructor.updateOne(
                 { _id: model._id },
                 {
