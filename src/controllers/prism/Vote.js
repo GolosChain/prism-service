@@ -15,8 +15,8 @@ class Vote extends AbstractContent {
             return;
         }
 
-        this._includeUpVote(model, { userId: content.voter, weight: content.weight });
-        this._excludeDownVote(model, content.voter);
+        await this._includeUpVote(model, { userId: content.voter, weight: content.weight });
+        await this._excludeDownVote(model, content.voter);
         await this._updatePayout(model, communityId, events);
 
         await model.save();
@@ -29,8 +29,8 @@ class Vote extends AbstractContent {
             return;
         }
 
-        this._includeDownVote(model, { userId: content.voter, weight: content.weight });
-        this._excludeUpVote(model, content.voter);
+        await this._includeDownVote(model, { userId: content.voter, weight: content.weight });
+        await this._excludeUpVote(model, content.voter);
         await this._updatePayout(model, communityId, events);
 
         await model.save();
@@ -43,52 +43,70 @@ class Vote extends AbstractContent {
             return;
         }
 
-        this._excludeUpVote(model, content.voter);
-        this._excludeDownVote(model, content.voter);
+        await this._excludeUpVote(model, content.voter);
+        await this._excludeDownVote(model, content.voter);
         await this._updatePayout(model, communityId, events);
 
         await model.save();
     }
 
-    _includeUpVote(model, vote) {
+    async _includeUpVote(model, vote) {
         const pack = model.votes.upVotes || [];
 
         if (!pack.find(item => item.userId === item.userId)) {
-            pack.push(vote);
-            model.markModified('votes.upVotes');
-            model.votes.upCount++;
+            await model.constructor.updateOne(
+                { _id: model._id },
+                {
+                    $addToSet: { 'votes.upVotes': vote },
+                    $inc: { 'votes.upCount': 1 },
+                }
+            );
         }
     }
 
-    _includeDownVote(model, vote) {
+    async _includeDownVote(model, vote) {
         const pack = model.votes.downVotes || [];
 
         if (!pack.find(item => item.userId === vote.userId)) {
-            pack.push(vote);
-            model.markModified('votes.downVotes');
-            model.votes.downCount++;
+            await model.constructor.updateOne(
+                { _id: model._id },
+                {
+                    $addToSet: { 'votes.downVotes': vote },
+                    $inc: { 'votes.downCount': 1 },
+                }
+            );
         }
     }
 
-    _excludeUpVote(model, userId) {
+    async _excludeUpVote(model, userId) {
         const pack = model.votes.upVotes || [];
 
-        const index = pack.findIndex(item => item.userId === userId);
-        if (index !== -1) {
-            pack.splice(index, 1);
-            model.markModified('votes.upVotes');
-            model.votes.upCount--;
+        const vote = pack.find(item => item.userId === userId);
+
+        if (vote) {
+            await model.constructor.updateOne(
+                { _id: model._id },
+                {
+                    $pull: { 'votes.upVotes': vote },
+                    $inc: { 'votes.upCount': -1 },
+                }
+            );
         }
     }
 
-    _excludeDownVote(model, userId) {
+    async _excludeDownVote(model, userId) {
         const pack = model.votes.downVotes || [];
 
-        const index = pack.findIndex(item => item.userId === userId);
-        if (index !== -1) {
-            pack.splice(index, 1);
-            model.markModified('votes.downVotes');
-            model.votes.downCount--;
+        const vote = pack.find(item => item.userId === userId);
+
+        if (vote) {
+            await model.constructor.updateOne(
+                { _id: model._id },
+                {
+                    $pull: { 'votes.downVotes': vote },
+                    $inc: { 'votes.downCount': -1 },
+                }
+            );
         }
     }
 
