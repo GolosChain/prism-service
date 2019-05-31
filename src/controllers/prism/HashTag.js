@@ -86,7 +86,7 @@ class HashTag extends AbstractContent {
     }
 
     _extractTagsFromBlockChain(content) {
-        return content.tags.map(tagObject => tagObject.tag);
+        return content.tags;
     }
 
     async _tryGetModel(content, projection) {
