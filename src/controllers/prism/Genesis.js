@@ -48,9 +48,20 @@ class Genesis {
         tags,
         votes,
         parent_author: parentAuthor,
+        parent_permlink: parentPermlink,
     }) {
         if (parentAuthor) {
-            await this._handleComment({ userId, permlink, title, body, votes });
+            await this._handleComment({
+                userId,
+                permlink,
+                title,
+                body,
+                votes,
+                parentContentId: {
+                    userId: parentAuthor,
+                    permlink: parentPermlink,
+                },
+            });
         } else {
             await this._handlePost({ userId, permlink, title, body, tags, votes });
         }
@@ -73,7 +84,7 @@ class Genesis {
         await this._postController.updateUserPostsCount(userId, 1);
     }
 
-    async _handleComment({ userId, permlink, title, body, votes }) {
+    async _handleComment({ userId, permlink, title, body, votes, parentContentId }) {
         const controller = this._commentController;
         const contentId = { userId, permlink };
         const model = new CommentModel({
@@ -84,7 +95,7 @@ class Genesis {
 
         this._applyVotes(model, votes);
 
-        await controller.applyParentById(model, contentId);
+        await controller.applyParentById(model, parentContentId);
         await controller.applyOrdering(model);
         await model.save();
         await controller.updatePostCommentsCount(model, 1);
