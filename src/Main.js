@@ -1,6 +1,7 @@
 const core = require('gls-core-service');
 const stats = core.utils.statsClient;
 const BasicMain = core.services.BasicMain;
+const Logger = core.utils.Logger;
 const env = require('./data/env');
 const Prism = require('./services/Prism');
 const Connector = require('./services/Connector');
@@ -59,10 +60,14 @@ class Main extends BasicMain {
     }
 
     async _setDbQueryMemoryLimit() {
-        await Post.db.db.command({
-            setParameter: 1,
-            internalQueryExecMaxBlockingSortBytes: env.GLS_MAX_QUERY_MEMORY_LIMIT,
-        });
+        try {
+            await Post.db.db.command({
+                setParameter: 1,
+                internalQueryExecMaxBlockingSortBytes: env.GLS_MAX_QUERY_MEMORY_LIMIT,
+            });
+        } catch (err) {
+            Logger.warn("Can't set MongoDB parameter");
+        }
     }
 
     async _tryRestoreGolosUsers() {
