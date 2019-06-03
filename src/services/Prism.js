@@ -4,8 +4,8 @@ const BlockSubscribe = core.services.BlockSubscribe;
 const Logger = core.utils.Logger;
 const env = require('../data/env');
 const MainPrismController = require('../controllers/prism/Main');
-const GenesisController = require('../controllers/prism/Genesis');
 const ServiceMetaModel = require('../models/ServiceMeta');
+const GenesisProcessor = require('../utils/GenesisProcessor');
 
 class Prism extends BasicService {
     constructor(...args) {
@@ -23,9 +23,14 @@ class Prism extends BasicService {
     }
 
     async start() {
-        this._inFork = false;
+        const meta = await this._getMeta();
+
+        if (!meta.isGenesisApplied && env.GLS_USE_GENESIS) {
+            await this._processGenesis();
+            await this._updateMeta({ isGenesisApplied: true });
+        }
+
         this._blockInProcessing = false;
-        this._genesisDataInProcessing = false;
         this._blockQueue = [];
         this._recentTransactions = new Set();
         this._currentBlockNum = 0;
@@ -33,37 +38,22 @@ class Prism extends BasicService {
             connector: this._connector,
             forkService: this._forkService,
         });
-        this._genesisController = new GenesisController();
 
-        let blockInfo = await this._getLastBlock();
-
-        if (blockInfo.lastBlockNum !== 0) {
-            await this._revertLastBlock();
-
-            blockInfo = await this._getLastBlock();
-        }
-
-        const subscriber = new BlockSubscribe({
-            lastSequence: blockInfo.lastBlockSequence || 0,
-            lastTime: blockInfo.lastBlockTime,
+        this._subscriber = new BlockSubscribe({
+            blockHandler: this._registerNewBlock.bind(this),
         });
 
-        this._inGenesis = blockInfo.lastBlockNum === 0;
+        const lastBlockInfo = await this._subscriber.getLastBlockMetaData();
 
-        if (!env.GLS_USE_GENESIS) {
-            this._inGenesis = false;
+        if (lastBlockInfo.lastBlockNum !== 0) {
+            await this._revertLastBlock();
         }
-
-        subscriber.eachBlock(this._registerNewBlock.bind(this));
-        subscriber.on('fork', this._markAsInFork.bind(this));
 
         try {
-            await subscriber.start();
+            await this._subscriber.start();
         } catch (error) {
-            Logger.error(`Cant start block subscriber - ${error.stack}`);
+            Logger.error('Cant start block subscriber:', error);
         }
-
-        this._runForkWatchDog();
     }
 
     getCurrentBlockNum() {
@@ -80,7 +70,7 @@ class Prism extends BasicService {
     }
 
     async _handleBlockQueue() {
-        if (this._inGenesis || this._genesisDataInProcessing || this._blockInProcessing) {
+        if (this._blockInProcessing) {
             return;
         }
 
@@ -97,17 +87,13 @@ class Prism extends BasicService {
 
     async _handleBlock(block) {
         try {
-            if (this._inFork) {
-                return;
-            }
-
             await this._forkService.initBlock(block);
             await this._setLastBlock(block);
             await this._mainPrismController.disperse(block);
 
             this._emitHandled(block);
         } catch (error) {
-            Logger.error(`Cant disperse block - ${error.stack}`);
+            Logger.error('Cant disperse block:', error);
             process.exit(1);
         }
     }
@@ -139,28 +125,10 @@ class Prism extends BasicService {
         }
     }
 
-    async _markAsInFork() {
-        Logger.info('Fork detected!');
-        this._inFork = true;
-    }
-
-    _runForkWatchDog() {
-        setInterval(() => {
-            if (this._inFork && !this._blockInProcessing) {
-                if (this._inGenesis) {
-                    Logger.error('Critical error!');
-                    Logger.error('Fork on genesis!');
-                    process.exit(1);
-                }
-
-                this._handleFork().catch();
-            }
-        }, env.GLS_MAX_WAIT_FOR_BLOCKCHAIN_TIMEOUT / 10);
-    }
-
     async _handleFork() {
         try {
-            await this._forkService.revert();
+            await this._forkService.revert(this._subscriber);
+            Logger.log('Shutdown on fork revert complete.');
             process.exit(0);
         } catch (error) {
             Logger.error('Critical error!');
@@ -171,72 +139,42 @@ class Prism extends BasicService {
 
     async _revertLastBlock() {
         try {
-            await this._forkService.revertLastBlock();
+            await this._forkService.revertLastBlock(this._subscriber);
         } catch (error) {
             Logger.error('Cant revert last block, but continue:', error);
         }
     }
 
-    async _handleGenesisData(type, data) {
-        if (!this._inGenesis) {
-            Logger.error('Genesis done, but data transfer.');
-            return;
-        }
-
-        if (type === 'dataend') {
-            Logger.log('Genesis processing is done!');
-            this._inGenesis = false;
-            return;
-        }
-
-        this._genesisDataInProcessing = true;
-
-        try {
-            await this._genesisController.handle(type, data);
-        } catch (error) {
-            Logger.error(`Critical error!`);
-            Logger.error(`Cant handle genesis data - ${error.stack}`);
-            process.exit(1);
-        }
-
-        this._genesisDataInProcessing = false;
-    }
-
-    async _getLastBlock() {
-        const model = await ServiceMetaModel.findOne(
+    async _getMeta() {
+        return await ServiceMetaModel.findOne(
             {},
-            {
-                lastBlockNum: true,
-                lastBlockSequence: true,
-                lastBlockTime: true,
-            },
+            {},
             {
                 lean: true,
             }
         );
+    }
 
-        if (!model) {
-            return {
-                lastBlockNum: 0,
-                lastBlockSequence: 0,
-                lastBlockTime: null,
-            };
-        }
-
-        return model;
+    async _updateMeta(params) {
+        return await ServiceMetaModel.updateOne(
+            {},
+            {
+                $set: params,
+            }
+        );
     }
 
     async _setLastBlock(block) {
-        await ServiceMetaModel.updateOne(
-            {},
-            {
-                $set: {
-                    lastBlockNum: block.blockNum,
-                    lastBlockTime: block.blockTime,
-                    lastBlockSequence: block.sequence,
-                },
-            }
-        );
+        await this._updateMeta({
+            lastBlockNum: block.blockNum,
+            lastBlockTime: block.blockTime,
+            lastBlockSequence: block.sequence,
+        });
+    }
+
+    async _processGenesis() {
+        const genesis = new GenesisProcessor();
+        await genesis.process();
     }
 }
 

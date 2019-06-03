@@ -28,7 +28,7 @@ class Fork extends BasicService {
         );
     }
 
-    async revert() {
+    async revert(subscriber) {
         Logger.info('Revert on fork...');
 
         const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 } });
@@ -38,18 +38,23 @@ class Fork extends BasicService {
             return;
         }
 
-        const lastBlockNum = documents[documents.length - 1].blockNum - 1;
+        const lastBlock = documents[documents.length - 1];
 
         for (const document of documents) {
             await this._restoreBy(document.toObject());
         }
 
-        await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum } });
+        // TODO: Need to set correct block data, not calculated
+        await subscriber.setLastBlockMetaData({
+            lastBlockNum: lastBlock.blockNum - 1,
+            lastBlockTime: new Date(lastBlock.blockTime.getTime() - 3000),
+            lastBlockSequence: lastBlock.blockSequence - 1,
+        });
 
         Logger.info('Revert on fork done!');
     }
 
-    async revertLastBlock() {
+    async revertLastBlock(subscriber) {
         Logger.info('Revert last block...');
 
         const [current, previous] = await ForkModel.find(
@@ -81,13 +86,13 @@ class Fork extends BasicService {
             };
         }
 
-        await ServiceMetaModel.updateOne({}, { $set: update });
+        await subscriber.setLastBlockMetaData(update);
 
         Logger.info('Revert last block done!');
     }
 
     async _clean() {
-        Logger.log('Start fork cleaner...');
+        Logger.log('Start fork cleaning');
 
         try {
             const currentLastBlock = await this._getCurrentLastBlock();
@@ -101,8 +106,6 @@ class Fork extends BasicService {
             Logger.error('Fork cleaner error:', error);
             process.exit(1);
         }
-
-        Logger.log('Fork cleaning done!');
     }
 
     async _getCurrentLastBlock() {

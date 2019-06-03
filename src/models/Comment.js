@@ -226,6 +226,10 @@ module.exports = MongoDB.makeModel(
                 type: Date,
             },
         },
+        nestedLevel: {
+            type: Number,
+            default: 1,
+        },
         ordering: {
             byTime: {
                 type: String,
@@ -249,7 +253,6 @@ module.exports = MongoDB.makeModel(
                     'ordering.byTime': 1,
                 },
                 options: {
-                    unique: true,
                     sparse: true,
                 },
             },

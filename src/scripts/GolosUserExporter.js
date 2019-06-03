@@ -23,7 +23,7 @@ class GolosUserExporter {
             { userId: document.owner, usernames: { gls: document.name } },
             { upsert: true }
         ).catch(error => {
-            Logger.error(`GOLOS Export users error - ${error}`);
+            Logger.error('GOLOS Export users error:', error);
             process.exit(1);
         });
     }
