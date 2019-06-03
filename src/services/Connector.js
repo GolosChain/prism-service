@@ -306,6 +306,9 @@ class Connector extends BasicConnector {
                     validation: {
                         required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
                             requestedUserId: {
                                 type: 'string',
                             },
@@ -326,6 +329,9 @@ class Connector extends BasicConnector {
                     validation: {
                         required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
+                            currentUserId: {
+                                type: 'string',
+                            },
                             type: {
                                 type: 'string',
                                 enum: ['like', 'dislike'],

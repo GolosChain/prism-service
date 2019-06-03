@@ -129,12 +129,29 @@ class AbstractContent extends BasicController {
         }
     }
 
-    async _populateUser(modelObject, app) {
-        const profile = await ProfileModel.findOne(
-            { userId: modelObject.userId },
-            { _id: false, usernames: true, [`personal.${app}.avatarUrl`]: true },
-            { lean: true }
-        );
+    async _populateUserGeneric({
+        modelObject,
+        app,
+        withSubscriptions = false,
+        withSubscribers = false,
+    }) {
+        const projection = {
+            _id: false,
+            usernames: true,
+            [`personal.${app}.avatarUrl`]: true,
+        };
+
+        if (withSubscribers) {
+            projection.subscribers = true;
+        }
+
+        if (withSubscriptions) {
+            projection.subscriptions = true;
+        }
+
+        const profile = await ProfileModel.findOne({ userId: modelObject.userId }, projection, {
+            lean: true,
+        });
 
         if (!profile) {
             Logger.warn(`populateUser - unknown user - ${modelObject.userId}`);
@@ -150,6 +167,22 @@ class AbstractContent extends BasicController {
         modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
         modelObject.username =
             profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
+
+        if (withSubscribers) {
+            modelObject.subscribers = profile.subscribers;
+        }
+
+        if (withSubscriptions) {
+            modelObject.subscriptions = profile.subscriptions;
+        }
+    }
+
+    async _populateUser(modelObject, app) {
+        await this._populateUserGeneric({ modelObject, app });
+    }
+
+    async _populateUserWithSubscribers(modelObject, app) {
+        await this._populateUserGeneric({ modelObject, app, withSubscribers: true });
     }
 
     async _populateCommunities(modelObjects) {
