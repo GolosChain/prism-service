@@ -2,6 +2,7 @@ const core = require('gls-core-service');
 const Content = core.utils.Content;
 const Logger = core.utils.Logger;
 const BigNum = core.types.BigNum;
+const { NESTED_COMMENTS_MAX_INDEX_DEPTH } = require('../../data/constants');
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
@@ -151,6 +152,7 @@ class Comment extends AbstractContent {
         if (post) {
             model.parent.post.contentId = contentId;
             model.parent.comment.contentId = null;
+            model.nestedLevel = 1;
             return;
         }
 
@@ -159,6 +161,7 @@ class Comment extends AbstractContent {
         if (comment) {
             model.parent.post.contentId = comment.parent.post.contentId;
             model.parent.comment.contentId = contentId;
+            model.nestedLevel = comment.nestedLevel + 1;
         }
     }
 
@@ -180,7 +183,8 @@ class Comment extends AbstractContent {
                 'contentId.userId': parentCommentId.userId,
                 'contentId.permlink': parentCommentId.permlink,
             },
-            { 'ordering.byTime': true }
+            { 'ordering.byTime': true, nestedLevel: true },
+            { lean: true }
         );
 
         if (!parentComment) {
@@ -188,7 +192,18 @@ class Comment extends AbstractContent {
             return;
         }
 
-        model.ordering.byTime = `${parentComment.ordering.byTime}-${Date.now()}`;
+        let indexBase = parentComment.ordering.byTime;
+
+        // Если уровень вложенности превышает максимум, то удаляем из индекса ключ родителя
+        // и на его место ставим индес текущего комментария.
+        if (parentComment.nestedLevel >= NESTED_COMMENTS_MAX_INDEX_DEPTH) {
+            indexBase = indexBase
+                .split('-')
+                .slice(0, NESTED_COMMENTS_MAX_INDEX_DEPTH - 1)
+                .join('-');
+        }
+
+        model.ordering.byTime = `${indexBase}-${Date.now()}`;
     }
 
     async _getParentPost(contentId) {
@@ -207,7 +222,8 @@ class Comment extends AbstractContent {
                 'contentId.userId': contentId.userId,
                 'contentId.permlink': contentId.permlink,
             },
-            { contentId: true, parent: true }
+            { contentId: true, parent: true, nestedLevel: true },
+            { lean: true }
         );
     }
 }

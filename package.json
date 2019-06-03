@@ -4,8 +4,7 @@
   "description": "",
   "main": "./src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js"
   },
   "repository": {
     "type": "git",
@@ -44,6 +43,7 @@
     "moment": "^2.24.0",
     "mongodb": "^3.2.7",
     "node-fetch": "^2.6.0",
+    "node-nats-streaming": "^0.2.2",
     "pluralize": "^7.0.0",
     "text-encoding": "^0.7.0",
     "uuid": "^3.3.2",
