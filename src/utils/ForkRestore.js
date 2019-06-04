@@ -1,49 +1,37 @@
+const core = require('gls-core-service');
+const Logger = core.utils.Logger;
 const RevertTrace = require('../models/RevertTrace');
 
 class ForkRestore {
     async revert() {
-        const documents = await RevertTrace.find({}, {}, { sort: { _id: -1 } });
+        const documents = await RevertTrace.find({}, {}, { sort: { _id: -1 }, lean: true });
 
         if (!documents) {
+            Logger.warn('Empty fork data.');
             return;
         }
 
         for (let document of documents) {
             await this._handleDocument(document);
         }
+
+        // TODO Update last block num
     }
 
     async _handleDocument(document) {
-        let stackFormEnd = document.stack.slice().reverse();
+        const stack = document.stack;
+        let data;
 
-        for (let { command, modelBody, modelClassName } of stackFormEnd) {
-            switch (command) {
-                case 'create':
-                    await this._delete(modelClassName, modelBody);
-                    break;
-                case 'swap':
-                    await this._swapBack(modelClassName, modelBody);
-                    break;
+        while ((data = stack.pop())) {
+            const { type, className, data } = data;
+            const Model = require(`../models/${className}`);
+
+            // TODO -
+            switch (type) {
             }
         }
 
         await document.remove();
-    }
-
-    async _delete(name, body) {
-        const Model = this._getModelClass(name);
-
-        await Model.deleteOne({ _id: body._id });
-    }
-
-    async _swapBack(name, body) {
-        const Model = this._getModelClass(name);
-
-        await Model.updateOne({ _id: body._id }, body);
-    }
-
-    _getModelClass(name) {
-        return new require(`../models/${name}`);
     }
 }
 

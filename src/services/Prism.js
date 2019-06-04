@@ -7,6 +7,7 @@ const MainPrismController = require('../controllers/prism/Main');
 const GenesisController = require('../controllers/prism/Genesis');
 const ServiceMetaModel = require('../models/ServiceMeta');
 const RevertTraceModel = require('../models/RevertTrace');
+const ForkRestore = require('../utils/ForkRestore');
 
 class Prism extends BasicService {
     setConnector(connector) {
@@ -16,6 +17,7 @@ class Prism extends BasicService {
     }
 
     async start() {
+        this._inFork = false;
         this._blockInProcessing = false;
         this._genesisDataInProcessing = false;
         this._blockQueue = [];
@@ -35,13 +37,15 @@ class Prism extends BasicService {
 
         subscriber.eachBlock(this._registerNewBlock.bind(this));
         subscriber.eachGenesisData(this._handleGenesisData.bind(this));
-        subscriber.on('fork', this._handleFork.bind(this));
+        subscriber.on('fork', this._markAsInFork.bind(this));
 
         try {
             await subscriber.start();
         } catch (error) {
             Logger.error(`Cant start block subscriber - ${error.stack}`);
         }
+
+        this._runForkWatchDog();
     }
 
     getCurrentBlockNum() {
@@ -75,6 +79,10 @@ class Prism extends BasicService {
 
     async _handleBlock(block) {
         try {
+            if (this._inFork) {
+                return;
+            }
+
             const blockNum = block.blockNum;
 
             await this._openNewRevertZone(blockNum);
@@ -115,13 +123,33 @@ class Prism extends BasicService {
         }
     }
 
+    async _markAsInFork() {
+        Logger.info('Fork detected!');
+        this._inFork = true;
+    }
+
+    _runForkWatchDog() {
+        setInterval(() => {
+            if (this._inFork && !this._blockInProcessing) {
+                if (this._inGenesis) {
+                    Logger.error('Critical error!');
+                    Logger.error('Fork on genesis!');
+                    process.exit(1);
+                }
+
+                this._handleFork().catch();
+            }
+        }, env.GLS_MAX_WAIT_FOR_BLOCKCHAIN_TIMEOUT / 10);
+    }
+
     async _handleFork() {
         try {
-            // TODO Revert on fork
-            // TODO Mark start/stop revert state
-            // TODO Revert lastBlockNum
+            const restorer = new ForkRestore();
+
+            await restorer.revert();
+            process.exit(0);
         } catch (error) {
-            Logger.error(`Critical error!`);
+            Logger.error('Critical error!');
             Logger.error(`Cant revert on fork - ${error.stack}`);
             process.exit(1);
         }

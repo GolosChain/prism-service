@@ -11,15 +11,15 @@ module.exports = MongoDB.makeModel(
         stack: {
             type: [
                 {
-                    command: {
+                    type: {
                         type: String,
-                        enum: ['swap', 'create'],
+                        enum: [], // TODO -
                     },
-                    modelBody: {
+                    className: {
+                        type: String,
+                    },
+                    data: {
                         type: Object,
-                    },
-                    modelClassName: {
-                        type: String,
                     },
                 },
             ],
