@@ -5,6 +5,7 @@ const ProfileModel = require('../../models/Profile');
 
 class Profile extends Abstract {
     async handleUsername({ owner: userId, name: username, creator: communityId }) {
+        // TODO Fork log
         await ProfileModel.updateOne(
             { userId },
             {
@@ -23,6 +24,7 @@ class Profile extends Abstract {
             return;
         }
 
+        // TODO Fork log
         await ProfileModel.create({
             userId,
             registration: {
@@ -65,6 +67,7 @@ class Profile extends Abstract {
         contacts.whatsApp = or(contacts.whatsApp, '');
         contacts.weChat = or(contacts.weChat, '');
 
+        // TODO Fork log
         await profile.save();
     }
 
@@ -102,6 +105,7 @@ class Profile extends Abstract {
 
             const chargePercent = (10000 - value) / 100;
 
+            // TODO Fork log
             await ProfileModel.updateOne(
                 {
                     userId: user,

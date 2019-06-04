@@ -27,6 +27,7 @@ class HashTag extends AbstractContent {
         const newTags = await this._extractTags(content);
 
         model.content.tags = newTags;
+        // TODO Fork log
         await model.save();
 
         await this._incrementTagsScore(newTags, communityId);
@@ -47,6 +48,7 @@ class HashTag extends AbstractContent {
         const recentTags = model.content.tags;
 
         model.content.tags = newTags;
+        // TODO Fork log
         await model.save();
 
         await this._decrementTagsScore(recentTags, communityId);
@@ -118,6 +120,7 @@ class HashTag extends AbstractContent {
                 countIncrement = -1;
             }
 
+            // TODO Fork log
             await HashTagModel.updateOne(
                 { communityId, name },
                 { $inc: { count: countIncrement } },

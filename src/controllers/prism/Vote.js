@@ -19,6 +19,7 @@ class Vote extends AbstractContent {
         await this._excludeDownVote(model, content.voter);
         await this._updatePayout(model, communityId, events);
 
+        // TODO Fork log
         await model.save();
     }
 
@@ -33,6 +34,7 @@ class Vote extends AbstractContent {
         await this._excludeUpVote(model, content.voter);
         await this._updatePayout(model, communityId, events);
 
+        // TODO Fork log
         await model.save();
     }
 
@@ -47,6 +49,7 @@ class Vote extends AbstractContent {
         await this._excludeDownVote(model, content.voter);
         await this._updatePayout(model, communityId, events);
 
+        // TODO Fork log
         await model.save();
     }
 
@@ -54,6 +57,7 @@ class Vote extends AbstractContent {
         const pack = model.votes.upVotes || [];
 
         if (!pack.find(item => item.userId === vote.userId)) {
+            // TODO Fork log
             await model.constructor.updateOne(
                 { _id: model._id },
                 {
@@ -68,6 +72,7 @@ class Vote extends AbstractContent {
         const pack = model.votes.downVotes || [];
 
         if (!pack.find(item => item.userId === vote.userId)) {
+            // TODO Fork log
             await model.constructor.updateOne(
                 { _id: model._id },
                 {
@@ -84,6 +89,7 @@ class Vote extends AbstractContent {
         const vote = pack.find(item => item.userId === userId);
 
         if (vote) {
+            // TODO Fork log
             await model.constructor.updateOne(
                 { _id: model._id },
                 {
@@ -100,6 +106,7 @@ class Vote extends AbstractContent {
         const vote = pack.find(item => item.userId === userId);
 
         if (vote) {
+            // TODO Fork log
             await model.constructor.updateOne(
                 { _id: model._id },
                 {
@@ -149,6 +156,7 @@ class Vote extends AbstractContent {
         }
 
         modelAuthor.stats.reputation += Number(rShares);
+        // TODO Fork log
         await modelAuthor.save();
     }
 
@@ -206,6 +214,7 @@ class Vote extends AbstractContent {
         const fundsValueRaw = poolState.funds;
         const [value, name] = fundsValueRaw.split(' ');
 
+        // TODO Fork log
         await PoolModel.updateOne(
             { communityId },
             {

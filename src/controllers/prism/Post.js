@@ -17,6 +17,7 @@ class Post extends AbstractContent {
 
         const contentId = this._extractContentId(content);
 
+        // TODO Fork log
         await PostModel.create({
             communityId,
             contentId,
@@ -39,6 +40,7 @@ class Post extends AbstractContent {
             return;
         }
 
+        // TODO Fork log
         await PostModel.updateOne(
             {
                 contentId: this._extractContentId(content),
@@ -58,11 +60,13 @@ class Post extends AbstractContent {
 
         const contentId = this._extractContentId(content);
 
+        // TODO Fork log
         await PostModel.deleteOne({ contentId });
         await this.updateUserPostsCount(contentId.userId, -1);
     }
 
     async handleRepost({ rebloger: userId, ...content }, { communityId, blockTime }) {
+        // TODO Fork log
         await PostModel.create({
             communityId,
             contentId: this._extractContentId(content),

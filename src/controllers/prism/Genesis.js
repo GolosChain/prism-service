@@ -32,6 +32,7 @@ class Genesis {
     }
 
     async _handleUsername({ owner: userId, name }) {
+        // TODO Fork log
         await ProfileModel.create({ userId, usernames: { gls: name } });
     }
 
@@ -68,6 +69,7 @@ class Genesis {
     }
 
     async _handlePost({ userId, permlink, title, body, tags, votes }) {
+        // TODO Fork log
         const model = new PostModel({
             communityId: 'gls',
             contentId: {
@@ -87,6 +89,7 @@ class Genesis {
     async _handleComment({ userId, permlink, title, body, votes, parentContentId }) {
         const controller = this._commentController;
         const contentId = { userId, permlink };
+        // TODO Fork log
         const model = new CommentModel({
             communityId: 'gls',
             contentId,

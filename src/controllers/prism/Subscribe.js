@@ -13,6 +13,7 @@ class Subscribe extends Abstract {
             data[arrayPath].push(pinning);
             data[countPath] = data[arrayPath].length;
 
+            // TODO Fork log
             await pinnerModel.save();
         }
 
@@ -22,6 +23,7 @@ class Subscribe extends Abstract {
             data[arrayPath].push(pinner);
             data[countPath] = data[arrayPath].length;
 
+            // TODO Fork log
             await pinningModel.save();
         }
     }
@@ -41,6 +43,7 @@ class Subscribe extends Abstract {
                 data[arrayPath] = subscriptions;
                 data[countPath] = data[arrayPath].length;
                 pinnerModel.markModified(`subscriptions.${arrayPath}`);
+                // TODO Fork log
                 await pinnerModel.save();
             }
         }
@@ -55,6 +58,7 @@ class Subscribe extends Abstract {
                 data[arrayPath] = subscribers;
                 data[countPath] = data[arrayPath].length;
                 pinningModel.markModified(`subscribers.${arrayPath}`);
+                // TODO Fork log
                 await pinningModel.save();
             }
         }

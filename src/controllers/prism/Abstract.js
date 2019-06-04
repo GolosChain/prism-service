@@ -13,6 +13,7 @@ class Abstract extends BasicController {
                 modelClassName: modelClass.modelName,
             });
         } else {
+            // TODO Fork log
             model = new modelClass(initData);
 
             await model.save();
@@ -44,6 +45,7 @@ class Abstract extends BasicController {
             }
         );
 
+        // TODO Fork log
         await RevertTrace.updateOne(
             {
                 _id: model._id,

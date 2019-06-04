@@ -18,6 +18,7 @@ class Comment extends AbstractContent {
             return;
         }
 
+        // TODO Fork log
         const model = new CommentModel({
             communityId,
             contentId: this._extractContentId(content),
@@ -45,6 +46,7 @@ class Comment extends AbstractContent {
             return;
         }
 
+        // TODO Fork log
         await CommentModel.updateOne(
             {
                 contentId: this._extractContentId(content),
@@ -72,10 +74,12 @@ class Comment extends AbstractContent {
 
         await this.updatePostCommentsCount(model, -1);
         await this.updateUserPostsCount(model.contentId.userId, -1);
+        // TODO Fork log
         await model.remove();
     }
 
     async updatePostCommentsCount(model, increment) {
+        // TODO Fork log
         await PostModel.updateOne(
             { contentId: model.parent.post.contentId },
             { $inc: { 'stats.commentsCount': increment } }
@@ -83,6 +87,7 @@ class Comment extends AbstractContent {
     }
 
     async updateUserCommentsCount(userId, increment) {
+        // TODO Fork log
         await ProfileModel.updateOne({ userId }, { $inc: { 'stats.commentsCount': increment } });
     }
 

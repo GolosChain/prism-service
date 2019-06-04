@@ -46,6 +46,7 @@ class AbstractContent extends Abstract {
     }
 
     async updateUserPostsCount(userId, increment) {
+        // TODO Fork log
         await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
     }
 
@@ -346,6 +347,7 @@ class AbstractContent extends Abstract {
     }
 
     async _setPayout(contentId, { rewardTypeKey, payoutType, tokenName, tokenValue }) {
+        // TODO Fork log
         await PostModel.updateOne(
             { contentId },
             {

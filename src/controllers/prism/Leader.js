@@ -35,6 +35,7 @@ class Leader extends Abstract {
     }
 
     async unregister({ witness: userId }, { communityId }) {
+        // TODO Fork log
         await LeaderModel.remove({
             userId,
             communityId,
@@ -65,6 +66,7 @@ class Leader extends Abstract {
         model.votes = [...new Set(model.votes)];
         model.rating = this._extractLeaderRating(events);
 
+        // TODO Fork log
         await model.save();
     }
 
@@ -79,6 +81,7 @@ class Leader extends Abstract {
         model.rating = this._extractLeaderRating(events);
         model.markModified('votes');
 
+        // TODO Fork log
         await model.save();
     }
 
@@ -87,10 +90,12 @@ class Leader extends Abstract {
     }
 
     async _updateLeaderWithUpsert(communityId, userId, action) {
+        // TODO Fork log
         await LeaderModel.updateOne({ communityId, userId }, action, { upsert: true });
     }
 
     async _setActiveState(userId, communityId, active) {
+        // TODO Fork log
         await LeaderModel.updateOne(
             { communityId, userId },
             {
@@ -119,6 +124,7 @@ class Leader extends Abstract {
             }
         );
 
+        // TODO Fork log
         await ProfileModel.updateOne(
             {
                 userId,
@@ -153,6 +159,7 @@ class Leader extends Abstract {
         const expiration = new Date(trx.expiration + 'Z');
         const [{ data }] = await this._api.deserializeActions(trx.actions);
 
+        // TODO Fork log
         const proposalModel = new ProposalModel({
             communityId,
             userId: proposer,
