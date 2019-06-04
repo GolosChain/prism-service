@@ -33,6 +33,7 @@ class AbstractContent extends BasicController {
             this._throwNotFound();
         }
 
+        await this._applyPayouts([modelObject], modelObject.communityId);
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
         await this._populateAuthors([modelObject], app);
 
@@ -331,6 +332,8 @@ class AbstractContent extends BasicController {
             }
 
             cache.set(communityId, pool);
+
+            return pool;
         };
     }
 
