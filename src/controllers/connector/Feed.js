@@ -147,6 +147,10 @@ class Feed extends AbstractFeed {
     }
 
     async _populate({ modelObjects, currentUserId, contentType, app, type, fullQuery }) {
+        if (type === 'byUser' || type === 'subscriptions') {
+            await this._populateReposts(modelObjects, fullQuery.projection);
+        }
+
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects, app);
         await this._populateCommunities(modelObjects);
@@ -154,10 +158,6 @@ class Feed extends AbstractFeed {
 
         if (contentType === 'mobile') {
             this._prepareMobile(modelObjects);
-        }
-
-        if (type === 'byUser' || type === 'subscriptions') {
-            await this._populateReposts(modelObjects, fullQuery.projection);
         }
     }
 

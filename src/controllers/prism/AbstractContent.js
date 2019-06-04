@@ -298,7 +298,7 @@ class AbstractContent extends Abstract {
             case 'author':
                 return 'author';
 
-            case 'curator':
+            case 'curators':
                 return 'curator';
 
             case 'benefeciary':
