@@ -17,8 +17,16 @@ class Fork extends BasicService {
         await ForkModel.create({ blockNum });
     }
 
+    async registerChanges({ type, className, documentId, data }) {
+        await ForkModel.findAndModify({
+            query: {},
+            sort: { blockNum: -1 },
+            update: { $push: { stack: { type, className, documentId, data } } },
+        });
+    }
+
     async revert() {
-        const documents = await ForkModel.find({}, {}, { sort: { _id: -1 }, lean: true });
+        const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 }, lean: true });
 
         if (!documents) {
             Logger.warn('Empty fork data.');
