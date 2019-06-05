@@ -42,7 +42,7 @@
     "gls-core-service": "^3.27.3",
     "golos-js": "^0.7.7",
     "moment": "^2.24.0",
-    "mongodb": "^3.2.6",
+    "mongodb": "^3.2.7",
     "node-fetch": "^2.6.0",
     "pluralize": "^7.0.0",
     "text-encoding": "^0.7.0",
