@@ -2,7 +2,7 @@ const core = require('gls-core-service');
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
-    'RevertTrace',
+    'Fork',
     {
         blockNum: {
             type: Number,
@@ -29,5 +29,12 @@ module.exports = MongoDB.makeModel(
         schema: {
             strict: false,
         },
+        index: [
+            {
+                fields: {
+                    blockNum: -1,
+                },
+            },
+        ],
     }
 );

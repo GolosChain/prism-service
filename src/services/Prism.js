@@ -6,14 +6,20 @@ const env = require('../data/env');
 const MainPrismController = require('../controllers/prism/Main');
 const GenesisController = require('../controllers/prism/Genesis');
 const ServiceMetaModel = require('../models/ServiceMeta');
-const RevertTraceModel = require('../models/RevertTrace');
-const ForkRestore = require('../utils/ForkRestore');
 
 class Prism extends BasicService {
-    setConnector(connector) {
-        this._connector = connector;
+    constructor(...args) {
+        super(...args);
 
         this.getEmitter().setMaxListeners(Infinity);
+    }
+
+    setForkService(forkService) {
+        this._forkService = forkService;
+    }
+
+    setConnector(connector) {
+        this._connector = connector;
     }
 
     async start() {
@@ -85,7 +91,7 @@ class Prism extends BasicService {
 
             const blockNum = block.blockNum;
 
-            await this._openNewRevertZone(blockNum);
+            await this._forkService.initBlock(blockNum);
             await this._setLastBlockNum(blockNum);
             await this._mainPrismController.disperse(block);
 
@@ -144,9 +150,7 @@ class Prism extends BasicService {
 
     async _handleFork() {
         try {
-            const restorer = new ForkRestore();
-
-            await restorer.revert();
+            await this._forkService.revert();
             process.exit(0);
         } catch (error) {
             Logger.error('Critical error!');
@@ -184,12 +188,6 @@ class Prism extends BasicService {
         const model = await ServiceMetaModel.findOne({}, { lastBlockNum: true });
 
         return model.lastBlockNum;
-    }
-
-    async _openNewRevertZone(blockNum) {
-        const model = new RevertTraceModel({ blockNum });
-
-        await model.save();
     }
 
     async _setLastBlockNum(blockNum) {

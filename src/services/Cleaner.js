@@ -3,7 +3,7 @@ const Logger = core.utils.Logger;
 const stats = core.utils.statsClient;
 const BasicService = core.services.Basic;
 const env = require('../data/env');
-const RevertTrace = require('../models/RevertTrace');
+const RevertTrace = require('../models/Fork');
 
 class Cleaner extends BasicService {
     async start() {
