@@ -238,12 +238,12 @@ class Profile extends AbstractFeed {
     async _populateSelfSubscribed(items, currentUserId, markAllAsSubscribed) {
         for (const item of items) {
             if (!currentUserId) {
-                item.hasSubscription = false;
+                item.isSubscribed = false;
                 continue;
             }
 
             if (markAllAsSubscribed) {
-                item.hasSubscription = true;
+                item.isSubscribed = true;
                 continue;
             }
 
@@ -252,7 +252,7 @@ class Profile extends AbstractFeed {
                 subscriptions: item.userId,
             });
 
-            item.hasSubscription = Boolean(count);
+            item.isSubscribed = Boolean(count);
         }
     }
 
