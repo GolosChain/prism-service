@@ -1,6 +1,6 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
-const stats = core.utils.statsClient;
+const metrics = core.utils.metrics;
 const BasicService = core.services.Basic;
 const env = require('../data/env');
 const RevertTrace = require('../models/RevertTrace');
@@ -17,7 +17,7 @@ class Cleaner extends BasicService {
     }
 
     async iteration() {
-        const timer = new Date();
+        const end = metrics.startTimer('cleaner_work_time');
 
         Logger.log('Start revert trace cleaning...');
 
@@ -30,14 +30,14 @@ class Cleaner extends BasicService {
                 await this._clearOutdated(edge);
             }
         } catch (error) {
-            Logger.error(`Cleaner error - ${error}`);
-            stats.increment('logic_service_error');
+            Logger.error('Cleaner error:', error);
+            metrics.inc('logic_service_error');
             process.exit(1);
         }
 
         Logger.log('Revert trace cleaning done!');
 
-        stats.timing('cleaner_work_time', new Date() - timer);
+        end();
     }
 
     async _getCurrentLastBlock() {
