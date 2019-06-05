@@ -4,3 +4,4 @@ db
 .env
 .vscode
 .npmrc
+stats.txt
