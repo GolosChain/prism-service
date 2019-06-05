@@ -1,5 +1,4 @@
 const core = require('gls-core-service');
-const stats = core.utils.statsClient;
 const BasicMain = core.services.BasicMain;
 const Logger = core.utils.Logger;
 const env = require('./data/env');
@@ -16,7 +15,7 @@ const GolosUserExporter = require('./scripts/GolosUserExporter');
 
 class Main extends BasicMain {
     constructor() {
-        super(stats, env);
+        super(env);
 
         const postFeedCache = new PostFeedCache();
         const leaderFeedCache = new LeaderFeedCache();
