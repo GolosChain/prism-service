@@ -8,7 +8,7 @@ class Fork extends BasicService {
     async start() {
         setInterval(async () => {
             await this._clean();
-        }, env.GLS_REVERT_TRACE_CLEANER_INTERVAL);
+        }, env.GLS_FORK_CLEANER_INTERVAL);
     }
 
     async initBlock(blockNum) {
