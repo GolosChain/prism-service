@@ -3,9 +3,18 @@ const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 
 class Vote extends AbstractFeed {
-    async getPostVotes({ requestedUserId, permlink, type, app, limit, sequenceKey }) {
+    async getPostVotes({
+        requestedUserId,
+        permlink,
+        type,
+        app,
+        limit,
+        sequenceKey,
+        currentUserId,
+    }) {
         return await this._getVotes(PostModel, {
             requestedUserId,
+            currentUserId,
             permlink,
             type,
             app,
@@ -14,9 +23,18 @@ class Vote extends AbstractFeed {
         });
     }
 
-    async getCommentVotes({ requestedUserId, permlink, type, app, limit, sequenceKey }) {
+    async getCommentVotes({
+        requestedUserId,
+        currentUserId,
+        permlink,
+        type,
+        app,
+        limit,
+        sequenceKey,
+    }) {
         return await this._getVotes(CommentModel, {
             requestedUserId,
+            currentUserId,
             permlink,
             type,
             app,
