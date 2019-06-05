@@ -1,7 +1,8 @@
-const Abstract = require('./Abstract');
+const core = require('gls-core-service');
+const BasicController = core.controllers.Basic;
 const ProfileModel = require('../../models/Profile');
 
-class Subscribe extends Abstract {
+class Subscribe extends BasicController {
     async pin({ pinner, pinning }) {
         const [arrayPath, countPath] = await this._getTargetFields(pinning);
         const pinnerModel = await this._getSubscriptionsProfile(pinner);
