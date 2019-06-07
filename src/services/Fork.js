@@ -17,11 +17,15 @@ class Fork extends BasicService {
     }
 
     async registerChanges({ type, Model, documentId, data = {} }) {
-        await ForkModel.findAndModify({
-            query: {},
-            sort: { blockNum: -1 },
-            update: { $push: { stack: { type, modelName: Model.modelName, documentId, data } } },
-        });
+        const className = Model.modelName;
+
+        data = this._packData(data);
+
+        await ForkModel.findOneAndUpdate(
+            {},
+            { $push: { stack: { type, className, documentId, data } } },
+            { sort: { blockNum: -1 } }
+        );
     }
 
     async revert() {
@@ -83,20 +87,18 @@ class Fork extends BasicService {
         let data;
 
         while ((data = stack.pop())) {
-            const { type, modelName, documentId, data } = data;
-            const Model = require(`../models/${modelName}`);
+            data = this._unpackData(data);
+
+            const { type, className, documentId, data } = data;
+            const Model = require(`../models/${className}`);
 
             switch (type) {
-                case 'swap':
-                    await this._swapDocumentBack(Model, documentId, data);
+                case 'create':
+                    await this._removeDocument(Model, documentId);
                     break;
 
                 case 'update':
-                    await this._restoreDocumentValues(Model, documentId, data);
-                    break;
-
-                case 'create':
-                    await this._removeDocument(Model, documentId);
+                    await this._restoreDocument(Model, documentId, data);
                     break;
 
                 case 'remove':
@@ -108,40 +110,56 @@ class Fork extends BasicService {
         await document.remove();
     }
 
-    async _swapDocumentBack(Model, documentId, data) {
-        await Model.updateOne({ _id: documentId }, data);
-    }
-
-    async _restoreDocumentValues(Model, documentId, data) {
-        const queryData = this._makeSetQueryData(data);
-
-        await Model.updateOne({ _id: documentId }, { $set: queryData });
-    }
-
-    _makeSetQueryData(data) {
-        const result = {};
-
-        for (const key of Object.keys(data)) {
-            if (typeof data[key] === 'object') {
-                const innerResult = this._makeSetQueryData(data[key]);
-
-                for (const innerKey of Object.keys(innerResult)) {
-                    result[`${key}.${innerKey}`] = innerResult[innerKey];
-                }
-            } else {
-                result[key] = data[key];
-            }
-        }
-
-        return result;
-    }
-
     async _removeDocument(Model, documentId) {
         await Model.deleteOne({ _id: documentId });
     }
 
+    async _restoreDocument(Model, documentId, data) {
+        await Model.updateOne({ _id: documentId }, data);
+    }
+
     async _recreateDocument(Model, documentId, data) {
         await Model.create({ _id: documentId, ...data });
+    }
+
+    _packData(data) {
+        const specialKeys = [];
+
+        for (const key of Object.keys(data)) {
+            if (key.indexOf('$') === 0) {
+                specialKeys.push(key);
+            }
+
+            if (typeof data[key] === 'object') {
+                this._packData(data[key]);
+            }
+        }
+
+        for (const key of specialKeys) {
+            data[`@${key}`] = data[key];
+
+            delete data[key];
+        }
+    }
+
+    _unpackData(data) {
+        const specialKeys = [];
+
+        for (const key of Object.keys(data)) {
+            if (key.indexOf('@$') === 0) {
+                specialKeys.push(key);
+            }
+
+            if (typeof data[key] === 'object') {
+                this._unpackData(data[key]);
+            }
+        }
+
+        for (const key of specialKeys) {
+            data[key.slice(1)] = data[key];
+
+            delete data[key];
+        }
     }
 }
 
