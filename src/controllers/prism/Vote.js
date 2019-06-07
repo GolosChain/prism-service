@@ -88,16 +88,31 @@ class Vote extends AbstractContent {
 
         const vote = pack.find(item => item.userId === userId);
 
-        if (vote) {
-            // TODO Fork log
-            await model.constructor.updateOne(
-                { _id: model._id },
-                {
-                    $pull: { 'votes.upVotes': vote },
-                    $inc: { 'votes.upCount': -1 },
-                }
-            );
+        if (!vote) {
+            return;
         }
+
+        const previousModel = await model.constructor.findOneAndUpdate(
+            { _id: model._id },
+            {
+                $pull: { 'votes.upVotes': vote },
+                $inc: { 'votes.upCount': -1 },
+            }
+        );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: model.constructor,
+            documentId: previousModel._id,
+            data: {
+                $addToSet: { 'votes.upVotes': vote },
+                $inc: { 'votes.upCount': 1 },
+            },
+        });
     }
 
     async _excludeDownVote(model, userId) {
@@ -105,16 +120,31 @@ class Vote extends AbstractContent {
 
         const vote = pack.find(item => item.userId === userId);
 
-        if (vote) {
-            // TODO Fork log
-            await model.constructor.updateOne(
-                { _id: model._id },
-                {
-                    $pull: { 'votes.downVotes': vote },
-                    $inc: { 'votes.downCount': -1 },
-                }
-            );
+        if (!vote) {
+            return;
         }
+
+        const previousModel = await model.constructor.findOneAndUpdate(
+            { _id: model._id },
+            {
+                $pull: { 'votes.downVotes': vote },
+                $inc: { 'votes.downCount': -1 },
+            }
+        );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: model.constructor,
+            documentId: previousModel._id,
+            data: {
+                $addToSet: { 'votes.downVotes': vote },
+                $inc: { 'votes.downCount': 1 },
+            },
+        });
     }
 
     async handleReputation({ voter, author, rshares: rShares }) {
@@ -213,9 +243,7 @@ class Vote extends AbstractContent {
     async _actualizePoolState(poolState, communityId) {
         const fundsValueRaw = poolState.funds;
         const [value, name] = fundsValueRaw.split(' ');
-
-        // TODO Fork log
-        await PoolModel.updateOne(
+        const previousModel = await PoolModel.findOneAndUpdate(
             { communityId },
             {
                 $set: {
@@ -229,6 +257,22 @@ class Vote extends AbstractContent {
             },
             { upsert: true }
         );
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: PoolModel,
+            documentId: previousModel._id,
+            data: {
+                $set: {
+                    funds: {
+                        name: previousModel.name,
+                        value: previousModel.value,
+                    },
+                    rShares: previousModel.rShares,
+                    rSharesFn: previousModel.rSharesFn,
+                },
+            },
+        });
     }
 
     _addPayoutScoring(model, postState) {

@@ -150,8 +150,7 @@ class Leader extends Abstract {
             }
         );
 
-        // TODO Fork log
-        await ProfileModel.updateOne(
+        const previousModel = await ProfileModel.findOneAndUpdate(
             {
                 userId,
             },
@@ -161,6 +160,21 @@ class Leader extends Abstract {
                 },
             }
         );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel._id,
+            data: {
+                $set: {
+                    leaderIn: previousModel.leaderIn,
+                },
+            },
+        });
     }
 
     async handleNewProposal(proposal) {
@@ -184,8 +198,6 @@ class Leader extends Abstract {
 
         const expiration = new Date(trx.expiration + 'Z');
         const [{ data }] = await this._api.deserializeActions(trx.actions);
-
-        // TODO Fork log
         const proposalModel = new ProposalModel({
             communityId,
             userId: proposer,
@@ -198,8 +210,13 @@ class Leader extends Abstract {
                 values,
             })),
         });
+        const saved = await proposalModel.save();
 
-        await proposalModel.save();
+        await this.registerForkChanges({
+            type: 'create',
+            Model: ProposalModel,
+            documentId: saved._id,
+        });
     }
 }
 

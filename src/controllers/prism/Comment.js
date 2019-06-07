@@ -50,8 +50,7 @@ class Comment extends AbstractContent {
             return;
         }
 
-        // TODO Fork log
-        await CommentModel.updateOne(
+        const previousModel = await CommentModel.findOneAndUpdate(
             {
                 contentId: this._extractContentId(content),
             },
@@ -61,6 +60,21 @@ class Comment extends AbstractContent {
                 },
             }
         );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: CommentModel,
+            documentId: previousModel._id,
+            data: {
+                $set: {
+                    content: previousModel.content,
+                },
+            },
+        });
     }
 
     async handleDelete(content) {
@@ -78,8 +92,15 @@ class Comment extends AbstractContent {
 
         await this.updatePostCommentsCount(model, -1);
         await this.updateUserPostsCount(model.contentId.userId, -1);
-        // TODO Fork log
-        await model.remove();
+
+        const removed = await model.remove();
+
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: CommentModel,
+            documentId: removed._id,
+            data: removed,
+        });
     }
 
     async updatePostCommentsCount(model, increment) {
