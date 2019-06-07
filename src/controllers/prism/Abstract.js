@@ -9,7 +9,9 @@ class Abstract extends BasicController {
     }
 
     async registerForkChanges(changes) {
-        await this._forkService.registerChanges(changes);
+        if (this._forkService) {
+            await this._forkService.registerChanges(changes);
+        }
     }
 }
 
