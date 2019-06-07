@@ -29,7 +29,10 @@ class Prism extends BasicService {
         this._blockQueue = [];
         this._recentTransactions = new Set();
         this._currentBlockNum = 0;
-        this._mainPrismController = new MainPrismController({ connector: this._connector });
+        this._mainPrismController = new MainPrismController({
+            connector: this._connector,
+            forkService: this._forkService,
+        });
         this._genesisController = new GenesisController();
 
         const lastBlock = await this._getLastBlockNum();

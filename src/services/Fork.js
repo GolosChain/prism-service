@@ -5,7 +5,6 @@ const env = require('../data/env');
 const ForkModel = require('../models/Fork');
 const ServiceMetaModel = require('../models/ServiceMeta');
 
-// TODO Register changes methods
 class Fork extends BasicService {
     async start() {
         setInterval(async () => {
@@ -17,11 +16,11 @@ class Fork extends BasicService {
         await ForkModel.create({ blockNum });
     }
 
-    async registerChanges({ type, className, documentId, data }) {
+    async registerChanges({ type, Model, documentId, data = {} }) {
         await ForkModel.findAndModify({
             query: {},
             sort: { blockNum: -1 },
-            update: { $push: { stack: { type, className, documentId, data } } },
+            update: { $push: { stack: { type, modelName: Model.modelName, documentId, data } } },
         });
     }
 
@@ -84,8 +83,8 @@ class Fork extends BasicService {
         let data;
 
         while ((data = stack.pop())) {
-            const { type, className, documentId, data } = data;
-            const Model = require(`../models/${className}`);
+            const { type, modelName, documentId, data } = data;
+            const Model = require(`../models/${modelName}`);
 
             switch (type) {
                 case 'swap':

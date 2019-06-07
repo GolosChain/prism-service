@@ -1,14 +1,14 @@
 const urlValidator = require('valid-url');
 const uuid = require('uuid');
 const core = require('gls-core-service');
-const BasicController = core.controllers.Basic;
 const Logger = core.utils.Logger;
+const Abstract = require('./Abstract');
 const env = require('../../data/env');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
 
-class AbstractContent extends BasicController {
+class AbstractContent extends Abstract {
     async handlePayout({ from, to, quantity, memo }) {
         if (!this._isPayoutContract(from)) {
             return;

@@ -16,7 +16,7 @@ module.exports = MongoDB.makeModel(
                         enum: ['swap', 'update', 'create', 'remove'],
                         required: true,
                     },
-                    className: {
+                    modelName: {
                         type: String,
                         required: true,
                     },

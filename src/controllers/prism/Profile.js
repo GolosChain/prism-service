@@ -1,9 +1,9 @@
 const core = require('gls-core-service');
-const BasicController = core.controllers.Basic;
 const Logger = core.utils.Logger;
+const Abstract = require('./Abstract');
 const ProfileModel = require('../../models/Profile');
 
-class Profile extends BasicController {
+class Profile extends Abstract {
     async handleUsername({ owner: userId, name: username, creator: communityId }) {
         // TODO Fork log
         await ProfileModel.updateOne(

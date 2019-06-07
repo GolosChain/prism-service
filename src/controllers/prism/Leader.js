@@ -2,14 +2,14 @@ const { JsonRpc, Api } = require('cyberwayjs');
 const fetch = require('node-fetch');
 const { TextEncoder, TextDecoder } = require('text-encoding');
 const core = require('gls-core-service');
-const BasicController = core.controllers.Basic;
 const Logger = core.utils.Logger;
+const Abstract = require('./Abstract');
 const env = require('../../data/env');
 const LeaderModel = require('../../models/Leader');
 const ProfileModel = require('../../models/Profile');
 const ProposalModel = require('../../models/Proposal');
 
-class Leader extends BasicController {
+class Leader extends Abstract {
     constructor(...args) {
         super(...args);
 
