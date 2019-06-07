@@ -7,9 +7,9 @@ const CommentController = require('./Comment');
 
 class Genesis {
     constructor() {
-        this._subscribeController = new SubscribeController();
-        this._postController = new PostController();
-        this._commentController = new CommentController();
+        this._subscribeController = new SubscribeController({});
+        this._postController = new PostController({});
+        this._commentController = new CommentController({});
     }
 
     async handle(type, data) {
@@ -32,7 +32,6 @@ class Genesis {
     }
 
     async _handleUsername({ owner: userId, name }) {
-        // TODO Fork log
         await ProfileModel.create({ userId, usernames: { gls: name } });
     }
 
@@ -69,7 +68,6 @@ class Genesis {
     }
 
     async _handlePost({ userId, permlink, title, body, tags, votes }) {
-        // TODO Fork log
         const model = new PostModel({
             communityId: 'gls',
             contentId: {
@@ -89,7 +87,6 @@ class Genesis {
     async _handleComment({ userId, permlink, title, body, votes, parentContentId }) {
         const controller = this._commentController;
         const contentId = { userId, permlink };
-        // TODO Fork log
         const model = new CommentModel({
             communityId: 'gls',
             contentId,
