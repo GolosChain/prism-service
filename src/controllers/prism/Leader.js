@@ -35,10 +35,16 @@ class Leader extends Abstract {
     }
 
     async unregister({ witness: userId }, { communityId }) {
-        // TODO Fork log
-        await LeaderModel.remove({
+        const previousModel = await LeaderModel.remove({
             userId,
             communityId,
+        });
+
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: LeaderModel,
+            documentId: previousModel._id,
+            data: previousModel.toObject(),
         });
 
         await this._updateProfile(userId);
@@ -90,13 +96,20 @@ class Leader extends Abstract {
     }
 
     async _updateLeaderWithUpsert(communityId, userId, action) {
-        // TODO Fork log
-        await LeaderModel.updateOne({ communityId, userId }, action, { upsert: true });
+        const previousModel = await LeaderModel.findOneAndUpdate({ communityId, userId }, action, {
+            upsert: true,
+        });
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: LeaderModel,
+            documentId: previousModel._id,
+            data: action,
+        });
     }
 
     async _setActiveState(userId, communityId, active) {
-        // TODO Fork log
-        await LeaderModel.updateOne(
+        const previousModel = await LeaderModel.findOneAndUpdate(
             { communityId, userId },
             {
                 $set: {
@@ -104,6 +117,19 @@ class Leader extends Abstract {
                 },
             }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: LeaderModel,
+                documentId: previousModel._id,
+                data: {
+                    $set: {
+                        active: !active,
+                    },
+                },
+            });
+        }
     }
 
     _extractLeaderRating(events) {

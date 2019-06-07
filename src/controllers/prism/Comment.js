@@ -18,7 +18,6 @@ class Comment extends AbstractContent {
             return;
         }
 
-        // TODO Fork log
         const model = new CommentModel({
             communityId,
             contentId: this._extractContentId(content),
@@ -37,6 +36,11 @@ class Comment extends AbstractContent {
         await this.applyParentByContent(model, content);
         await this.applyOrdering(model);
         await model.save();
+        await this.registerForkChanges({
+            type: 'create',
+            Model: CommentModel,
+            documentId: model._id,
+        });
         await this.updatePostCommentsCount(model, 1);
         await this.updateUserCommentsCount(model.contentId.userId, 1);
     }
@@ -79,16 +83,35 @@ class Comment extends AbstractContent {
     }
 
     async updatePostCommentsCount(model, increment) {
-        // TODO Fork log
-        await PostModel.updateOne(
+        const previousModel = await PostModel.findOneAndUpdate(
             { contentId: model.parent.post.contentId },
             { $inc: { 'stats.commentsCount': increment } }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: PostModel,
+                documentId: previousModel._id,
+                data: { $inc: { 'stats.commentsCount': -increment } },
+            });
+        }
     }
 
     async updateUserCommentsCount(userId, increment) {
-        // TODO Fork log
-        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.commentsCount': increment } });
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            { userId },
+            { $inc: { 'stats.commentsCount': increment } }
+        );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: ProfileModel,
+                documentId: previousModel._id,
+                data: { $inc: { 'stats.commentsCount': -increment } },
+            });
+        }
     }
 
     async applyParentById(model, contentId) {

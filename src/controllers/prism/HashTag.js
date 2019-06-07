@@ -120,12 +120,22 @@ class HashTag extends AbstractContent {
                 countIncrement = -1;
             }
 
-            // TODO Fork log
-            await HashTagModel.updateOne(
+            const previousModel = await HashTagModel.findOneAndUpdate(
                 { communityId, name },
                 { $inc: { count: countIncrement } },
                 { upsert: true }
             );
+
+            if (previousModel) {
+                await this.registerForkChanges({
+                    type: 'update',
+                    Model: HashTagModel,
+                    documentId: previousModel._id,
+                    data: {
+                        $inc: { count: -countIncrement },
+                    },
+                });
+            }
         }
     }
 }

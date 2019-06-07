@@ -17,8 +17,7 @@ class Post extends AbstractContent {
 
         const contentId = this._extractContentId(content);
 
-        // TODO Fork log
-        await PostModel.create({
+        const model = await PostModel.create({
             communityId,
             contentId,
             content: await this._extractContentObject(content),
@@ -32,6 +31,8 @@ class Post extends AbstractContent {
                 },
             },
         });
+
+        await this.registerForkChanges({ type: 'create', Model: PostModel, documentId: model._id });
         await this.updateUserPostsCount(contentId.userId, 1);
     }
 
@@ -40,8 +41,7 @@ class Post extends AbstractContent {
             return;
         }
 
-        // TODO Fork log
-        await PostModel.updateOne(
+        const previousModel = await PostModel.findOneAndUpdate(
             {
                 contentId: this._extractContentId(content),
             },
@@ -51,6 +51,19 @@ class Post extends AbstractContent {
                 },
             }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: PostModel,
+                documentId: previousModel._id,
+                data: {
+                    $set: {
+                        content: previousModel.content,
+                    },
+                },
+            });
+        }
     }
 
     async handleDelete(content) {
@@ -59,15 +72,18 @@ class Post extends AbstractContent {
         }
 
         const contentId = this._extractContentId(content);
+        const previousModel = await PostModel.findOneAndRemove({ contentId });
 
-        // TODO Fork log
-        await PostModel.deleteOne({ contentId });
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: PostModel,
+            documentId: previousModel._id,
+        });
         await this.updateUserPostsCount(contentId.userId, -1);
     }
 
     async handleRepost({ rebloger: userId, ...content }, { communityId, blockTime }) {
-        // TODO Fork log
-        await PostModel.create({
+        const model = await PostModel.create({
             communityId,
             contentId: this._extractContentId(content),
             repost: {
@@ -81,6 +97,8 @@ class Post extends AbstractContent {
                 time: blockTime,
             },
         });
+
+        await this.registerForkChanges({ type: 'create', model: PostModel, documentId: model._id });
     }
 }
 
