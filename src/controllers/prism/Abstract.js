@@ -13,6 +13,15 @@ class Abstract extends BasicController {
             await this._forkService.registerChanges(changes);
         }
     }
+
+    _getArrayEntityCommands(action) {
+        switch (action) {
+            case 'add':
+                return ['$addToSet', '$pull', 1];
+            case 'remove':
+                return ['$pull', '$addToSet', -1];
+        }
+    }
 }
 
 module.exports = Abstract;

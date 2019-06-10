@@ -51,46 +51,56 @@ class Vote extends AbstractContent {
     }
 
     async handleReputation({ voter, author, rshares: rShares }) {
-        await this._updateProfileReputation(voter, author, rShares);
+        await this._tryUpdateProfileReputation(voter, author, rShares);
     }
 
-    async _updateProfileReputation(voter, author, rShares) {
-        const modelVoter = await ProfileModel.findOne(
+    async _tryUpdateProfileReputation(voter, author, rShares) {
+        const voterModelObject = await ProfileModel.findOne(
             { userId: voter },
-            {
-                'stats.reputation': true,
-            },
+            { 'stats.reputation': true },
             { lean: true }
         );
 
-        if (!modelVoter) {
+        if (!voterModelObject) {
             Logger.warn(`Unknown voter - ${voter}`);
             return;
         }
 
-        if (modelVoter.stats.reputation < 0) {
+        if (voterModelObject.stats.reputation < 0) {
             return;
         }
 
-        const modelAuthor = await ProfileModel.findOne(
+        const authorModel = await ProfileModel.findOne(
             { userId: author },
-            {
-                'stats.reputation': true,
-            }
+            { 'stats.reputation': true }
         );
 
-        if (!modelAuthor) {
+        if (!authorModel) {
             Logger.warn(`Unknown voter - ${author}`);
             return;
         }
 
-        if (rShares < 0 && modelVoter.stats.reputation <= modelAuthor.stats.reputation) {
+        if (rShares < 0 && voterModelObject.stats.reputation <= authorModel.stats.reputation) {
             return;
         }
 
-        modelAuthor.stats.reputation += Number(rShares);
-        // TODO Fork log
-        await modelAuthor.save();
+        await this._updateProfileReputation(authorModel, rShares);
+    }
+
+    async _updateProfileReputation(model, rShares) {
+        const previousReputation = model.stats.reputation;
+
+        model.stats.reputation += Number(rShares);
+
+        await model.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: model._id,
+            data: {
+                $set: { 'stats.reputation': previousReputation },
+            },
+        });
     }
 
     _makeVotesManager(model, content) {
@@ -102,16 +112,7 @@ class Vote extends AbstractContent {
     }
 
     async _manageVotes({ model, vote, type, action }) {
-        let addAction = '$addToSet';
-        let removeAction = '$pull';
-        let increment = 1;
-
-        if (action === 'remove') {
-            addAction = '$pull';
-            removeAction = '$addToSet';
-            increment = -1;
-        }
-
+        const [addAction, removeAction, increment] = this._getArrayEntityCommands(action);
         const Model = model.constructor;
         const pack = model.votes[`${type}Votes`] || [];
 

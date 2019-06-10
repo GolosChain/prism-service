@@ -3,77 +3,46 @@ const Abstract = require('./Abstract');
 
 class Subscribe extends Abstract {
     async pin({ pinner, pinning }) {
-        const [arrayPath, countPath] = await this._getTargetFields(pinning);
-        const pinnerModel = await this._getSubscriptionsProfile(pinner);
-        const pinningModel = await this._getSubscribersProfile(pinning);
-
-        if (pinnerModel) {
-            const data = pinnerModel.subscriptions;
-
-            data[arrayPath].push(pinning);
-            data[countPath] = data[arrayPath].length;
-
-            // TODO Fork log
-            await pinnerModel.save();
-        }
-
-        if (pinningModel) {
-            const data = pinningModel.subscribers;
-
-            data[arrayPath].push(pinner);
-            data[countPath] = data[arrayPath].length;
-
-            // TODO Fork log
-            await pinningModel.save();
-        }
+        await this._manage(pinner, pinning, 'add');
     }
 
     async unpin({ pinner, pinning }) {
-        const [arrayPath, countPath] = await this._getTargetFields(pinning);
-        const pinnerModel = await this._getSubscriptionsProfile(pinner);
-        const pinningModel = await this._getSubscribersProfile(pinning);
-
-        if (pinnerModel) {
-            const data = pinnerModel.subscriptions;
-            const subscriptions = data[arrayPath];
-            const index = subscriptions.indexOf(pinner);
-
-            if (index !== -1) {
-                subscriptions.splice(index, 1);
-                data[arrayPath] = subscriptions;
-                data[countPath] = data[arrayPath].length;
-                pinnerModel.markModified(`subscriptions.${arrayPath}`);
-                // TODO Fork log
-                await pinnerModel.save();
-            }
-        }
-
-        if (pinningModel) {
-            const data = pinningModel.subscribers;
-            const subscribers = data[arrayPath];
-            const index = subscribers.indexOf(pinning);
-
-            if (index !== -1) {
-                subscribers.splice(index, 1);
-                data[arrayPath] = subscribers;
-                data[countPath] = data[arrayPath].length;
-                pinningModel.markModified(`subscribers.${arrayPath}`);
-                // TODO Fork log
-                await pinningModel.save();
-            }
-        }
+        await this._manage(pinner, pinning, 'remove');
     }
 
-    async _getSubscriptionsProfile(userId) {
-        return await this._getProfile(userId, { subscriptions: true });
+    async _manage(pinner, pinning, action) {
+        const [addAction, removeAction, increment] = this._getArrayEntityCommands(action);
+        const applier = this._makeSubscriptionApplier({ addAction, removeAction, increment });
+
+        await applier(pinner, pinning, 'subscriptions');
+        await applier(pinning, pinner, 'subscribers');
     }
 
-    async _getSubscribersProfile(userId) {
-        return await this._getProfile(userId, { subscribers: true });
-    }
+    _makeSubscriptionApplier({ addAction, removeAction, increment }) {
+        return async (iniciator, target, type) => {
+            const [arrayPath, countPath] = await this._getTargetFields(iniciator);
+            const fullArrayPath = `${type}.${arrayPath}`;
+            const fullCountPath = `${type}.${countPath}`;
+            const previousModel = await ProfileModel.findOneAndUpdate(
+                {
+                    userId: iniciator,
+                },
+                {
+                    [addAction]: { [fullArrayPath]: target },
+                    $inc: { [fullCountPath]: increment },
+                }
+            );
 
-    async _getProfile(userId, projection) {
-        return await ProfileModel.findOne({ userId }, projection);
+            await this.registerForkChanges({
+                type: 'update',
+                Model: ProfileModel,
+                documentId: previousModel._id,
+                data: {
+                    [removeAction]: { [fullArrayPath]: target },
+                    $inc: { [fullCountPath]: -increment },
+                },
+            });
+        };
     }
 
     async _getTargetFields(target) {
