@@ -5,15 +5,43 @@ const ProfileModel = require('../../models/Profile');
 
 class Profile extends Abstract {
     async handleUsername({ owner: userId, name: username, creator: communityId }) {
-        // TODO Fork log
-        await ProfileModel.updateOne(
+        const path = `usernames.${communityId}`;
+        const previousModel = await ProfileModel.findOneAndUpdate(
             { userId },
             {
                 $set: {
-                    [`usernames.${communityId}`]: username,
+                    [path]: username,
                 },
             }
         );
+
+        if (!previousModel) {
+            return;
+        }
+
+        const previousName = previousModel[path];
+        let revertData;
+
+        if (previousName) {
+            revertData = {
+                $set: {
+                    [path]: previousName,
+                },
+            };
+        } else {
+            revertData = {
+                $unset: {
+                    [path]: true,
+                },
+            };
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel._id,
+            data: revertData,
+        });
     }
 
     async handleCreate({ name: userId }, { blockTime }) {
@@ -24,12 +52,17 @@ class Profile extends Abstract {
             return;
         }
 
-        // TODO Fork log
-        await ProfileModel.create({
+        const model = await ProfileModel.create({
             userId,
             registration: {
                 time: blockTime,
             },
+        });
+
+        await this.registerForkChanges({
+            type: 'create',
+            Model: ProfileModel,
+            documentId: model._id,
         });
     }
 
@@ -105,14 +138,33 @@ class Profile extends Abstract {
 
             const chargePercent = (10000 - value) / 100;
 
-            // TODO Fork log
-            await ProfileModel.updateOne(
-                {
-                    userId: user,
-                },
-                { $set: { [`chargers.${chargeType}`]: chargePercent } }
-            );
+            await this._updateChargeState(chargeType, chargePercent);
         }
+    }
+
+    async _updateChargeState(chargeType, chargePercent) {
+        const path = `chargers.${chargeType}`;
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            {
+                userId: user,
+            },
+            {
+                $set: { [path]: chargePercent },
+            }
+        );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel._id,
+            data: {
+                $set: { [path]: previousModel[path] },
+            },
+        });
     }
 
     _currentOrNew(currentValue, newValue) {

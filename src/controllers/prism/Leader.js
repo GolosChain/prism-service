@@ -60,35 +60,54 @@ class Leader extends Abstract {
         await this._updateProfile(userId);
     }
 
-    async vote({ voter, witness: leader }, { communityId, events }) {
-        const model = await this._getLeaderModelForUpdate(communityId, leader);
+    async vote({ voter, witness }, { communityId, events }) {
+        const previousModel = await LeaderModel.findOneAndUpdate(
+            { communityId, userId: witness },
+            {
+                $addToSet: { votes: voter },
+                $set: { rating: this._extractLeaderRating(events) },
+            }
+        );
 
-        if (!model) {
-            Logger.warn(`Unknown leader - ${leader}`);
+        if (!previousModel) {
+            Logger.warn(`Unknown leader - ${witness}`);
+            return;
         }
 
-        model.votes = model.votes || [];
-        model.votes.push(voter);
-        model.votes = [...new Set(model.votes)];
-        model.rating = this._extractLeaderRating(events);
-
-        // TODO Fork log
-        await model.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: LeaderModel,
+            documentId: previousModel._id,
+            data: {
+                $pull: { votes: voter },
+                $set: { rating: previousModel.rating },
+            },
+        });
     }
 
-    async unvote({ voter, witness: leader }, { communityId, events }) {
-        const model = await this._getLeaderModelForUpdate(communityId, leader);
+    async unvote({ voter, witness }, { communityId, events }) {
+        const previousModel = await LeaderModel.findOneAndUpdate(
+            { communityId, userId: witness },
+            {
+                $pull: { votes: voter },
+                $set: { rating: this._extractLeaderRating(events) },
+            }
+        );
 
-        if (!model) {
-            Logger.warn(`Unknown leader - ${leader}`);
+        if (!previousModel) {
+            Logger.warn(`Unknown leader - ${witness}`);
+            return;
         }
 
-        model.votes = model.votes.filter(userId => userId !== voter);
-        model.rating = this._extractLeaderRating(events);
-        model.markModified('votes');
-
-        // TODO Fork log
-        await model.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: LeaderModel,
+            documentId: previousModel._id,
+            data: {
+                $addToSet: { votes: voter },
+                $set: { rating: previousModel.rating },
+            },
+        });
     }
 
     async _getLeaderModelForUpdate(communityId, userId) {
