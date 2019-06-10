@@ -15,12 +15,11 @@ class Vote extends AbstractContent {
             return;
         }
 
-        await this._includeUpVote(model, { userId: content.voter, weight: content.weight });
-        await this._excludeDownVote(model, content.voter);
-        await this._updatePayout(model, communityId, events);
+        const votesManager = this._makeVotesManager(model, content);
 
-        // TODO Fork log
-        await model.save();
+        await votesManager('up', 'add');
+        await votesManager('down', 'remove');
+        await this._updatePayout(model, communityId, events);
     }
 
     async handleDownVote(content, { communityId, events }) {
@@ -30,12 +29,11 @@ class Vote extends AbstractContent {
             return;
         }
 
-        await this._includeDownVote(model, { userId: content.voter, weight: content.weight });
-        await this._excludeUpVote(model, content.voter);
-        await this._updatePayout(model, communityId, events);
+        const votesManager = this._makeVotesManager(model, content);
 
-        // TODO Fork log
-        await model.save();
+        await votesManager('up', 'remove');
+        await votesManager('down', 'add');
+        await this._updatePayout(model, communityId, events);
     }
 
     async handleUnVote(content, { communityId, events }) {
@@ -45,106 +43,11 @@ class Vote extends AbstractContent {
             return;
         }
 
-        await this._excludeUpVote(model, content.voter);
-        await this._excludeDownVote(model, content.voter);
+        const votesManager = this._makeVotesManager(model, content);
+
+        await votesManager('up', 'remove');
+        await votesManager('down', 'remove');
         await this._updatePayout(model, communityId, events);
-
-        // TODO Fork log
-        await model.save();
-    }
-
-    async _includeUpVote(model, vote) {
-        const pack = model.votes.upVotes || [];
-
-        if (!pack.find(item => item.userId === vote.userId)) {
-            // TODO Fork log
-            await model.constructor.updateOne(
-                { _id: model._id },
-                {
-                    $addToSet: { 'votes.upVotes': vote },
-                    $inc: { 'votes.upCount': 1 },
-                }
-            );
-        }
-    }
-
-    async _includeDownVote(model, vote) {
-        const pack = model.votes.downVotes || [];
-
-        if (!pack.find(item => item.userId === vote.userId)) {
-            // TODO Fork log
-            await model.constructor.updateOne(
-                { _id: model._id },
-                {
-                    $addToSet: { 'votes.downVotes': vote },
-                    $inc: { 'votes.downCount': 1 },
-                }
-            );
-        }
-    }
-
-    async _excludeUpVote(model, userId) {
-        const pack = model.votes.upVotes || [];
-
-        const vote = pack.find(item => item.userId === userId);
-
-        if (!vote) {
-            return;
-        }
-
-        const previousModel = await model.constructor.findOneAndUpdate(
-            { _id: model._id },
-            {
-                $pull: { 'votes.upVotes': vote },
-                $inc: { 'votes.upCount': -1 },
-            }
-        );
-
-        if (!previousModel) {
-            return;
-        }
-
-        await this.registerForkChanges({
-            type: 'update',
-            Model: model.constructor,
-            documentId: previousModel._id,
-            data: {
-                $addToSet: { 'votes.upVotes': vote },
-                $inc: { 'votes.upCount': 1 },
-            },
-        });
-    }
-
-    async _excludeDownVote(model, userId) {
-        const pack = model.votes.downVotes || [];
-
-        const vote = pack.find(item => item.userId === userId);
-
-        if (!vote) {
-            return;
-        }
-
-        const previousModel = await model.constructor.findOneAndUpdate(
-            { _id: model._id },
-            {
-                $pull: { 'votes.downVotes': vote },
-                $inc: { 'votes.downCount': -1 },
-            }
-        );
-
-        if (!previousModel) {
-            return;
-        }
-
-        await this.registerForkChanges({
-            type: 'update',
-            Model: model.constructor,
-            documentId: previousModel._id,
-            data: {
-                $addToSet: { 'votes.downVotes': vote },
-                $inc: { 'votes.downCount': 1 },
-            },
-        });
     }
 
     async handleReputation({ voter, author, rshares: rShares }) {
@@ -190,6 +93,57 @@ class Vote extends AbstractContent {
         await modelAuthor.save();
     }
 
+    _makeVotesManager(model, content) {
+        const vote = this._extractVote(content);
+
+        return async (type, action) => {
+            await this._manageVotes({ model, vote, type, action });
+        };
+    }
+
+    async _manageVotes({ model, vote, type, action }) {
+        let addAction = '$addToSet';
+        let removeAction = '$pull';
+        let increment = 1;
+
+        if (action === 'remove') {
+            addAction = '$pull';
+            removeAction = '$addToSet';
+            increment = -1;
+        }
+
+        const Model = model.constructor;
+        const pack = model.votes[`${type}Votes`] || [];
+
+        if (pack.find(item => item.userId === vote.userId)) {
+            return;
+        }
+
+        const votesArrayPath = `votes.${type}Votes`;
+        const votesCountPath = `votes.${type}Count`;
+        const previousModel = await Model.findOneAndUpdate(
+            { _id: model._id },
+            {
+                [addAction]: { [votesArrayPath]: vote },
+                $inc: { [votesCountPath]: increment },
+            }
+        );
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model,
+            documentId: previousModel._id,
+            data: {
+                [removeAction]: { [votesArrayPath]: vote },
+                $inc: { [votesCountPath]: -increment },
+            },
+        });
+    }
+
+    _extractVote(content) {
+        return { userId: content.voter, weight: content.weight };
+    }
+
     async _getModel(content) {
         const contentId = this._extractContentId(content);
         const query = { contentId };
@@ -213,8 +167,23 @@ class Vote extends AbstractContent {
         const { postState, poolState } = this._getPayoutEventsData(events);
 
         await this._actualizePoolState(poolState, communityId);
-        this._addPayoutScoring(model, postState);
-        this._addPayoutMeta(model, postState);
+
+        const previousScoringQuery = this._addPayoutScoring(model, postState);
+        const previousMetaQuery = this._addPayoutMeta(model, postState);
+
+        await model.save();
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: model.constructor,
+            documentId: model._id,
+            data: {
+                $set: {
+                    ...previousScoringQuery,
+                    ...previousMetaQuery,
+                },
+            },
+        });
     }
 
     _getPayoutEventsData(events) {
@@ -279,16 +248,31 @@ class Vote extends AbstractContent {
         const rShares = Number(postState.netshares);
 
         model.stats = model.stats || {};
+
+        const previousQuery = {
+            ['stats.rShares']: model.stats.rShares,
+            ['stats.hot']: model.stats.hot,
+            ['stats.trending']: model.stats.trending,
+        };
+
         model.stats.rShares = rShares;
         model.stats.hot = WilsonScoring.calcHot(rShares, model.meta.time);
         model.stats.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
+
+        return previousQuery;
     }
 
     _addPayoutMeta(model, postState) {
         const meta = model.payout.meta;
+        const previousQuery = {
+            ['payout.meta.sharesFn']: meta.sharesFn,
+            ['payout.meta.sumCuratorSw']: meta.sumCuratorSw,
+        };
 
         meta.sharesFn = Number(postState.sharesfn);
         meta.sumCuratorSw = Number(postState.sumcuratorsw);
+
+        return previousQuery;
     }
 }
 

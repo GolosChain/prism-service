@@ -15,7 +15,7 @@ class Leaders extends AbstractFeed {
 
         const modelObjects = await LeaderModel.find(query, projection, options);
 
-        if (!modelObjects) {
+        if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
         }
 
