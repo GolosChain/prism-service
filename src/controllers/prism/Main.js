@@ -157,6 +157,10 @@ class Main {
                 await this._post.handleRepost(actionArgs, { communityId, blockTime });
                 break;
 
+            case `${communityId}.publish->erasereblog`:
+                await this._post.handleRemoveRepost(actionArgs, { communityId, blockTime });
+                break;
+
             case 'cyber.msig->propose':
                 await this._leader.handleNewProposal(actionArgs);
                 break;
