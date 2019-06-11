@@ -16,10 +16,10 @@ class Fork extends BasicService {
         await ForkModel.create({ blockNum });
     }
 
-    async registerChanges({ type, Model, documentId, data = {} }) {
+    async registerChanges({ type, Model, documentId, data }) {
         const className = Model.modelName;
 
-        data = this._packData(data);
+        data = this._packData(data || {});
 
         await ForkModel.findOneAndUpdate(
             {},
@@ -87,7 +87,7 @@ class Fork extends BasicService {
         let data;
 
         while ((data = stack.pop())) {
-            data = this._unpackData(data);
+            data = this._unpackData(data || {});
 
             const { type, className, documentId, data } = data;
             const Model = require(`../models/${className}`);

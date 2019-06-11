@@ -40,11 +40,15 @@ class Leader extends Abstract {
             communityId,
         });
 
+        if (!previousModel) {
+            return;
+        }
+
         await this.registerForkChanges({
             type: 'remove',
             Model: LeaderModel,
             documentId: previousModel._id,
-            data: previousModel.toObject(),
+            data: previousModel,
         });
 
         await this._updateProfile(userId);
@@ -115,9 +119,11 @@ class Leader extends Abstract {
     }
 
     async _updateLeaderWithUpsert(communityId, userId, action) {
-        const previousModel = await LeaderModel.findOneAndUpdate({ communityId, userId }, action, {
-            upsert: true,
-        });
+        let previousModel = await LeaderModel.findOneAndUpdate({ communityId, userId }, action);
+
+        if (!previousModel) {
+            previousModel = await LeaderModel.create({ communityId, userId, ...action });
+        }
 
         await this.registerForkChanges({
             type: 'update',
