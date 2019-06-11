@@ -67,6 +67,8 @@ class Profile extends Abstract {
     }
 
     async handleMeta({ account: userId, meta }) {
+        console.log(meta);
+
         const profile = await ProfileModel.findOne({ userId }, { personal: true });
 
         if (!profile) {
@@ -138,15 +140,15 @@ class Profile extends Abstract {
 
             const chargePercent = (10000 - value) / 100;
 
-            await this._updateChargeState(chargeType, chargePercent);
+            await this._updateChargeState(user, chargeType, chargePercent);
         }
     }
 
-    async _updateChargeState(chargeType, chargePercent) {
+    async _updateChargeState(userId, chargeType, chargePercent) {
         const path = `chargers.${chargeType}`;
         const previousModel = await ProfileModel.findOneAndUpdate(
             {
-                userId: user,
+                userId,
             },
             {
                 $set: { [path]: chargePercent },
@@ -165,6 +167,14 @@ class Profile extends Abstract {
                 $set: { [path]: previousModel[path] },
             },
         });
+    }
+
+    _extractUpdatedMetaFields(meta) {
+        const result = {};
+
+        for (const key of Object.keys(meta)) {
+            //
+        }
     }
 
     _currentOrNew(currentValue, newValue) {
