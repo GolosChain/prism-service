@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const MongoDB = core.services.MongoDB;
+const MongoBigNum = core.types.MongoBigNum;
 
 module.exports = MongoDB.makeModel(
     'Post',
@@ -145,7 +146,7 @@ module.exports = MongoDB.makeModel(
             author: {
                 token: {
                     value: {
-                        type: Number,
+                        type: MongoBigNum,
                         default: 0,
                     },
                     name: {
@@ -155,7 +156,7 @@ module.exports = MongoDB.makeModel(
                 },
                 vesting: {
                     value: {
-                        type: Number,
+                        type: MongoBigNum,
                         default: 0,
                     },
                     name: {
@@ -167,7 +168,7 @@ module.exports = MongoDB.makeModel(
             curator: {
                 vesting: {
                     value: {
-                        type: Number,
+                        type: MongoBigNum,
                         default: 0,
                     },
                     name: {
@@ -179,7 +180,7 @@ module.exports = MongoDB.makeModel(
             benefactor: {
                 vesting: {
                     value: {
-                        type: Number,
+                        type: MongoBigNum,
                         default: 0,
                     },
                     name: {
@@ -190,23 +191,27 @@ module.exports = MongoDB.makeModel(
             },
             meta: {
                 rewardWeight: {
-                    type: Number,
+                    type: MongoBigNum,
                     default: 10000,
                 },
                 sharesFn: {
-                    type: Number,
+                    type: MongoBigNum,
                     default: 0,
                 },
                 sumCuratorSw: {
-                    type: Number,
+                    type: MongoBigNum,
                     default: 0,
                 },
                 benefactorPercents: {
-                    type: [Number],
+                    type: [MongoBigNum],
                     default: [0],
                 },
                 tokenProp: {
-                    type: Number,
+                    type: MongoBigNum,
+                    default: 0,
+                },
+                curatorsPercent: {
+                    type: MongoBigNum,
                     default: 0,
                 },
             },
