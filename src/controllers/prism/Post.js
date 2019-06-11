@@ -59,7 +59,7 @@ class Post extends AbstractContent {
                 documentId: previousModel._id,
                 data: {
                     $set: {
-                        content: previousModel.content,
+                        content: previousModel.content.toObject(),
                     },
                 },
             });
@@ -98,7 +98,7 @@ class Post extends AbstractContent {
             },
         });
 
-        await this.registerForkChanges({ type: 'create', model: PostModel, documentId: model._id });
+        await this.registerForkChanges({ type: 'create', Model: PostModel, documentId: model._id });
     }
 }
 

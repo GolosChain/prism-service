@@ -60,7 +60,7 @@ class HashTag extends AbstractContent {
             type: 'update',
             Model: HashTagModel,
             documentId: model._id,
-            data: { $set: { 'content.tags': recentTags } },
+            data: { $set: { 'content.tags': recentTags.toObject() } },
         });
 
         await this._decrementTagsScore(recentTags, communityId);

@@ -33,6 +33,10 @@ class Subscribe extends Abstract {
                 }
             );
 
+            if (!previousModel) {
+                return;
+            }
+
             await this.registerForkChanges({
                 type: 'update',
                 Model: ProfileModel,

@@ -213,20 +213,29 @@ class Vote extends AbstractContent {
     async _actualizePoolState(poolState, communityId) {
         const fundsValueRaw = poolState.funds;
         const [value, name] = fundsValueRaw.split(' ');
-        const previousModel = await PoolModel.findOneAndUpdate(
+        let previousModel = await PoolModel.findOneAndUpdate(
             { communityId },
             {
                 $set: {
-                    funds: {
-                        name: name,
-                        value: Number(value),
-                    },
+                    'funds.name': name,
+                    'funds.value': Number(value),
                     rShares: Number(poolState.rshares),
                     rSharesFn: Number(poolState.rsharesfn),
                 },
-            },
-            { upsert: true }
+            }
         );
+
+        if (!previousModel) {
+            previousModel = await PoolModel.create({
+                communityId,
+                funds: {
+                    name: name,
+                    value: Number(value),
+                },
+                rShares: Number(poolState.rshares),
+                rSharesFn: Number(poolState.rsharesfn),
+            });
+        }
 
         await this.registerForkChanges({
             type: 'update',
@@ -234,10 +243,8 @@ class Vote extends AbstractContent {
             documentId: previousModel._id,
             data: {
                 $set: {
-                    funds: {
-                        name: previousModel.name,
-                        value: previousModel.value,
-                    },
+                    'funds.name': previousModel.name,
+                    'funds.value': previousModel.value,
                     rShares: previousModel.rShares,
                     rSharesFn: previousModel.rSharesFn,
                 },

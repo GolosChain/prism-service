@@ -35,7 +35,7 @@ class Leader extends Abstract {
     }
 
     async unregister({ witness: userId }, { communityId }) {
-        const previousModel = await LeaderModel.remove({
+        const previousModel = await LeaderModel.findOneAndDelete({
             userId,
             communityId,
         });
@@ -48,7 +48,7 @@ class Leader extends Abstract {
             type: 'remove',
             Model: LeaderModel,
             documentId: previousModel._id,
-            data: previousModel,
+            data: previousModel.toObject(),
         });
 
         await this._updateProfile(userId);
@@ -112,10 +112,6 @@ class Leader extends Abstract {
                 $set: { rating: previousModel.rating },
             },
         });
-    }
-
-    async _getLeaderModelForUpdate(communityId, userId) {
-        return await LeaderModel.findOne({ communityId, userId }, { votes: true, rating: true });
     }
 
     async _updateLeaderWithUpsert(communityId, userId, action) {
@@ -196,7 +192,7 @@ class Leader extends Abstract {
             documentId: previousModel._id,
             data: {
                 $set: {
-                    leaderIn: previousModel.leaderIn,
+                    leaderIn: previousModel.leaderIn.toObject(),
                 },
             },
         });

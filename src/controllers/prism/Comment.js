@@ -71,7 +71,7 @@ class Comment extends AbstractContent {
             documentId: previousModel._id,
             data: {
                 $set: {
-                    content: previousModel.content,
+                    content: previousModel.content.toObject(),
                 },
             },
         });
@@ -99,7 +99,7 @@ class Comment extends AbstractContent {
             type: 'remove',
             Model: CommentModel,
             documentId: removed._id,
-            data: removed,
+            data: removed.toObject(),
         });
     }
 

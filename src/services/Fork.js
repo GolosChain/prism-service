@@ -130,7 +130,7 @@ class Fork extends BasicService {
                 specialKeys.push(key);
             }
 
-            if (typeof data[key] === 'object') {
+            if (data[key] && typeof data[key] === 'object') {
                 this._packData(data[key]);
             }
         }
@@ -150,7 +150,7 @@ class Fork extends BasicService {
                 specialKeys.push(key);
             }
 
-            if (typeof data[key] === 'object') {
+            if (data[key] && typeof data[key] === 'object') {
                 this._unpackData(data[key]);
             }
         }
