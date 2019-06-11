@@ -80,6 +80,14 @@ class Post extends AbstractContent {
             },
         });
     }
+
+    async handleRemoveRepost({ rebloger: userId, ...content }, { communityId }) {
+        await PostModel.deleteOne({
+            communityId,
+            'repost.userId': userId,
+            contentId: this._extractContentId(content),
+        });
+    }
 }
 
 module.exports = Post;
