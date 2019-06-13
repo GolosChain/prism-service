@@ -249,7 +249,7 @@ class SearchSync extends BasicService {
         for (const model of this.modelsToWatch) {
             const searchModel = await this._findOrCreateSyncModel(model);
 
-            if (this.modelsInSync.get(searchModel)) {
+            if (this.modelsInSync.has(searchModel)) {
                 continue;
             }
 

@@ -36,7 +36,7 @@ class Fork extends BasicService {
             return;
         }
 
-        for (let document of documents) {
+        for (const document of documents) {
             await this._restoreBy(document);
         }
 

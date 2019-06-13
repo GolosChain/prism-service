@@ -7,9 +7,9 @@ const CommentController = require('./Comment');
 
 class Genesis {
     constructor() {
-        this._subscribeController = new SubscribeController({});
-        this._postController = new PostController({});
-        this._commentController = new CommentController({});
+        this._subscribeController = new SubscribeController();
+        this._postController = new PostController();
+        this._commentController = new CommentController();
     }
 
     async handle(type, data) {

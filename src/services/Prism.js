@@ -156,7 +156,7 @@ class Prism extends BasicService {
             process.exit(0);
         } catch (error) {
             Logger.error('Critical error!');
-            Logger.error(`Cant revert on fork - ${error.stack}`);
+            Logger.error('Cant revert on fork:', error);
             process.exit(1);
         }
     }
