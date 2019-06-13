@@ -100,7 +100,7 @@ class Profile extends Abstract {
                     return;
             }
 
-            const chargePercent = (10000 - value) / 100;
+            const chargePercent = 100 - (value / 4096) * 100;
 
             await ProfileModel.updateOne(
                 {
