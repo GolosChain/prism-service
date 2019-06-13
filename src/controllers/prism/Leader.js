@@ -24,21 +24,39 @@ class Leader extends Abstract {
     }
 
     async register({ witness: userId, url }, { communityId }) {
-        const action = { $set: { communityId, userId, active: true } };
+        const action = { communityId, userId, active: true };
 
         if (typeof url === 'string') {
             action.url = url;
         }
 
-        await this._updateLeaderWithUpsert(communityId, userId, action);
+        let previousModel = await LeaderModel.findOneAndUpdate(
+            { communityId, userId },
+            { $set: action }
+        );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: LeaderModel,
+                documentId: previousModel._id,
+                data: action,
+            });
+        } else {
+            previousModel = await LeaderModel.create({ communityId, userId, ...action });
+
+            await this.registerForkChanges({
+                type: 'create',
+                Model: LeaderModel,
+                documentId: previousModel._id,
+            });
+        }
+
         await this._updateProfile(userId);
     }
 
     async unregister({ witness: userId }, { communityId }) {
-        const previousModel = await LeaderModel.findOneAndDelete({
-            userId,
-            communityId,
-        });
+        const previousModel = await LeaderModel.findOneAndDelete({ userId, communityId });
 
         if (!previousModel) {
             return;
@@ -114,29 +132,10 @@ class Leader extends Abstract {
         });
     }
 
-    async _updateLeaderWithUpsert(communityId, userId, action) {
-        let previousModel = await LeaderModel.findOneAndUpdate({ communityId, userId }, action);
-
-        if (!previousModel) {
-            previousModel = await LeaderModel.create({ communityId, userId, ...action });
-        }
-
-        await this.registerForkChanges({
-            type: 'update',
-            Model: LeaderModel,
-            documentId: previousModel._id,
-            data: action,
-        });
-    }
-
     async _setActiveState(userId, communityId, active) {
         const previousModel = await LeaderModel.findOneAndUpdate(
             { communityId, userId },
-            {
-                $set: {
-                    active,
-                },
-            }
+            { $set: { active } }
         );
 
         if (previousModel) {
@@ -159,22 +158,12 @@ class Leader extends Abstract {
 
     async _updateProfile(userId) {
         const communities = await LeaderModel.find(
-            {
-                userId,
-                active: true,
-            },
-            {
-                communityId: true,
-            },
-            {
-                lean: true,
-            }
+            { userId, active: true },
+            { communityId: true },
+            { lean: true }
         );
-
         const previousModel = await ProfileModel.findOneAndUpdate(
-            {
-                userId,
-            },
+            { userId },
             {
                 $set: {
                     leaderIn: communities.map(community => community.communityId),
