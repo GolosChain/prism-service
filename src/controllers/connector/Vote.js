@@ -25,7 +25,10 @@ class Vote extends AbstractFeed {
         });
     }
 
-    async _getVotes(Model, { requestedUserId, username, permlink, limit, type, sequenceKey, app }) {
+    async _getVotes(
+        Model,
+        { requestedUserId, currentUserId, username, permlink, limit, type, sequenceKey, app }
+    ) {
         if (!requestedUserId && !username) {
             throw { code: 400, message: 'Invalid user identification' };
         }
@@ -68,7 +71,7 @@ class Vote extends AbstractFeed {
 
         const items = modelObject.votes[targetType];
 
-        await this._populateVoters(items, app);
+        await this._populateVoters(items, app, currentUserId);
 
         return this._makeArrayPaginationResult(items, skip, limit);
     }
@@ -83,10 +86,16 @@ class Vote extends AbstractFeed {
         }
     }
 
-    async _populateVoters(votes, app) {
+    async _populateVoters(votes, app, userId) {
         await Promise.all(
             votes.map(async (vote, i) => {
-                await this._populateUser(vote, app);
+                if (userId) {
+                    await this._populateUserWithSubscribers(vote, app);
+                    vote.isSubscribed = vote.subscribers.userIds.includes(userId);
+                    delete vote.subscribers;
+                } else {
+                    await this._populateUser(vote, app);
+                }
                 votes[i] = vote;
             })
         );
