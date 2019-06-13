@@ -16,11 +16,11 @@ class Vote extends AbstractContent {
             return;
         }
 
-        await this._includeUpVote(model, { userId: content.voter, weight: content.weight });
-        await this._excludeDownVote(model, content.voter);
-        await this._updatePayout(model, communityId, events);
+        const votesManager = this._makeVotesManager(model, content);
 
-        await model.save();
+        await votesManager('up', 'add');
+        await votesManager('down', 'remove');
+        await this._updatePayout(model, communityId, events);
     }
 
     async handleDownVote(content, { communityId, events }) {
@@ -30,11 +30,11 @@ class Vote extends AbstractContent {
             return;
         }
 
-        await this._includeDownVote(model, { userId: content.voter, weight: content.weight });
-        await this._excludeUpVote(model, content.voter);
-        await this._updatePayout(model, communityId, events);
+        const votesManager = this._makeVotesManager(model, content);
 
-        await model.save();
+        await votesManager('up', 'remove');
+        await votesManager('down', 'add');
+        await this._updatePayout(model, communityId, events);
     }
 
     async handleUnVote(content, { communityId, events }) {
@@ -44,113 +44,106 @@ class Vote extends AbstractContent {
             return;
         }
 
-        await this._excludeUpVote(model, content.voter);
-        await this._excludeDownVote(model, content.voter);
+        const votesManager = this._makeVotesManager(model, content);
+
+        await votesManager('up', 'remove');
+        await votesManager('down', 'remove');
         await this._updatePayout(model, communityId, events);
-
-        await model.save();
-    }
-
-    async _includeUpVote(model, vote) {
-        const pack = model.votes.upVotes || [];
-
-        if (!pack.find(item => item.userId === vote.userId)) {
-            await model.constructor.updateOne(
-                { _id: model._id },
-                {
-                    $addToSet: { 'votes.upVotes': vote },
-                    $inc: { 'votes.upCount': 1 },
-                }
-            );
-        }
-    }
-
-    async _includeDownVote(model, vote) {
-        const pack = model.votes.downVotes || [];
-
-        if (!pack.find(item => item.userId === vote.userId)) {
-            await model.constructor.updateOne(
-                { _id: model._id },
-                {
-                    $addToSet: { 'votes.downVotes': vote },
-                    $inc: { 'votes.downCount': 1 },
-                }
-            );
-        }
-    }
-
-    async _excludeUpVote(model, userId) {
-        const pack = model.votes.upVotes || [];
-
-        const vote = pack.find(item => item.userId === userId);
-
-        if (vote) {
-            await model.constructor.updateOne(
-                { _id: model._id },
-                {
-                    $pull: { 'votes.upVotes': vote },
-                    $inc: { 'votes.upCount': -1 },
-                }
-            );
-        }
-    }
-
-    async _excludeDownVote(model, userId) {
-        const pack = model.votes.downVotes || [];
-
-        const vote = pack.find(item => item.userId === userId);
-
-        if (vote) {
-            await model.constructor.updateOne(
-                { _id: model._id },
-                {
-                    $pull: { 'votes.downVotes': vote },
-                    $inc: { 'votes.downCount': -1 },
-                }
-            );
-        }
     }
 
     async handleReputation({ voter, author, rshares: rShares }) {
-        await this._updateProfileReputation(voter, author, rShares);
+        await this._tryUpdateProfileReputation(voter, author, rShares);
     }
 
-    async _updateProfileReputation(voter, author, rShares) {
-        const modelVoter = await ProfileModel.findOne(
+    async _tryUpdateProfileReputation(voter, author, rShares) {
+        const voterModelObject = await ProfileModel.findOne(
             { userId: voter },
-            {
-                'stats.reputation': true,
-            },
+            { 'stats.reputation': true },
             { lean: true }
         );
 
-        if (!modelVoter) {
+        if (!voterModelObject) {
             Logger.warn(`Unknown voter - ${voter}`);
             return;
         }
 
-        if (modelVoter.stats.reputation < 0) {
+        if (voterModelObject.stats.reputation < 0) {
             return;
         }
 
-        const modelAuthor = await ProfileModel.findOne(
+        const authorModel = await ProfileModel.findOne(
             { userId: author },
-            {
-                'stats.reputation': true,
-            }
+            { 'stats.reputation': true }
         );
 
-        if (!modelAuthor) {
+        if (!authorModel) {
             Logger.warn(`Unknown voter - ${author}`);
             return;
         }
 
-        if (rShares < 0 && modelVoter.stats.reputation <= modelAuthor.stats.reputation) {
+        if (rShares < 0 && voterModelObject.stats.reputation <= authorModel.stats.reputation) {
             return;
         }
 
-        modelAuthor.stats.reputation += Number(rShares);
-        await modelAuthor.save();
+        await this._updateProfileReputation(authorModel, rShares);
+    }
+
+    async _updateProfileReputation(model, rShares) {
+        const previousReputation = model.stats.reputation;
+
+        model.stats.reputation += Number(rShares);
+
+        await model.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: model._id,
+            data: {
+                $set: { 'stats.reputation': previousReputation },
+            },
+        });
+    }
+
+    _makeVotesManager(model, content) {
+        const vote = this._extractVote(content);
+
+        return async (type, action) => {
+            await this._manageVotes({ model, vote, type, action });
+        };
+    }
+
+    async _manageVotes({ model, vote, type, action }) {
+        const [addAction, removeAction, increment] = this._getArrayEntityCommands(action);
+        const Model = model.constructor;
+        const pack = model.votes[`${type}Votes`] || [];
+
+        if (pack.find(item => item.userId === vote.userId)) {
+            return;
+        }
+
+        const votesArrayPath = `votes.${type}Votes`;
+        const votesCountPath = `votes.${type}Count`;
+        const previousModel = await Model.findOneAndUpdate(
+            { _id: model._id },
+            {
+                [addAction]: { [votesArrayPath]: vote },
+                $inc: { [votesCountPath]: increment },
+            }
+        );
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model,
+            documentId: previousModel._id,
+            data: {
+                [removeAction]: { [votesArrayPath]: vote },
+                $inc: { [votesCountPath]: -increment },
+            },
+        });
+    }
+
+    _extractVote(content) {
+        return { userId: content.voter, weight: content.weight };
     }
 
     async _getModel(content) {
@@ -176,8 +169,23 @@ class Vote extends AbstractContent {
         const { postState, poolState } = this._getPayoutEventsData(events);
 
         await this._actualizePoolState(poolState, communityId);
-        this._addPayoutScoring(model, postState);
-        this._addPayoutMeta(model, postState);
+
+        const previousScoringQuery = this._addPayoutScoring(model, postState);
+        const previousMetaQuery = this._addPayoutMeta(model, postState);
+
+        await model.save();
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: model.constructor,
+            documentId: model._id,
+            data: {
+                $set: {
+                    ...previousScoringQuery,
+                    ...previousMetaQuery,
+                },
+            },
+        });
     }
 
     _getPayoutEventsData(events) {
@@ -206,37 +214,74 @@ class Vote extends AbstractContent {
     async _actualizePoolState(poolState, communityId) {
         const fundsValueRaw = poolState.funds;
         const [value, name] = fundsValueRaw.split(' ');
-
-        await PoolModel.updateOne(
+        let previousModel = await PoolModel.findOneAndUpdate(
             { communityId },
             {
                 $set: {
-                    funds: {
-                        name: name,
-                        value: new BigNum(value),
-                    },
+                    'funds.name': name,
+                    'funds.value': new BigNum(value),
                     rShares: new BigNum(poolState.rshares),
                     rSharesFn: new BigNum(poolState.rsharesfn),
                 },
-            },
-            { upsert: true }
+            }
         );
+
+        if (!previousModel) {
+            previousModel = await PoolModel.create({
+                communityId,
+                funds: {
+                    name: name,
+                    value: new BigNum(value),
+                },
+                rShares: new BigNum(poolState.rshares),
+                rSharesFn: new BigNum(poolState.rsharesfn),
+            });
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: PoolModel,
+            documentId: previousModel._id,
+            data: {
+                $set: {
+                    'funds.name': previousModel.name,
+                    'funds.value': previousModel.value,
+                    rShares: previousModel.rShares,
+                    rSharesFn: previousModel.rSharesFn,
+                },
+            },
+        });
     }
 
     _addPayoutScoring(model, postState) {
         const rShares = Number(postState.netshares);
 
         model.stats = model.stats || {};
+
+        const previousQuery = {
+            ['stats.rShares']: model.stats.rShares,
+            ['stats.hot']: model.stats.hot,
+            ['stats.trending']: model.stats.trending,
+        };
+
         model.stats.rShares = rShares;
         model.stats.hot = WilsonScoring.calcHot(rShares, model.meta.time);
         model.stats.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
+
+        return previousQuery;
     }
 
     _addPayoutMeta(model, postState) {
         const meta = model.payout.meta;
+        const previousQuery = {
+            ['payout.meta.sharesFn']: meta.sharesFn,
+            ['payout.meta.sumCuratorSw']: meta.sumCuratorSw,
+        };
 
         meta.sharesFn = new BigNum(postState.sharesfn);
         meta.sumCuratorSw = new BigNum(postState.sumcuratorsw);
+
+        return previousQuery;
     }
 }
 

@@ -1,59 +1,26 @@
 const core = require('gls-core-service');
 const BasicController = core.controllers.Basic;
-const RevertTrace = require('../../models/RevertTrace');
 
 class Abstract extends BasicController {
-    async _getOrCreateModelWithTrace(modelClass, queryForCheck, initData) {
-        let model = await this._getModelWithoutTrace(modelClass, queryForCheck);
+    constructor({ forkService } = {}, ...args) {
+        super(...args);
 
-        if (model) {
-            await this._updateRevertTrace({
-                command: 'swap',
-                modelBody: model.toObject(),
-                modelClassName: modelClass.modelName,
-            });
-        } else {
-            model = new modelClass(initData);
+        this._forkService = forkService;
+    }
 
-            await model.save();
-
-            await this._updateRevertTrace({
-                command: 'create',
-                modelBody: model.toObject(),
-                modelClassName: modelClass.modelName,
-            });
+    async registerForkChanges(changes) {
+        if (this._forkService) {
+            await this._forkService.registerChanges(changes);
         }
-
-        return model;
     }
 
-    async _getModelWithoutTrace(modelClass, query) {
-        return await modelClass.findOne(query);
-    }
-
-    async _updateRevertTrace({ command, modelBody, modelClassName }) {
-        const model = await RevertTrace.findOne(
-            {},
-            {
-                _id: 1,
-            },
-            {
-                sort: {
-                    _id: -1,
-                },
-            }
-        );
-
-        await RevertTrace.updateOne(
-            {
-                _id: model._id,
-            },
-            {
-                $push: {
-                    stack: { command, modelBody, modelClassName },
-                },
-            }
-        );
+    _getArrayEntityCommands(action) {
+        switch (action) {
+            case 'add':
+                return ['$addToSet', '$pull', 1];
+            case 'remove':
+                return ['$pull', '$addToSet', -1];
+        }
     }
 }
 

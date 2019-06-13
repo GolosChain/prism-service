@@ -1,3 +1,4 @@
+const lodash = require('lodash');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
@@ -5,14 +6,43 @@ const ProfileModel = require('../../models/Profile');
 
 class Profile extends Abstract {
     async handleUsername({ owner: userId, name: username, creator: communityId }) {
-        await ProfileModel.updateOne(
+        const path = `usernames.${communityId}`;
+        const previousModel = await ProfileModel.findOneAndUpdate(
             { userId },
             {
                 $set: {
-                    [`usernames.${communityId}`]: username,
+                    [path]: username,
                 },
             }
         );
+
+        if (!previousModel) {
+            return;
+        }
+
+        const previousName = previousModel[path];
+        let revertData;
+
+        if (previousName) {
+            revertData = {
+                $set: {
+                    [path]: previousName,
+                },
+            };
+        } else {
+            revertData = {
+                $unset: {
+                    [path]: true,
+                },
+            };
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel._id,
+            data: revertData,
+        });
     }
 
     async handleCreate({ name: userId }, { blockTime }) {
@@ -23,49 +53,43 @@ class Profile extends Abstract {
             return;
         }
 
-        await ProfileModel.create({
+        const model = await ProfileModel.create({
             userId,
             registration: {
                 time: blockTime,
             },
         });
+
+        await this.registerForkChanges({
+            type: 'create',
+            Model: ProfileModel,
+            documentId: model._id,
+        });
     }
 
     async handleMeta({ account: userId, meta }) {
-        const profile = await ProfileModel.findOne({ userId }, { personal: true });
+        const query = this._makePersonalUpdateQuery(meta);
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            {
+                userId,
+            },
+            {
+                $set: query,
+            }
+        );
 
-        if (!profile) {
+        if (!previousModel) {
             return;
         }
 
-        const updateFields = this._omitNulls(meta);
-
-        if (updateFields.profile_image !== undefined) {
-            updateFields.avatarUrl = updateFields.profile_image;
-        }
-
-        if (updateFields.cover_image !== undefined) {
-            updateFields.coverUrl = updateFields.cover_image;
-        }
-
-        profile.personal.gls = {
-            ...profile.personal.gls,
-            ...updateFields,
-        };
-
-        const personal = profile.personal.cyber;
-        const contacts = personal.contacts;
-        const or = this._currentOrNew.bind(this);
-
-        personal.avatarUrl = or(personal.avatarUrl, meta.profile_image);
-        personal.coverUrl = or(personal.coverUrl, meta.cover_image);
-        personal.biography = or(personal.biography, meta.about);
-        contacts.facebook = or(contacts.facebook, meta.facebook);
-        contacts.telegram = or(contacts.telegram, meta.telegram);
-        contacts.whatsApp = or(contacts.whatsApp, '');
-        contacts.weChat = or(contacts.weChat, '');
-
-        await profile.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel,
+            data: {
+                $set: this._extractPersonalReversedFields(query, previousModel),
+            },
+        });
     }
 
     async handleChargeState(chargeStateEvents) {
@@ -102,41 +126,122 @@ class Profile extends Abstract {
 
             const chargePercent = 100 - (value / 4096) * 100;
 
-            await ProfileModel.updateOne(
-                {
-                    userId: user,
-                },
-                { $set: { [`chargers.${chargeType}`]: chargePercent } }
-            );
+            await this._updateChargeState(user, chargeType, chargePercent);
         }
     }
 
-    _currentOrNew(currentValue, newValue) {
-        if (newValue === null || newValue === undefined) {
-            return currentValue;
-        } else {
-            return newValue;
+    async _updateChargeState(userId, chargeType, chargePercent) {
+        const path = `chargers.${chargeType}`;
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            {
+                userId,
+            },
+            {
+                $set: { [path]: chargePercent },
+            }
+        );
+
+        if (!previousModel) {
+            return;
         }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel._id,
+            data: {
+                $set: { [path]: previousModel[path] },
+            },
+        });
     }
 
-    _omitNulls(data) {
-        const newData = {};
+    _makePersonalUpdateQuery(meta) {
+        const data = this._extractUpdatedPersonalRawFields(meta);
+        const query = {};
 
         for (const key of Object.keys(data)) {
-            const value = data[key];
+            switch (key) {
+                case 'profile_image':
+                    query['personal.cyber.avatarUrl'] = data[key];
+                    query['personal.gls.avatarUrl'] = data[key];
+                    break;
+
+                case 'background_image':
+                case 'cover_image':
+                    query['personal.cyber.coverUrl'] = data[key];
+                    query['personal.gls.coverUrl'] = data[key];
+                    break;
+
+                case 'about':
+                    query['personal.cyber.biography'] = data[key];
+                    query['personal.gls.about'] = data[key];
+                    break;
+
+                case 'facebook':
+                    query['personal.cyber.contacts.facebook'] = data[key];
+                    break;
+
+                case 'telegram':
+                    query['personal.cyber.contacts.telegram'] = data[key];
+                    break;
+
+                case 'whatsapp':
+                    query['personal.cyber.contacts.whatsApp'] = data[key];
+                    break;
+
+                case 'wechat':
+                    query['personal.cyber.contacts.weChat'] = data[key];
+                    break;
+
+                case 'user_image':
+                    query['personal.gls.name'] = data[key];
+                    break;
+
+                case 'gender':
+                    query['personal.gls.gender'] = data[key];
+                    break;
+
+                case 'location':
+                    query['personal.gls.location'] = data[key];
+                    break;
+
+                case 'website':
+                    query['personal.gls.website'] = data[key];
+                    break;
+            }
+        }
+
+        return query;
+    }
+
+    _extractUpdatedPersonalRawFields(meta) {
+        const result = {};
+
+        for (const key of Object.keys(meta)) {
+            const value = meta[key];
 
             if (value === null || value === undefined) {
                 continue;
             }
 
             if (value === '') {
-                newData[key] = null;
-            } else {
-                newData[key] = value;
+                result[key] = null;
             }
+
+            result[key] = value;
         }
 
-        return newData;
+        return result;
+    }
+
+    _extractPersonalReversedFields(query, previousModel) {
+        const result = {};
+
+        for (const key of Object.keys(query)) {
+            result[key] = lodash.get(previousModel, key) || null;
+        }
+
+        return result;
     }
 }
 

@@ -22,14 +22,14 @@ const communityRegistry = [
 ];
 
 class Main {
-    constructor({ connector }) {
-        this._post = new Post({ connector });
-        this._comment = new Comment({ connector });
-        this._profile = new Profile({ connector });
-        this._vote = new Vote({ connector });
-        this._subscribe = new Subscribe({ connector });
-        this._hashTag = new HashTag({ connector });
-        this._leader = new Leader({ connector });
+    constructor({ connector, forkService }) {
+        this._post = new Post({ connector, forkService });
+        this._comment = new Comment({ connector, forkService });
+        this._profile = new Profile({ connector, forkService });
+        this._vote = new Vote({ connector, forkService });
+        this._subscribe = new Subscribe({ connector, forkService });
+        this._hashTag = new HashTag({ connector, forkService });
+        this._leader = new Leader({ connector, forkService });
     }
 
     async disperse({ transactions, blockNum, blockTime }) {

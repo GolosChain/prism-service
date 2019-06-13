@@ -18,7 +18,7 @@ class Post extends AbstractContent {
 
         const contentId = this._extractContentId(content);
 
-        await PostModel.create({
+        const model = await PostModel.create({
             communityId,
             contentId,
             content: await this._extractContentObject(content),
@@ -33,6 +33,8 @@ class Post extends AbstractContent {
                 },
             },
         });
+
+        await this.registerForkChanges({ type: 'create', Model: PostModel, documentId: model._id });
         await this.updateUserPostsCount(contentId.userId, 1);
     }
 
@@ -41,7 +43,7 @@ class Post extends AbstractContent {
             return;
         }
 
-        await PostModel.updateOne(
+        const previousModel = await PostModel.findOneAndUpdate(
             {
                 contentId: this._extractContentId(content),
             },
@@ -51,6 +53,19 @@ class Post extends AbstractContent {
                 },
             }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: PostModel,
+                documentId: previousModel._id,
+                data: {
+                    $set: {
+                        content: previousModel.content.toObject(),
+                    },
+                },
+            });
+        }
     }
 
     async handleDelete(content) {
@@ -59,13 +74,19 @@ class Post extends AbstractContent {
         }
 
         const contentId = this._extractContentId(content);
+        const previousModel = await PostModel.findOneAndRemove({ contentId });
 
-        await PostModel.deleteOne({ contentId });
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: PostModel,
+            documentId: previousModel._id,
+            data: previousModel.toObject(),
+        });
         await this.updateUserPostsCount(contentId.userId, -1);
     }
 
     async handleRepost({ rebloger: userId, ...content }, { communityId, blockTime }) {
-        await PostModel.create({
+        const model = await PostModel.create({
             communityId,
             contentId: this._extractContentId(content),
             repost: {
@@ -79,13 +100,26 @@ class Post extends AbstractContent {
                 time: blockTime,
             },
         });
+
+        await this.registerForkChanges({ type: 'create', Model: PostModel, documentId: model._id });
     }
 
     async handleRemoveRepost({ rebloger: userId, ...content }, { communityId }) {
-        await PostModel.deleteOne({
+        const previousModel = await PostModel.findOneAndRemove({
             communityId,
             'repost.userId': userId,
             contentId: this._extractContentId(content),
+        });
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: PostModel,
+            documentId: previousModel._id,
+            data: previousModel.toObject(),
         });
     }
 }

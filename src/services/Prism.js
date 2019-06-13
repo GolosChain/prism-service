@@ -6,22 +6,33 @@ const env = require('../data/env');
 const MainPrismController = require('../controllers/prism/Main');
 const GenesisController = require('../controllers/prism/Genesis');
 const ServiceMetaModel = require('../models/ServiceMeta');
-const RevertTraceModel = require('../models/RevertTrace');
 
 class Prism extends BasicService {
-    setConnector(connector) {
-        this._connector = connector;
+    constructor(...args) {
+        super(...args);
 
         this.getEmitter().setMaxListeners(Infinity);
     }
 
+    setForkService(forkService) {
+        this._forkService = forkService;
+    }
+
+    setConnector(connector) {
+        this._connector = connector;
+    }
+
     async start() {
+        this._inFork = false;
         this._blockInProcessing = false;
         this._genesisDataInProcessing = false;
         this._blockQueue = [];
         this._recentTransactions = new Set();
         this._currentBlockNum = 0;
-        this._mainPrismController = new MainPrismController({ connector: this._connector });
+        this._mainPrismController = new MainPrismController({
+            connector: this._connector,
+            forkService: this._forkService,
+        });
         this._genesisController = new GenesisController();
 
         const lastBlock = await this._getLastBlockNum();
@@ -34,13 +45,15 @@ class Prism extends BasicService {
         }
 
         subscriber.eachBlock(this._registerNewBlock.bind(this));
-        subscriber.on('fork', this._handleFork.bind(this));
+        subscriber.on('fork', this._markAsInFork.bind(this));
 
         try {
             await subscriber.start();
         } catch (error) {
             Logger.error(`Cant start block subscriber - ${error.stack}`);
         }
+
+        this._runForkWatchDog();
     }
 
     getCurrentBlockNum() {
@@ -74,9 +87,13 @@ class Prism extends BasicService {
 
     async _handleBlock(block) {
         try {
+            if (this._inFork) {
+                return;
+            }
+
             const blockNum = block.blockNum;
 
-            await this._openNewRevertZone(blockNum);
+            await this._forkService.initBlock(blockNum);
             await this._setLastBlockNum(blockNum);
             await this._mainPrismController.disperse(block);
 
@@ -114,14 +131,32 @@ class Prism extends BasicService {
         }
     }
 
+    async _markAsInFork() {
+        Logger.info('Fork detected!');
+        this._inFork = true;
+    }
+
+    _runForkWatchDog() {
+        setInterval(() => {
+            if (this._inFork && !this._blockInProcessing) {
+                if (this._inGenesis) {
+                    Logger.error('Critical error!');
+                    Logger.error('Fork on genesis!');
+                    process.exit(1);
+                }
+
+                this._handleFork().catch();
+            }
+        }, env.GLS_MAX_WAIT_FOR_BLOCKCHAIN_TIMEOUT / 10);
+    }
+
     async _handleFork() {
         try {
-            // TODO Revert on fork
-            // TODO Mark start/stop revert state
-            // TODO Revert lastBlockNum
+            await this._forkService.revert();
+            process.exit(0);
         } catch (error) {
-            Logger.error(`Critical error!`);
-            Logger.error(`Cant revert on fork - ${error.stack}`);
+            Logger.error('Critical error!');
+            Logger.error('Cant revert on fork:', error);
             process.exit(1);
         }
     }
@@ -155,12 +190,6 @@ class Prism extends BasicService {
         const model = await ServiceMetaModel.findOne({}, { lastBlockNum: true });
 
         return model.lastBlockNum;
-    }
-
-    async _openNewRevertZone(blockNum) {
-        const model = new RevertTraceModel({ blockNum });
-
-        await model.save();
     }
 
     async _setLastBlockNum(blockNum) {

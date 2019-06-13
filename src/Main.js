@@ -4,13 +4,12 @@ const Logger = core.utils.Logger;
 const env = require('./data/env');
 const Prism = require('./services/Prism');
 const Connector = require('./services/Connector');
-const Cleaner = require('./services/Cleaner');
 const PostFeedCache = require('./services/PostFeedCache');
 const LeaderFeedCache = require('./services/LeaderFeedCache');
-const Sync = require('./services/Sync');
+const SearchSync = require('./services/SearchSync');
+const Fork = require('./services/Fork');
 const ServiceMetaModel = require('./models/ServiceMeta');
 const Post = require('./models/Post');
-const Comment = require('./models/Comment');
 const GolosUserExporter = require('./scripts/GolosUserExporter');
 
 class Main extends BasicMain {
@@ -21,32 +20,17 @@ class Main extends BasicMain {
         const leaderFeedCache = new LeaderFeedCache();
         const prism = new Prism();
         const connector = new Connector({ postFeedCache, leaderFeedCache, prism });
-        const cleaner = new Cleaner();
-        const sync = new Sync([Post, Comment], {
-            Post: data => {
-                return {
-                    title: data.content.title,
-                    body: data.content.body,
-                    permlink: data.contentId.permlink,
-                    contentId: data.contentId,
-                };
-            },
-            Comment: data => {
-                return {
-                    title: data.content.title,
-                    body: data.content.body,
-                    permlink: data.contentId.permlink,
-                    contentId: data.contentId,
-                };
-            },
-        });
+        const searchSync = new SearchSync();
+        const fork = new Fork();
 
+        prism.setForkService(fork);
         prism.setConnector(connector);
+
         this.startMongoBeforeBoot();
-        this.addNested(cleaner, prism, postFeedCache, leaderFeedCache);
+        this.addNested(fork, prism, postFeedCache, leaderFeedCache);
 
         if (env.GLS_SEARCH_ENABLED) {
-            this.addNested(sync);
+            this.addNested(searchSync);
         }
 
         this.addNested(connector);
@@ -65,7 +49,7 @@ class Main extends BasicMain {
                 internalQueryExecMaxBlockingSortBytes: env.GLS_MAX_QUERY_MEMORY_LIMIT,
             });
         } catch (err) {
-            Logger.warn("Can't set MongoDB parameter");
+            Logger.warn('Can`t set MongoDB memory limit');
         }
     }
 

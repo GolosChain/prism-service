@@ -3,8 +3,8 @@ const fetch = require('node-fetch');
 const { TextEncoder, TextDecoder } = require('text-encoding');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
-const env = require('../../data/env');
 const Abstract = require('./Abstract');
+const env = require('../../data/env');
 const LeaderModel = require('../../models/Leader');
 const ProfileModel = require('../../models/Profile');
 const ProposalModel = require('../../models/Proposal');
@@ -35,9 +35,20 @@ class Leader extends Abstract {
     }
 
     async unregister({ witness: userId }, { communityId }) {
-        await LeaderModel.remove({
+        const previousModel = await LeaderModel.findOneAndDelete({
             userId,
             communityId,
+        });
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: LeaderModel,
+            documentId: previousModel._id,
+            data: previousModel.toObject(),
         });
 
         await this._updateProfile(userId);
@@ -53,45 +64,73 @@ class Leader extends Abstract {
         await this._updateProfile(userId);
     }
 
-    async vote({ voter, witness: leader }, { communityId, events }) {
-        const model = await this._getLeaderModelForUpdate(communityId, leader);
+    async vote({ voter, witness }, { communityId, events }) {
+        const previousModel = await LeaderModel.findOneAndUpdate(
+            { communityId, userId: witness },
+            {
+                $addToSet: { votes: voter },
+                $set: { rating: this._extractLeaderRating(events) },
+            }
+        );
 
-        if (!model) {
-            Logger.warn(`Unknown leader - ${leader}`);
+        if (!previousModel) {
+            Logger.warn(`Unknown leader - ${witness}`);
+            return;
         }
 
-        model.votes = model.votes || [];
-        model.votes.push(voter);
-        model.votes = [...new Set(model.votes)];
-        model.rating = this._extractLeaderRating(events);
-
-        await model.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: LeaderModel,
+            documentId: previousModel._id,
+            data: {
+                $pull: { votes: voter },
+                $set: { rating: previousModel.rating },
+            },
+        });
     }
 
-    async unvote({ voter, witness: leader }, { communityId, events }) {
-        const model = await this._getLeaderModelForUpdate(communityId, leader);
+    async unvote({ voter, witness }, { communityId, events }) {
+        const previousModel = await LeaderModel.findOneAndUpdate(
+            { communityId, userId: witness },
+            {
+                $pull: { votes: voter },
+                $set: { rating: this._extractLeaderRating(events) },
+            }
+        );
 
-        if (!model) {
-            Logger.warn(`Unknown leader - ${leader}`);
+        if (!previousModel) {
+            Logger.warn(`Unknown leader - ${witness}`);
+            return;
         }
 
-        model.votes = model.votes.filter(userId => userId !== voter);
-        model.rating = this._extractLeaderRating(events);
-        model.markModified('votes');
-
-        await model.save();
-    }
-
-    async _getLeaderModelForUpdate(communityId, userId) {
-        return await LeaderModel.findOne({ communityId, userId }, { votes: true, rating: true });
+        await this.registerForkChanges({
+            type: 'update',
+            Model: LeaderModel,
+            documentId: previousModel._id,
+            data: {
+                $addToSet: { votes: voter },
+                $set: { rating: previousModel.rating },
+            },
+        });
     }
 
     async _updateLeaderWithUpsert(communityId, userId, action) {
-        await LeaderModel.updateOne({ communityId, userId }, action, { upsert: true });
+        let previousModel = await LeaderModel.findOneAndUpdate({ communityId, userId }, action);
+
+        if (!previousModel) {
+            previousModel = await LeaderModel.create({ communityId, userId, ...action });
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: LeaderModel,
+            documentId: previousModel._id,
+            data: action,
+        });
     }
 
     async _setActiveState(userId, communityId, active) {
-        await LeaderModel.updateOne(
+        const previousModel = await LeaderModel.findOneAndUpdate(
             { communityId, userId },
             {
                 $set: {
@@ -99,6 +138,19 @@ class Leader extends Abstract {
                 },
             }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: LeaderModel,
+                documentId: previousModel._id,
+                data: {
+                    $set: {
+                        active: !active,
+                    },
+                },
+            });
+        }
     }
 
     _extractLeaderRating(events) {
@@ -119,7 +171,7 @@ class Leader extends Abstract {
             }
         );
 
-        await ProfileModel.updateOne(
+        const previousModel = await ProfileModel.findOneAndUpdate(
             {
                 userId,
             },
@@ -129,6 +181,21 @@ class Leader extends Abstract {
                 },
             }
         );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel._id,
+            data: {
+                $set: {
+                    leaderIn: previousModel.leaderIn.toObject(),
+                },
+            },
+        });
     }
 
     async handleNewProposal(proposal) {
@@ -152,7 +219,6 @@ class Leader extends Abstract {
 
         const expiration = new Date(trx.expiration + 'Z');
         const [{ data }] = await this._api.deserializeActions(trx.actions);
-
         const proposalModel = new ProposalModel({
             communityId,
             userId: proposer,
@@ -165,8 +231,13 @@ class Leader extends Abstract {
                 values,
             })),
         });
+        const saved = await proposalModel.save();
 
-        await proposalModel.save();
+        await this.registerForkChanges({
+            type: 'create',
+            Model: ProposalModel,
+            documentId: saved._id,
+        });
     }
 }
 

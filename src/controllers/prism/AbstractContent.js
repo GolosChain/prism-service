@@ -47,7 +47,19 @@ class AbstractContent extends Abstract {
     }
 
     async updateUserPostsCount(userId, increment) {
-        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            { userId },
+            { $inc: { 'stats.postsCount': increment } }
+        );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: ProfileModel,
+                documentId: previousModel._id,
+                data: { $inc: { 'stats.postsCount': -increment } },
+            });
+        }
     }
 
     extractContentObjectFromGenesis(genesisContent) {
@@ -347,7 +359,7 @@ class AbstractContent extends Abstract {
     }
 
     async _setPayout(contentId, { rewardTypeKey, payoutType, tokenName, tokenValue }) {
-        await PostModel.updateOne(
+        const previousModel = await PostModel.findOneAndUpdate(
             { contentId },
             {
                 $set: {
@@ -359,6 +371,19 @@ class AbstractContent extends Abstract {
                 },
             }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: PostModel,
+                documentId: previousModel._id,
+                data: {
+                    $set: {
+                        ...previousModel.toObject(),
+                    },
+                },
+            });
+        }
     }
 
     _extractBenefactorPercents(content) {
