@@ -109,13 +109,13 @@ class Profile extends Abstract {
 
             switch (chargeId) {
                 case 0:
-                    chargeType = 'posts';
+                    chargeType = 'votes';
                     break;
                 case 1:
-                    chargeType = 'comments';
+                    chargeType = 'posts';
                     break;
                 case 2:
-                    chargeType = 'votes';
+                    chargeType = 'comments';
                     break;
                 case 3:
                     chargeType = 'postbw';
