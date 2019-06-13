@@ -2,6 +2,7 @@ const urlValidator = require('valid-url');
 const uuid = require('uuid');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
+const BigNum = core.types.BigNum;
 const Abstract = require('./Abstract');
 const env = require('../../data/env');
 const PostModel = require('../../models/Post');
@@ -347,9 +348,9 @@ class AbstractContent extends Abstract {
     _extractTokenInfo(quantity) {
         let [tokenValue, tokenName] = quantity.split(' ');
 
-        tokenValue = Number(tokenValue);
+        tokenValue = new BigNum(tokenValue);
 
-        if (!tokenName || Number.isNaN(tokenValue)) {
+        if (!tokenName || tokenValue.isNaN()) {
             Logger.warn(`Payout - invalid quantity - ${quantity}`);
             return { tokenName: null, tokenValue: null };
         }
@@ -388,7 +389,7 @@ class AbstractContent extends Abstract {
     _extractBenefactorPercents(content) {
         const percents = content.beneficiaries || [];
 
-        return percents.map(value => value.weight);
+        return percents.map(value => new BigNum(value.weight));
     }
 }
 

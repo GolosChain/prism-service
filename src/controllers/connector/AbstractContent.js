@@ -1,6 +1,7 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BasicController = core.controllers.Basic;
+const BigNum = core.types.BigNum;
 const ProfileModel = require('../../models/Profile');
 const PostModel = require('../../models/Post');
 const PoolModel = require('../../models/Pool');
@@ -380,7 +381,7 @@ class AbstractContent extends BasicController {
         });
         const curationPayout = this._calcCuratorPayout({
             totalPayout,
-            sumCuratorSw: payoutMeta.sumCuratorSw,
+            curatorsPercent: payoutMeta.curatorsPercent,
         });
         const benefactorPayout = this._calcBenefactorPayout({
             totalPayout,
@@ -408,27 +409,30 @@ class AbstractContent extends BasicController {
     }
 
     _calcTotalPayout({ rewardWeight, funds, sharesFn, rSharesFn }) {
-        return rewardWeight * funds * (sharesFn / rSharesFn);
+        return new BigNum(rewardWeight)
+            .times(funds)
+            .times(new BigNum(sharesFn).div(rSharesFn))
+            .div(10000);
     }
 
     _calcAuthorPayout({ totalPayout, curationPayout, benefactorPayout, tokenProp }) {
-        const total = totalPayout - curationPayout - benefactorPayout;
-        const tokens = total * tokenProp;
-        const vesting = total - tokens;
+        const total = totalPayout.minus(curationPayout).minus(benefactorPayout);
+        const tokens = total.times(new BigNum(tokenProp).div(10000));
+        const vesting = total.minus(tokens);
 
         return { tokens, vesting };
     }
 
-    _calcCuratorPayout({ totalPayout, sumCuratorSw }) {
-        return totalPayout - sumCuratorSw * totalPayout;
+    _calcCuratorPayout({ totalPayout, curatorsPercent }) {
+        return totalPayout.times(new BigNum(curatorsPercent).div(10000));
     }
 
     _calcBenefactorPayout({ totalPayout, curationPayout, percents }) {
-        const payoutDiff = totalPayout - curationPayout;
-        let result = 0;
+        const payoutDiff = totalPayout.minus(curationPayout);
+        let result = new BigNum(0);
 
         for (const percent of percents) {
-            result += payoutDiff * percent;
+            result = result.plus(payoutDiff.times(new BigNum(percent).div(10000)));
         }
 
         return result;

@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
+const BigNum = core.types.BigNum;
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
@@ -218,9 +219,9 @@ class Vote extends AbstractContent {
             {
                 $set: {
                     'funds.name': name,
-                    'funds.value': Number(value),
-                    rShares: Number(poolState.rshares),
-                    rSharesFn: Number(poolState.rsharesfn),
+                    'funds.value': new BigNum(value),
+                    rShares: new BigNum(poolState.rshares),
+                    rSharesFn: new BigNum(poolState.rsharesfn),
                 },
             }
         );
@@ -230,10 +231,10 @@ class Vote extends AbstractContent {
                 communityId,
                 funds: {
                     name: name,
-                    value: Number(value),
+                    value: new BigNum(value),
                 },
-                rShares: Number(poolState.rshares),
-                rSharesFn: Number(poolState.rsharesfn),
+                rShares: new BigNum(poolState.rshares),
+                rSharesFn: new BigNum(poolState.rsharesfn),
             });
         }
 
@@ -277,8 +278,8 @@ class Vote extends AbstractContent {
             ['payout.meta.sumCuratorSw']: meta.sumCuratorSw,
         };
 
-        meta.sharesFn = Number(postState.sharesfn);
-        meta.sumCuratorSw = Number(postState.sumcuratorsw);
+        meta.sharesFn = new BigNum(postState.sharesfn);
+        meta.sumCuratorSw = new BigNum(postState.sumcuratorsw);
 
         return previousQuery;
     }

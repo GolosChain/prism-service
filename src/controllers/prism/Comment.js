@@ -1,6 +1,7 @@
 const core = require('gls-core-service');
 const Content = core.utils.Content;
 const Logger = core.utils.Logger;
+const BigNum = core.types.BigNum;
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
@@ -27,8 +28,9 @@ class Comment extends AbstractContent {
             },
             payout: {
                 meta: {
-                    tokenProp: Number(content.tokenprop),
+                    tokenProp: new BigNum(content.tokenprop),
                     benefactorPercents: this._extractBenefactorPercents(content),
+                    curatorsPercent: new BigNum(content.curators_prcnt),
                 },
             },
         });

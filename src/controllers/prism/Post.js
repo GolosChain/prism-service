@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const Content = core.utils.Content;
+const BigNum = core.types.BigNum;
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 
@@ -26,8 +27,9 @@ class Post extends AbstractContent {
             },
             payout: {
                 meta: {
-                    tokenProp: Number(content.tokenprop),
+                    tokenProp: new BigNum(content.tokenprop),
                     benefactorPercents: this._extractBenefactorPercents(content),
+                    curatorsPercent: new BigNum(content.curators_prcnt),
                 },
             },
         });
@@ -99,6 +101,14 @@ class Post extends AbstractContent {
         });
 
         await this.registerForkChanges({ type: 'create', Model: PostModel, documentId: model._id });
+    }
+
+    async handleRemoveRepost({ rebloger: userId, ...content }, { communityId }) {
+        await PostModel.deleteOne({
+            communityId,
+            'repost.userId': userId,
+            contentId: this._extractContentId(content),
+        });
     }
 }
 
