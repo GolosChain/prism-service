@@ -80,6 +80,7 @@ class Post extends AbstractContent {
             type: 'remove',
             Model: PostModel,
             documentId: previousModel._id,
+            data: previousModel.toObject(),
         });
         await this.updateUserPostsCount(contentId.userId, -1);
     }
@@ -104,10 +105,21 @@ class Post extends AbstractContent {
     }
 
     async handleRemoveRepost({ rebloger: userId, ...content }, { communityId }) {
-        await PostModel.deleteOne({
+        const previousModel = await PostModel.findOneAndRemove({
             communityId,
             'repost.userId': userId,
             contentId: this._extractContentId(content),
+        });
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: PostModel,
+            documentId: previousModel._id,
+            data: previousModel.toObject(),
         });
     }
 }
