@@ -34,7 +34,6 @@ class Prism extends BasicService {
         }
 
         subscriber.eachBlock(this._registerNewBlock.bind(this));
-        subscriber.eachGenesisData(this._handleGenesisData.bind(this));
         subscriber.on('fork', this._handleFork.bind(this));
 
         try {
