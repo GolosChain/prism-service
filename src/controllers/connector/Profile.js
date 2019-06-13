@@ -2,7 +2,7 @@ const AbstractFeed = require('./AbstractFeed');
 const Model = require('../../models/Profile');
 
 class Profile extends AbstractFeed {
-    async getProfile({ currentUserId, requestedUserId, type, username, app }) {
+    async getProfile({ currentUserId, requestedUserId, username, app }) {
         if (!requestedUserId && !username) {
             throw { code: 400, message: 'Invalid user identification' };
         }

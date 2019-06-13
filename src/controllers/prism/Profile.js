@@ -1,3 +1,4 @@
+const lodash = require('lodash');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
@@ -67,43 +68,28 @@ class Profile extends Abstract {
     }
 
     async handleMeta({ account: userId, meta }) {
-        console.log(meta);
+        const query = this._makePersonalUpdateQuery(meta);
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            {
+                userId,
+            },
+            {
+                $set: query,
+            }
+        );
 
-        const profile = await ProfileModel.findOne({ userId }, { personal: true });
-
-        if (!profile) {
+        if (!previousModel) {
             return;
         }
 
-        const updateFields = this._omitNulls(meta);
-
-        if (updateFields.profile_image !== undefined) {
-            updateFields.avatarUrl = updateFields.profile_image;
-        }
-
-        if (updateFields.cover_image !== undefined) {
-            updateFields.coverUrl = updateFields.cover_image;
-        }
-
-        profile.personal.gls = {
-            ...profile.personal.gls,
-            ...updateFields,
-        };
-
-        const personal = profile.personal.cyber;
-        const contacts = personal.contacts;
-        const or = this._currentOrNew.bind(this);
-
-        personal.avatarUrl = or(personal.avatarUrl, meta.profile_image);
-        personal.coverUrl = or(personal.coverUrl, meta.cover_image);
-        personal.biography = or(personal.biography, meta.about);
-        contacts.facebook = or(contacts.facebook, meta.facebook);
-        contacts.telegram = or(contacts.telegram, meta.telegram);
-        contacts.whatsApp = or(contacts.whatsApp, '');
-        contacts.weChat = or(contacts.weChat, '');
-
-        // TODO Fork log
-        await profile.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel,
+            data: {
+                $set: this._extractPersonalReversedFields(query, previousModel),
+            },
+        });
     }
 
     async handleChargeState(chargeStateEvents) {
@@ -169,40 +155,93 @@ class Profile extends Abstract {
         });
     }
 
-    _extractUpdatedMetaFields(meta) {
+    _makePersonalUpdateQuery(meta) {
+        const data = this._extractUpdatedPersonalRawFields(meta);
+        const query = {};
+
+        for (const key of Object.keys(data)) {
+            switch (key) {
+                case 'profile_image':
+                    query['personal.cyber.avatarUrl'] = data[key];
+                    query['personal.gls.avatarUrl'] = data[key];
+                    break;
+
+                case 'background_image':
+                case 'cover_image':
+                    query['personal.cyber.coverUrl'] = data[key];
+                    query['personal.gls.coverUrl'] = data[key];
+                    break;
+
+                case 'about':
+                    query['personal.cyber.biography'] = data[key];
+                    query['personal.gls.about'] = data[key];
+                    break;
+
+                case 'facebook':
+                    query['personal.cyber.contacts.facebook'] = data[key];
+                    break;
+
+                case 'telegram':
+                    query['personal.cyber.contacts.telegram'] = data[key];
+                    break;
+
+                case 'whatsapp':
+                    query['personal.cyber.contacts.whatsApp'] = data[key];
+                    break;
+
+                case 'wechat':
+                    query['personal.cyber.contacts.weChat'] = data[key];
+                    break;
+
+                case 'user_image':
+                    query['personal.gls.name'] = data[key];
+                    break;
+
+                case 'gender':
+                    query['personal.gls.gender'] = data[key];
+                    break;
+
+                case 'location':
+                    query['personal.gls.location'] = data[key];
+                    break;
+
+                case 'website':
+                    query['personal.gls.website'] = data[key];
+                    break;
+            }
+        }
+
+        return query;
+    }
+
+    _extractUpdatedPersonalRawFields(meta) {
         const result = {};
 
         for (const key of Object.keys(meta)) {
-            //
-        }
-    }
-
-    _currentOrNew(currentValue, newValue) {
-        if (newValue === null || newValue === undefined) {
-            return currentValue;
-        } else {
-            return newValue;
-        }
-    }
-
-    _omitNulls(data) {
-        const newData = {};
-
-        for (const key of Object.keys(data)) {
-            const value = data[key];
+            const value = meta[key];
 
             if (value === null || value === undefined) {
                 continue;
             }
 
             if (value === '') {
-                newData[key] = null;
-            } else {
-                newData[key] = value;
+                result[key] = null;
             }
+
+            result[key] = value;
         }
 
-        return newData;
+        return result;
+    }
+
+    _extractPersonalReversedFields(query, previousModel) {
+        const result = {};
+
+        for (const key of Object.keys(query)) {
+            result[key] = lodash.get(previousModel, key) || null;
+        }
+
+        return result;
     }
 }
 

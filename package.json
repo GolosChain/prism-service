@@ -41,6 +41,7 @@
     "elasticsearch": "^15.5.0",
     "gls-core-service": "^3.25.2",
     "golos-js": "^0.7.7",
+    "lodash": "^4.17.11",
     "moment": "^2.24.0",
     "mongodb": "^3.2.6",
     "node-fetch": "^2.6.0",

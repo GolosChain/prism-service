@@ -79,9 +79,6 @@ module.exports = MongoDB.makeModel(
                 coverUrl: {
                     type: String,
                 },
-                social: {
-                    type: String,
-                },
             },
         },
         subscriptions: {
