@@ -35,16 +35,22 @@ class Leader extends Abstract {
             { $set: action }
         );
 
-        if (!previousModel) {
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: LeaderModel,
+                documentId: previousModel._id,
+                data: action,
+            });
+        } else {
             previousModel = await LeaderModel.create({ communityId, userId, ...action });
-        }
 
-        await this.registerForkChanges({
-            type: 'update',
-            Model: LeaderModel,
-            documentId: previousModel._id,
-            data: action,
-        });
+            await this.registerForkChanges({
+                type: 'create',
+                Model: LeaderModel,
+                documentId: previousModel._id,
+            });
+        }
 
         await this._updateProfile(userId);
     }
