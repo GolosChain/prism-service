@@ -33,7 +33,7 @@ class Fork extends BasicService {
 
         const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 } });
 
-        if (!documents) {
+        if (!documents.length) {
             Logger.warn('Empty fork data.');
             return;
         }
@@ -54,7 +54,7 @@ class Fork extends BasicService {
 
         const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 }, limit: 1 });
 
-        if (!documents) {
+        if (!documents.length) {
             Logger.warn('Empty restore data.');
             return;
         }
