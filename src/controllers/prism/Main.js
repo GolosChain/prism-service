@@ -68,6 +68,7 @@ class Main {
                 await this._profile.handleChargeState(events);
 
                 break;
+
             case `cyber->newaccount`:
                 await this._profile.handleCreate(actionArgs, { blockTime });
                 break;
@@ -103,10 +104,6 @@ class Main {
 
             case `${communityId}.social->updatemeta`:
                 await this._profile.handleMeta(actionArgs);
-                break;
-
-            case `${communityId}.social->changereput`:
-                await this._vote.handleReputation(actionArgs);
                 break;
 
             case `${communityId}.publish->upvote`:
