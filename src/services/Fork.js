@@ -29,20 +29,44 @@ class Fork extends BasicService {
     }
 
     async revert() {
-        const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 }, lean: true });
+        Logger.info('Revert on fork...');
+
+        const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 } });
 
         if (!documents) {
             Logger.warn('Empty fork data.');
             return;
         }
 
+        const lastBlockNum = documents[documents.length - 1].blockNum - 1;
+
         for (const document of documents) {
             await this._restoreBy(document);
         }
 
-        const lastBlockNum = documents[documents.length - 1].blockNum;
+        await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum } });
+
+        Logger.info('Revert on fork done!');
+    }
+
+    async revertLastBlock() {
+        Logger.info('Revert last block...');
+
+        const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 }, limit: 1 });
+
+        if (!documents) {
+            Logger.warn('Empty restore data.');
+            return;
+        }
+
+        const document = documents[0];
+        const lastBlockNum = document.blockNum - 1;
+
+        await this._restoreBy(document);
 
         await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum } });
+
+        Logger.info('Revert last block done!');
     }
 
     async _clean() {
