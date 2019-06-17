@@ -1,3 +1,4 @@
+const lodash = require('lodash');
 const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BigNum = core.types.BigNum;
@@ -128,12 +129,18 @@ class Vote extends AbstractContent {
             return;
         }
 
+        const previousVotes = lodash.get(previousModel, votesArrayPath);
+
+        if (!previousVotes.some(recentVote => recentVote.userId === vote.userId)) {
+            return;
+        }
+
         await Model.updateOne({ _id: model._id }, { $inc: { [votesCountPath]: increment } });
 
         await this.registerForkChanges({
             type: 'update',
             Model,
-            documentId: previousModel._id,
+            documentId: updatedModel._id,
             data: {
                 [removeAction]: { [votesArrayPath]: vote },
                 $inc: { [votesCountPath]: -increment },
