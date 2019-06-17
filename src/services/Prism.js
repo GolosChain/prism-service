@@ -35,7 +35,14 @@ class Prism extends BasicService {
         });
         this._genesisController = new GenesisController();
 
-        const lastBlock = await this._getLastBlockNum();
+        let lastBlock = await this._getLastBlockNum();
+
+        if (lastBlock !== 0) {
+            await this._revertLastBlock();
+
+            lastBlock = await this._getLastBlockNum();
+        }
+
         const subscriber = new BlockSubscribe(lastBlock + 1);
 
         this._inGenesis = lastBlock === 0;
@@ -161,6 +168,14 @@ class Prism extends BasicService {
         }
     }
 
+    async _revertLastBlock() {
+        try {
+            await this._forkService.revertLastBlock();
+        } catch (error) {
+            Logger.error('Cant revert last block, but continue:', error);
+        }
+    }
+
     async _handleGenesisData(type, data) {
         if (!this._inGenesis) {
             Logger.error('Genesis done, but data transfer.');
@@ -189,7 +204,11 @@ class Prism extends BasicService {
     async _getLastBlockNum() {
         const model = await ServiceMetaModel.findOne({}, { lastBlockNum: true });
 
-        return model.lastBlockNum;
+        if (model) {
+            return model.lastBlockNum;
+        } else {
+            return 0;
+        }
     }
 
     async _setLastBlockNum(blockNum) {
