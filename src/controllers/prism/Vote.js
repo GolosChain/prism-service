@@ -140,7 +140,7 @@ class Vote extends AbstractContent {
         await this.registerForkChanges({
             type: 'update',
             Model,
-            documentId: updatedModel._id,
+            documentId: previousVotes._id,
             data: {
                 [removeAction]: { [votesArrayPath]: vote },
                 $inc: { [votesCountPath]: -increment },
