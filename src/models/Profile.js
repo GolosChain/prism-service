@@ -13,7 +13,7 @@ module.exports = MongoDB.makeModel(
             type: Object,
             default: {},
         },
-        chargers: {
+        chargersRaw: {
             votes: {
                 value: {
                     type: Number,
