@@ -131,7 +131,7 @@ class Profile extends Abstract {
     }
 
     async _updateChargeState(userId, chargeType, chargePercent) {
-        const path = `chargers.${chargeType}`;
+        const path = `chargersRaw.${chargeType}`;
         const previousModel = await ProfileModel.findOneAndUpdate(
             {
                 userId,

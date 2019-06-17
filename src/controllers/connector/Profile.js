@@ -48,6 +48,9 @@ class Profile extends AbstractFeed {
             modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
         delete modelObject.usernames;
 
+        modelObject.chargers = this._calculateChargers(modelObject.chargersRaw);
+        delete modelObject.chargersRaw;
+
         await this._detectSubscription(modelObject, currentUserId, requestedUserId);
 
         return modelObject;
@@ -56,13 +59,11 @@ class Profile extends AbstractFeed {
     async getChargers({ userId }) {
         const profile = await Model.findOne(
             { userId },
-            { chargers: true, _id: false },
+            { chargersRaw: true, _id: false },
             { lean: true }
         );
 
-        profile.chargers = this._calculateChargers(profile);
-
-        return profile.chargers;
+        return this._calculateChargers(profile.chargersRaw);
     }
 
     _calculateChargers(chargers) {
