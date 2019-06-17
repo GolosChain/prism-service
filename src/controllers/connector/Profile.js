@@ -63,6 +63,8 @@ class Profile extends AbstractFeed {
             { lean: true }
         );
 
+        this._checkExists(profile);
+
         return this._calculateChargers(profile.chargersRaw);
     }
 
