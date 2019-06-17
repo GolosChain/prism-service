@@ -59,7 +59,7 @@ class Profile extends AbstractFeed {
     async getChargers({ userId }) {
         const profile = await Model.findOne(
             { userId },
-            { chargers: true, _id: false },
+            { chargersRaw: true, _id: false },
             { lean: true }
         );
 
