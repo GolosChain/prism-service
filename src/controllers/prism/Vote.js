@@ -130,8 +130,12 @@ class Vote extends AbstractContent {
         }
 
         const previousVotes = lodash.get(previousModel, votesArrayPath);
+        const inPreviousVotes = previousVotes.some(recentVote => recentVote.userId === vote.userId);
 
-        if (!previousVotes.some(recentVote => recentVote.userId === vote.userId)) {
+        if (
+            (addAction === '$push' && inPreviousVotes) ||
+            (addAction === '$pull' && !inPreviousVotes)
+        ) {
             return;
         }
 
