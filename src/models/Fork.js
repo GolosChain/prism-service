@@ -8,6 +8,14 @@ module.exports = MongoDB.makeModel(
             type: Number,
             required: true,
         },
+        blockTime: {
+            type: Date,
+            required: true,
+        },
+        blockSequence: {
+            type: Number,
+            required: true,
+        },
         stack: {
             type: [
                 {
