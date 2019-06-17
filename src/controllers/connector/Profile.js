@@ -49,7 +49,7 @@ class Profile extends AbstractFeed {
         delete modelObject.usernames;
 
         modelObject.chargers = this._calculateChargers(modelObject.chargersRaw);
-        delete modelObject.chargers;
+        delete modelObject.chargersRaw;
 
         await this._detectSubscription(modelObject, currentUserId, requestedUserId);
 
