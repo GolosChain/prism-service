@@ -35,17 +35,20 @@ class Prism extends BasicService {
         });
         this._genesisController = new GenesisController();
 
-        let lastBlock = await this._getLastBlockNum();
+        let blockInfo = await this._getLastBlock();
 
-        if (lastBlock !== 0) {
+        if (blockInfo.lastBlockNum !== 0) {
             await this._revertLastBlock();
 
-            lastBlock = await this._getLastBlockNum();
+            blockInfo = await this._getLastBlock();
         }
 
-        const subscriber = new BlockSubscribe(lastBlock + 1);
+        const subscriber = new BlockSubscribe({
+            lastSequence: blockInfo.lastBlockSequence || 0,
+            lastTime: blockInfo.lastBlockTime,
+        });
 
-        this._inGenesis = lastBlock === 0;
+        this._inGenesis = blockInfo.lastBlockNum === 0;
 
         if (!env.GLS_USE_GENESIS) {
             this._inGenesis = false;
@@ -98,10 +101,8 @@ class Prism extends BasicService {
                 return;
             }
 
-            const blockNum = block.blockNum;
-
-            await this._forkService.initBlock(blockNum);
-            await this._setLastBlockNum(blockNum);
+            await this._forkService.initBlock(block);
+            await this._setLastBlock(block);
             await this._mainPrismController.disperse(block);
 
             this._emitHandled(block);
@@ -201,18 +202,41 @@ class Prism extends BasicService {
         this._genesisDataInProcessing = false;
     }
 
-    async _getLastBlockNum() {
-        const model = await ServiceMetaModel.findOne({}, { lastBlockNum: true });
+    async _getLastBlock() {
+        const model = await ServiceMetaModel.findOne(
+            {},
+            {
+                lastBlockNum: true,
+                lastBlockSequence: true,
+                lastBlockTime: true,
+            },
+            {
+                lean: true,
+            }
+        );
 
-        if (model) {
-            return model.lastBlockNum;
-        } else {
-            return 0;
+        if (!model) {
+            return {
+                lastBlockNum: 0,
+                lastBlockSequence: 0,
+                lastBlockTime: null,
+            };
         }
+
+        return model;
     }
 
-    async _setLastBlockNum(blockNum) {
-        await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum: blockNum } });
+    async _setLastBlock(block) {
+        await ServiceMetaModel.updateOne(
+            {},
+            {
+                $set: {
+                    lastBlockNum: block.blockNum,
+                    lastBlockTime: block.blockTime,
+                    lastBlockSequence: block.sequence,
+                },
+            }
+        );
     }
 }
 

@@ -12,8 +12,8 @@ class Fork extends BasicService {
         }, env.GLS_FORK_CLEANER_INTERVAL);
     }
 
-    async initBlock(blockNum) {
-        await ForkModel.create({ blockNum });
+    async initBlock({ blockNum, blockTime, sequence }) {
+        await ForkModel.create({ blockNum, blockTime, blockSequence: sequence });
     }
 
     async registerChanges({ type, Model, documentId, data }) {
@@ -52,19 +52,36 @@ class Fork extends BasicService {
     async revertLastBlock() {
         Logger.info('Revert last block...');
 
-        const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 }, limit: 1 });
+        const [current, previous] = await ForkModel.find(
+            {},
+            {},
+            { sort: { blockNum: -1 }, limit: 2 }
+        );
 
-        if (!documents.length) {
+        if (!current) {
             Logger.warn('Empty restore data.');
             return;
         }
 
-        const document = documents[0];
-        const lastBlockNum = document.blockNum - 1;
+        await this._restoreBy(current);
 
-        await this._restoreBy(document);
+        let update;
 
-        await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum } });
+        if (previous) {
+            update = {
+                lastBlockNum: previous.blockNum,
+                lastBlockTime: previous.blockTime,
+                lastBlockSequence: previous.blockSequence,
+            };
+        } else {
+            update = {
+                lastBlockNum: 0,
+                lastBlockTime: null,
+                lastBlockSequence: 0,
+            };
+        }
+
+        await ServiceMetaModel.updateOne({}, { $set: update });
 
         Logger.info('Revert last block done!');
     }
