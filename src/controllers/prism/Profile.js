@@ -137,7 +137,7 @@ class Profile extends Abstract {
                 userId,
             },
             {
-                $set: { [path]: chargePercent },
+                $set: { [path]: { value: chargePercent, lastUpdated: Date.now() } },
             }
         );
 

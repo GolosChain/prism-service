@@ -15,20 +15,44 @@ module.exports = MongoDB.makeModel(
         },
         chargers: {
             votes: {
-                type: Number,
-                default: 100,
+                value: {
+                    type: Number,
+                    default: 100,
+                },
+                lastUpdated: {
+                    type: Date,
+                    default: Date.now(),
+                },
             },
             posts: {
-                type: Number,
-                default: 100,
+                value: {
+                    type: Number,
+                    default: 100,
+                },
+                lastUpdated: {
+                    type: Date,
+                    default: Date.now(),
+                },
             },
             comments: {
-                type: Number,
-                default: 100,
+                value: {
+                    type: Number,
+                    default: 100,
+                },
+                lastUpdated: {
+                    type: Date,
+                    default: Date.now(),
+                },
             },
             postbw: {
-                type: Number,
-                default: 100,
+                value: {
+                    type: Number,
+                    default: 100,
+                },
+                lastUpdated: {
+                    type: Date,
+                    default: Date.now(),
+                },
             },
         },
         personal: {

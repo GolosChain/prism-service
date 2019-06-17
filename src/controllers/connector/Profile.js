@@ -59,7 +59,21 @@ class Profile extends AbstractFeed {
             { chargers: true, _id: false },
             { lean: true }
         );
+
+        profile.chargers = this._calculateChargers(profile);
+
         return profile.chargers;
+    }
+
+    _calculateChargers(chargers) {
+        const chargerValues = {};
+
+        for (const charger of Object.keys(chargers)) {
+            // todo: wait for core team and add formula
+            chargerValues[charger] = chargers[charger].value;
+        }
+
+        return chargerValues;
     }
 
     async _detectSubscription(modelObject, currentUserId, requestedUserId) {
