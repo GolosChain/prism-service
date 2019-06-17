@@ -121,11 +121,14 @@ class Vote extends AbstractContent {
         const votesCountPath = `votes.${type}Count`;
         const previousModel = await Model.findOneAndUpdate(
             { _id: model._id },
-            {
-                [addAction]: { [votesArrayPath]: vote },
-                $inc: { [votesCountPath]: increment },
-            }
+            { [addAction]: { [votesArrayPath]: vote } }
         );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await Model.updateOne({ _id: model._id }, { $inc: { [votesCountPath]: increment } });
 
         await this.registerForkChanges({
             type: 'update',
