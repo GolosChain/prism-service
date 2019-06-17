@@ -51,11 +51,7 @@ class Vote extends AbstractContent {
         await this._updatePayout(model, communityId, events);
     }
 
-    async handleReputation({ voter, author, rshares: rShares }) {
-        await this._tryUpdateProfileReputation(voter, author, rShares);
-    }
-
-    async _tryUpdateProfileReputation(voter, author, rShares) {
+    async _tryUpdateProfileReputation({ voter, author, rshares: rShares }) {
         const voterModelObject = await ProfileModel.findOne(
             { userId: voter },
             { 'stats.reputation': true },
@@ -166,8 +162,9 @@ class Vote extends AbstractContent {
     }
 
     async _updatePayout(model, communityId, events) {
-        const { postState, poolState } = this._getPayoutEventsData(events);
+        const { voteState, postState, poolState } = this._getEventsData(events);
 
+        await this._tryUpdateProfileReputation(voteState);
         await this._actualizePoolState(poolState, communityId);
 
         const previousScoringQuery = this._addPayoutScoring(model, postState);
@@ -188,7 +185,7 @@ class Vote extends AbstractContent {
         });
     }
 
-    _getPayoutEventsData(events) {
+    _getEventsData(events) {
         let postState;
         let poolState;
         let voteState;
