@@ -162,6 +162,7 @@ class Profile extends Abstract {
         for (const key of Object.keys(data)) {
             switch (key) {
                 case 'profile_image':
+                case 'user_image':
                     query['personal.cyber.avatarUrl'] = data[key];
                     query['personal.gls.avatarUrl'] = data[key];
                     break;
@@ -193,7 +194,7 @@ class Profile extends Abstract {
                     query['personal.cyber.contacts.weChat'] = data[key];
                     break;
 
-                case 'user_image':
+                case 'name':
                     query['personal.gls.name'] = data[key];
                     break;
 
