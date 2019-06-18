@@ -86,16 +86,7 @@ module.exports = MongoDB.makeModel(
         },
         votes: {
             upVotes: {
-                type: [
-                    {
-                        userId: {
-                            type: String,
-                        },
-                        weight: {
-                            type: Number,
-                        },
-                    },
-                ],
+                type: Array,
                 default: [],
             },
             upCount: {
@@ -103,16 +94,7 @@ module.exports = MongoDB.makeModel(
                 default: 0,
             },
             downVotes: {
-                type: [
-                    {
-                        userId: {
-                            type: String,
-                        },
-                        weight: {
-                            type: Number,
-                        },
-                    },
-                ],
+                type: Array,
                 default: [],
             },
             downCount: {

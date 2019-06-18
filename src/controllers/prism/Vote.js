@@ -112,17 +112,17 @@ class Vote extends AbstractContent {
     async _manageVotes({ model, vote, type, action }) {
         const [addAction, removeAction, increment] = this._getArrayEntityCommands(action);
         const Model = model.constructor;
-        const pack = model.votes[`${type}Votes`] || [];
-
-        if (pack.find(item => item.userId === vote.userId)) {
-            return;
-        }
-
         const votesArrayPath = `votes.${type}Votes`;
         const votesCountPath = `votes.${type}Count`;
+        let updateVoteObject = vote;
+
+        if (addAction === '$pull') {
+            updateVoteObject = { userId: vote.userId };
+        }
+
         const previousModel = await Model.findOneAndUpdate(
             { _id: model._id },
-            { [addAction]: { [votesArrayPath]: vote } }
+            { [addAction]: { [votesArrayPath]: updateVoteObject } }
         );
 
         if (!previousModel) {
@@ -133,7 +133,7 @@ class Vote extends AbstractContent {
         const inPreviousVotes = previousVotes.some(recentVote => recentVote.userId === vote.userId);
 
         if (
-            (addAction === '$push' && inPreviousVotes) ||
+            (addAction === '$addToSet' && inPreviousVotes) ||
             (addAction === '$pull' && !inPreviousVotes)
         ) {
             return;
@@ -141,12 +141,18 @@ class Vote extends AbstractContent {
 
         await Model.updateOne({ _id: model._id }, { $inc: { [votesCountPath]: increment } });
 
+        let removeVoteObject = vote;
+
+        if (removeAction === '$pull') {
+            removeVoteObject = { userId: vote.userId };
+        }
+
         await this.registerForkChanges({
             type: 'update',
             Model,
             documentId: previousVotes._id,
             data: {
-                [removeAction]: { [votesArrayPath]: vote },
+                [removeAction]: { [votesArrayPath]: removeVoteObject },
                 $inc: { [votesCountPath]: -increment },
             },
         });
