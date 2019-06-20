@@ -115,7 +115,7 @@ class Block extends BasicController {
     }
 
     _isExpired(startTime) {
-        return startTime + env.GLS_MAX_WAIT_FOR_BLOCKCHAIN_TIMEOUT < new Date();
+        return Number(startTime) + Number(env.GLS_MAX_WAIT_FOR_BLOCKCHAIN_TIMEOUT) < new Date();
     }
 
     _rejectTimeout(reject) {
