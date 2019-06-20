@@ -181,6 +181,8 @@ class Fork extends BasicService {
 
             delete data[key];
         }
+
+        return data;
     }
 
     _unpackData(data) {
@@ -201,6 +203,8 @@ class Fork extends BasicService {
 
             delete data[key];
         }
+
+        return data;
     }
 }
 
