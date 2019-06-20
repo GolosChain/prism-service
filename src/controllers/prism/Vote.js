@@ -184,6 +184,11 @@ class Vote extends AbstractContent {
     async _updatePayout(model, communityId, events) {
         const { voteState, postState, poolState } = this._getEventsData(events);
 
+        if (!voteState) {
+            Logger.warn('Undefined VoteState event!');
+            return;
+        }
+
         await this._tryUpdateProfileReputation(voteState);
         await this._actualizePoolState(poolState, communityId);
 
