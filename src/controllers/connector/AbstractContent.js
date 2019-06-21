@@ -399,13 +399,13 @@ class AbstractContent extends BasicController {
         const name = pool.funds.name;
 
         payout.author.token.name = name;
-        payout.author.token.value = authorTokenPayout;
+        payout.author.token.value = Number(authorTokenPayout) || 0;
         payout.author.vesting.name = name;
-        payout.author.vesting.value = authorVestingPayout;
+        payout.author.vesting.value = Number(authorVestingPayout) || 0;
         payout.curator.vesting.name = name;
-        payout.curator.vesting.value = curationPayout;
+        payout.curator.vesting.value = Number(curationPayout) || 0;
         payout.benefactor.vesting.name = name;
-        payout.benefactor.vesting.value = benefactorPayout;
+        payout.benefactor.vesting.value = Number(benefactorPayout) || 0;
     }
 
     _calcTotalPayout({ rewardWeight, funds, sharesFn, rSharesFn }) {
