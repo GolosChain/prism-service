@@ -179,8 +179,8 @@ class Profile extends Abstract {
                     break;
 
                 case 'vk':
-                    query['personal.cyber.contacts.vk'] = data[key];
-                    query['personal.gls.contacts.vk'] = data[key];
+                    query['personal.cyber.contacts.vkontakte'] = data[key];
+                    query['personal.gls.contacts.vkontakte'] = data[key];
                     break;
 
                 case 'facebook':

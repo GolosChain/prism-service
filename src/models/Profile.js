@@ -67,7 +67,7 @@ module.exports = MongoDB.makeModel(
                     type: String,
                 },
                 contacts: {
-                    vk: {
+                    vkontakte: {
                         type: String,
                     },
                     facebook: {
@@ -110,7 +110,7 @@ module.exports = MongoDB.makeModel(
                     type: String,
                 },
                 contacts: {
-                    vk: {
+                    vkontakte: {
                         type: String,
                     },
                     facebook: {
