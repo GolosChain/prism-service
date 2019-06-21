@@ -48,6 +48,7 @@ class Profile extends AbstractFeed {
             modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
         delete modelObject.usernames;
 
+        modelObject.chargersRaw = modelObject.chargersRaw = {};
         modelObject.chargers = this._calculateChargers(modelObject.chargersRaw);
         delete modelObject.chargersRaw;
 
@@ -65,7 +66,7 @@ class Profile extends AbstractFeed {
 
         this._checkExists(profile);
 
-        return this._calculateChargers(profile.chargersRaw);
+        return this._calculateChargers(profile.chargersRaw || {});
     }
 
     _calculateChargers(chargers) {
