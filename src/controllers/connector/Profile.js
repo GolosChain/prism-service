@@ -267,7 +267,7 @@ class Profile extends AbstractFeed {
 
             const count = await Model.countDocuments({
                 userId: currentUserId,
-                subscriptions: item.userId,
+                'subscriptions.userIds': item.userId,
             });
 
             item.isSubscribed = Boolean(count);
