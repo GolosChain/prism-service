@@ -178,20 +178,34 @@ class Profile extends Abstract {
                     query['personal.gls.about'] = data[key];
                     break;
 
+                case 'vk':
+                    query['personal.cyber.contacts.vkontakte'] = data[key];
+                    query['personal.gls.contacts.vkontakte'] = data[key];
+                    break;
+
                 case 'facebook':
                     query['personal.cyber.contacts.facebook'] = data[key];
+                    query['personal.gls.contacts.facebook'] = data[key];
+                    break;
+
+                case 'instagram':
+                    query['personal.cyber.contacts.instagram'] = data[key];
+                    query['personal.gls.contacts.instagram'] = data[key];
                     break;
 
                 case 'telegram':
                     query['personal.cyber.contacts.telegram'] = data[key];
+                    query['personal.gls.contacts.telegram'] = data[key];
                     break;
 
                 case 'whatsapp':
                     query['personal.cyber.contacts.whatsApp'] = data[key];
+                    query['personal.gls.contacts.whatsApp'] = data[key];
                     break;
 
                 case 'wechat':
                     query['personal.cyber.contacts.weChat'] = data[key];
+                    query['personal.gls.contacts.weChat'] = data[key];
                     break;
 
                 case 'name':

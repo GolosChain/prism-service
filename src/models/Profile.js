@@ -67,7 +67,13 @@ module.exports = MongoDB.makeModel(
                     type: String,
                 },
                 contacts: {
+                    vkontakte: {
+                        type: String,
+                    },
                     facebook: {
+                        type: String,
+                    },
+                    instagram: {
                         type: String,
                     },
                     telegram: {
@@ -102,6 +108,26 @@ module.exports = MongoDB.makeModel(
                 },
                 coverUrl: {
                     type: String,
+                },
+                contacts: {
+                    vkontakte: {
+                        type: String,
+                    },
+                    facebook: {
+                        type: String,
+                    },
+                    instagram: {
+                        type: String,
+                    },
+                    telegram: {
+                        type: String,
+                    },
+                    whatsApp: {
+                        type: String,
+                    },
+                    weChat: {
+                        type: String,
+                    },
                 },
             },
         },
