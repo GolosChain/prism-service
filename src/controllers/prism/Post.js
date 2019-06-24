@@ -95,8 +95,6 @@ class Post extends AbstractContent {
                 body: {
                     raw: this._extractBodyRaw(content),
                 },
-            },
-            meta: {
                 time: blockTime,
             },
         });

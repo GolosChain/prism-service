@@ -18,6 +18,10 @@ module.exports = MongoDB.makeModel(
                     type: String,
                 },
             },
+            time: {
+                type: Date,
+                default: new Date(),
+            },
         },
         contentId: {
             userId: {
