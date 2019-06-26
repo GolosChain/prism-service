@@ -10,40 +10,38 @@ const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
 
 class AbstractContent extends Abstract {
-    async handlePayout({ from, to, quantity, memo }) {
-        if (!this._isPayoutContract(from)) {
+    async handlePayout(content, { events }) {
+        const model = await this._getModel(content);
+        if (!model) {
             return;
         }
 
-        const payoutType = this._getPayoutType(to);
-        if (!payoutType) {
-            return;
+        const event = events.find(event => event.event === 'postreward');
+
+        if (event) {
+            const rewardTypes = ['author_reward', 'curator_reward', 'benefactor_reward'];
+
+            const payouts = {};
+
+            for (const rewardType of rewardTypes) {
+                const rewardTypeKey = this._getRewardTypeKey(rewardType);
+                if (!rewardTypeKey) {
+                    return;
+                }
+
+                const { tokenName, tokenValue } = this._extractTokenInfo(event.args[rewardType]);
+                if (!tokenName) {
+                    return;
+                }
+
+                payouts[`payout.${rewardTypeKey}.token`] = {
+                    name: tokenName,
+                    value: tokenValue,
+                };
+            }
+
+            await this._setPayouts(model, payouts);
         }
-
-        const { userId, permlink, contentType, rewardType } = this._parsePayoutMemo(
-            memo,
-            payoutType
-        );
-
-        const Model = this._getPayoutModelClass(contentType);
-        if (!Model) {
-            return;
-        }
-
-        const rewardTypeKey = this._getRewardTypeKey(rewardType);
-        if (!rewardTypeKey) {
-            return;
-        }
-
-        const { tokenName, tokenValue } = this._extractTokenInfo(quantity);
-        if (!tokenName) {
-            return;
-        }
-
-        await this._setPayout(
-            { userId, permlink },
-            { rewardTypeKey, payoutType, tokenName, tokenValue }
-        );
     }
 
     async updateUserPostsCount(userId, increment) {
@@ -222,6 +220,25 @@ class AbstractContent extends Abstract {
         item.result = embedData;
     }
 
+    async _getModel(content) {
+        const contentId = this._extractContentId(content);
+        const query = { contentId };
+        const projection = { votes: true, payout: true, meta: true, stats: true };
+        const post = await PostModel.findOne(query, projection);
+
+        if (post) {
+            return post;
+        }
+
+        const comment = await CommentModel.findOne(query, projection);
+
+        if (comment) {
+            return comment;
+        }
+
+        return null;
+    }
+
     _extractContentId(content) {
         return this._extractContentIdFromId(content.message_id);
     }
@@ -280,68 +297,20 @@ class AbstractContent extends Abstract {
         };
     }
 
-    _isPayoutContract(name) {
-        return name.split('.')[1] === 'publish';
-    }
-
-    _parsePayoutMemo(memo, payoutType) {
-        if (payoutType === 'vesting') {
-            const match = memo.match(/^\w+ \w+: (.+); (\w+) \w+ \w+ (\w+) .+:(.+)$/);
-
-            return {
-                userId: match[1],
-                permlink: match[4],
-                rewardType: match[2],
-                contentType: match[3],
-            };
-        } else {
-            const match = memo.match(/^\w+ \w+ (\w+) (.+):(.+)/);
-
-            return {
-                userId: match[2],
-                permlink: match[3],
-                rewardType: 'author',
-                contentType: match[1],
-            };
-        }
-    }
-
     _getRewardTypeKey(rewardType) {
         switch (rewardType) {
-            case 'author':
+            case 'author_reward':
                 return 'author';
 
-            case 'curators':
+            case 'curator_reward':
                 return 'curator';
 
-            case 'benefeciary':
+            case 'benefactor_reward':
                 return 'benefactor';
 
             default:
                 Logger.warn(`Payout - unknown reward type - ${rewardType}`);
                 return null;
-        }
-    }
-
-    _getPayoutModelClass(contentType) {
-        switch (contentType) {
-            case 'post':
-                return PostModel;
-
-            case 'comment':
-                return CommentModel;
-
-            default:
-                Logger.warn(`Payout - unknown content type - ${contentType}`);
-                return null;
-        }
-    }
-
-    _getPayoutType(target) {
-        if (target.split('.')[1] === 'vesting') {
-            return 'vesting';
-        } else {
-            return 'token';
         }
     }
 
@@ -358,16 +327,14 @@ class AbstractContent extends Abstract {
         return { tokenName, tokenValue };
     }
 
-    async _setPayout(contentId, { rewardTypeKey, payoutType, tokenName, tokenValue }) {
-        const previousModel = await PostModel.findOneAndUpdate(
-            { contentId },
+    async _setPayouts(model, payouts) {
+        const Model = model.constructor;
+        const previousModel = await Model.findOneAndUpdate(
+            { contentId: model.contentId },
             {
                 $set: {
                     'payout.done': true,
-                    [`payout.${rewardTypeKey}.${payoutType}`]: {
-                        name: tokenName,
-                        value: tokenValue,
-                    },
+                    ...payouts,
                 },
             }
         );
@@ -375,7 +342,7 @@ class AbstractContent extends Abstract {
         if (previousModel) {
             await this.registerForkChanges({
                 type: 'update',
-                Model: PostModel,
+                Model: Model,
                 documentId: previousModel._id,
                 data: {
                     $set: {

@@ -152,6 +152,16 @@ module.exports = MongoDB.makeModel(
                 },
             },
             curator: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
                 vesting: {
                     value: {
                         type: MongoBigNum,
@@ -164,6 +174,16 @@ module.exports = MongoDB.makeModel(
                 },
             },
             benefactor: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: 0,
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
                 vesting: {
                     value: {
                         type: MongoBigNum,

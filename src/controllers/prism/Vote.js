@@ -162,25 +162,6 @@ class Vote extends AbstractContent {
         return { userId: content.voter, weight: content.weight };
     }
 
-    async _getModel(content) {
-        const contentId = this._extractContentId(content);
-        const query = { contentId };
-        const projection = { votes: true, payout: true, meta: true, stats: true };
-        const post = await PostModel.findOne(query, projection);
-
-        if (post) {
-            return post;
-        }
-
-        const comment = await CommentModel.findOne(query, projection);
-
-        if (comment) {
-            return comment;
-        }
-
-        return null;
-    }
-
     async _updatePayout(model, communityId, events) {
         const { voteState, postState, poolState } = this._getEventsData(events);
 
