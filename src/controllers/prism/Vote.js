@@ -11,7 +11,12 @@ const PoolModel = require('../../models/Pool');
 
 class Vote extends AbstractContent {
     async handleUpVote(content, { communityId, events }) {
-        const model = await this._getModel(content);
+        const model = await this._getModel(content, {
+            votes: true,
+            payout: true,
+            meta: true,
+            stats: true,
+        });
 
         if (!model) {
             return;
@@ -25,7 +30,12 @@ class Vote extends AbstractContent {
     }
 
     async handleDownVote(content, { communityId, events }) {
-        const model = await this._getModel(content);
+        const model = await this._getModel(content, {
+            votes: true,
+            payout: true,
+            meta: true,
+            stats: true,
+        });
 
         if (!model) {
             return;
@@ -50,6 +60,10 @@ class Vote extends AbstractContent {
         await votesManager('up', 'remove');
         await votesManager('down', 'remove');
         await this._updatePayout(model, communityId, events);
+    }
+
+    async _getModel(content) {
+        await super._getModel(content, { votes: true, payout: true, meta: true, stats: true });
     }
 
     async _tryUpdateProfileReputation({ voter, author, rshares: rShares }) {

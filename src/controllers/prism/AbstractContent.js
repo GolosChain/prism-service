@@ -220,10 +220,9 @@ class AbstractContent extends Abstract {
         item.result = embedData;
     }
 
-    async _getModel(content) {
+    async _getModel(content, projection = {}) {
         const contentId = this._extractContentId(content);
         const query = { contentId };
-        const projection = { votes: true, payout: true, meta: true, stats: true };
         const post = await PostModel.findOne(query, projection);
 
         if (post) {
