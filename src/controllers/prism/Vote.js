@@ -11,7 +11,7 @@ const PoolModel = require('../../models/Pool');
 
 class Vote extends AbstractContent {
     async handleUpVote(content, { communityId, events }) {
-        const model = await this._getModel(content,);
+        const model = await this._getModel(content);
 
         if (!model) {
             return;

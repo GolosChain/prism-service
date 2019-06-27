@@ -19,7 +19,7 @@ class AbstractContent extends Abstract {
 
         const event = events.find(event => event.event === 'postreward');
 
-        if (event) {
+        if (!event) {
             return;
         }
 
