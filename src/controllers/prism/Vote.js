@@ -52,6 +52,10 @@ class Vote extends AbstractContent {
         await this._updatePayout(model, communityId, events);
     }
 
+    async _getModel(content) {
+        await super._getModel(content, { votes: true, payout: true, meta: true, stats: true });
+    }
+
     async _tryUpdateProfileReputation({ voter, author, rshares: rShares }) {
         const voterModelObject = await ProfileModel.findOne(
             { userId: voter },
@@ -160,25 +164,6 @@ class Vote extends AbstractContent {
 
     _extractVote(content) {
         return { userId: content.voter, weight: content.weight };
-    }
-
-    async _getModel(content) {
-        const contentId = this._extractContentId(content);
-        const query = { contentId };
-        const projection = { votes: true, payout: true, meta: true, stats: true };
-        const post = await PostModel.findOne(query, projection);
-
-        if (post) {
-            return post;
-        }
-
-        const comment = await CommentModel.findOne(query, projection);
-
-        if (comment) {
-            return comment;
-        }
-
-        return null;
     }
 
     async _updatePayout(model, communityId, events) {

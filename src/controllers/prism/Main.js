@@ -66,7 +66,6 @@ class Main {
         switch (pathName) {
             case `${communityId}.charge->use`:
                 await this._profile.handleChargeState(events);
-
                 break;
 
             case `cyber->newaccount`:
@@ -77,8 +76,8 @@ class Main {
                 await this._profile.handleUsername(actionArgs);
                 break;
 
-            case 'cyber.token->transfer':
-                await this._post.handlePayout(actionArgs, { communityId });
+            case `${communityId}.publish->paymssgrwrd`:
+                await this._post.handlePayout(actionArgs, { events });
                 break;
 
             case `${communityId}.publish->createmssg`:
