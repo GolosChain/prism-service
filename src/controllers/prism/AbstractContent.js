@@ -12,6 +12,7 @@ const ProfileModel = require('../../models/Profile');
 class AbstractContent extends Abstract {
     async handlePayout(content, { events }) {
         const model = await this._getModel(content);
+
         if (!model) {
             return;
         }
@@ -19,29 +20,33 @@ class AbstractContent extends Abstract {
         const event = events.find(event => event.event === 'postreward');
 
         if (event) {
-            const rewardTypes = ['author_reward', 'curator_reward', 'benefactor_reward'];
+            return;
+        }
 
-            const payouts = {};
+        const rewardTypes = ['author_reward', 'curator_reward', 'benefactor_reward'];
 
-            for (const rewardType of rewardTypes) {
-                const rewardTypeKey = this._getRewardTypeKey(rewardType);
-                if (!rewardTypeKey) {
-                    return;
-                }
+        const payouts = {};
 
-                const { tokenName, tokenValue } = this._extractTokenInfo(event.args[rewardType]);
-                if (!tokenName) {
-                    return;
-                }
+        for (const rewardType of rewardTypes) {
+            const rewardTypeKey = this._getRewardTypeKey(rewardType);
 
-                payouts[`payout.${rewardTypeKey}.token`] = {
-                    name: tokenName,
-                    value: tokenValue,
-                };
+            if (!rewardTypeKey) {
+                return;
             }
 
-            await this._setPayouts(model, payouts);
+            const { tokenName, tokenValue } = this._extractTokenInfo(event.args[rewardType]);
+
+            if (!tokenName) {
+                return;
+            }
+
+            payouts[`payout.${rewardTypeKey}.token`] = {
+                name: tokenName,
+                value: tokenValue,
+            };
         }
+
+        await this._setPayouts(model, payouts);
     }
 
     async updateUserPostsCount(userId, increment) {
@@ -341,7 +346,7 @@ class AbstractContent extends Abstract {
         if (previousModel) {
             await this.registerForkChanges({
                 type: 'update',
-                Model: Model,
+                Model,
                 documentId: previousModel._id,
                 data: {
                     $set: {
