@@ -133,7 +133,7 @@ module.exports = MongoDB.makeModel(
                 token: {
                     value: {
                         type: MongoBigNum,
-                        default: 0,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -143,7 +143,7 @@ module.exports = MongoDB.makeModel(
                 vesting: {
                     value: {
                         type: MongoBigNum,
-                        default: 0,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -155,7 +155,7 @@ module.exports = MongoDB.makeModel(
                 token: {
                     value: {
                         type: MongoBigNum,
-                        default: 0,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -165,7 +165,7 @@ module.exports = MongoDB.makeModel(
                 vesting: {
                     value: {
                         type: MongoBigNum,
-                        default: 0,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -177,7 +177,7 @@ module.exports = MongoDB.makeModel(
                 token: {
                     value: {
                         type: MongoBigNum,
-                        default: 0,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -187,7 +187,7 @@ module.exports = MongoDB.makeModel(
                 vesting: {
                     value: {
                         type: MongoBigNum,
-                        default: 0,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -198,27 +198,27 @@ module.exports = MongoDB.makeModel(
             meta: {
                 rewardWeight: {
                     type: MongoBigNum,
-                    default: 10000,
+                    default: new BigNum(10000),
                 },
                 sharesFn: {
                     type: MongoBigNum,
-                    default: 0,
+                    default: new BigNum(0),
                 },
                 sumCuratorSw: {
                     type: MongoBigNum,
-                    default: 0,
+                    default: new BigNum(0),
                 },
                 benefactorPercents: {
                     type: [MongoBigNum],
-                    default: [0],
+                    default: [new BigNum(0)],
                 },
                 tokenProp: {
                     type: MongoBigNum,
-                    default: 0,
+                    default: new BigNum(0),
                 },
                 curatorsPercent: {
                     type: MongoBigNum,
-                    default: 0,
+                    default: new BigNum(0),
                 },
             },
         },
