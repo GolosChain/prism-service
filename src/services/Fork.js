@@ -41,7 +41,7 @@ class Fork extends BasicService {
         const lastBlockNum = documents[documents.length - 1].blockNum - 1;
 
         for (const document of documents) {
-            await this._restoreBy(document);
+            await this._restoreBy(document.toObject());
         }
 
         await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum } });
@@ -125,12 +125,11 @@ class Fork extends BasicService {
 
     async _restoreBy(document) {
         const stack = document.stack;
-        let data;
+        let stackItem;
 
-        while ((data = stack.pop())) {
-            data = this._unpackData(data || {});
-
-            const { type, className, documentId, data } = data;
+        while ((stackItem = stack.pop())) {
+            const { type, className, documentId } = stackItem;
+            const data = this._unpackData(stackItem.data || {});
             const Model = require(`../models/${className}`);
 
             switch (type) {
