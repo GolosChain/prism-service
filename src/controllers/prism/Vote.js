@@ -53,7 +53,7 @@ class Vote extends AbstractContent {
     }
 
     async _getModel(content) {
-        await super._getModel(content, { votes: true, payout: true, meta: true, stats: true });
+        return await super._getModel(content, { votes: true, payout: true, meta: true, stats: true });
     }
 
     async _tryUpdateProfileReputation({ voter, author, rshares: rShares }) {

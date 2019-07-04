@@ -44,8 +44,7 @@ class Prism extends BasicService {
         }
 
         const subscriber = new BlockSubscribe({
-            lastSequence: blockInfo.lastBlockSequence || 0,
-            lastTime: blockInfo.lastBlockTime,
+            blockHandler: this._registerNewBlock.bind(this)
         });
 
         this._inGenesis = blockInfo.lastBlockNum === 0;
@@ -54,7 +53,6 @@ class Prism extends BasicService {
             this._inGenesis = false;
         }
 
-        subscriber.eachBlock(this._registerNewBlock.bind(this));
         subscriber.on('fork', this._markAsInFork.bind(this));
 
         try {
