@@ -302,19 +302,10 @@ class Connector extends BasicConnector {
                 getPostVotes: {
                     handler: this._vote.getPostVotes,
                     scope: this._vote,
-                    inherits: ['feedPagination', 'appSpecify'],
+                    inherits: ['contentId', 'userRelativity', 'feedPagination', 'appSpecify'],
                     validation: {
                         required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
-                            currentUserId: {
-                                type: 'string',
-                            },
-                            requestedUserId: {
-                                type: 'string',
-                            },
-                            permlink: {
-                                type: 'string',
-                            },
                             type: {
                                 type: 'string',
                                 enum: ['like', 'dislike'],
@@ -325,13 +316,10 @@ class Connector extends BasicConnector {
                 getCommentVotes: {
                     handler: this._vote.getCommentVotes,
                     scope: this._vote,
-                    inherits: ['feedPagination', 'appSpecify'],
+                    inherits: ['contentId', 'userRelativity', 'feedPagination', 'appSpecify'],
                     validation: {
                         required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
-                            currentUserId: {
-                                type: 'string',
-                            },
                             type: {
                                 type: 'string',
                                 enum: ['like', 'dislike'],
