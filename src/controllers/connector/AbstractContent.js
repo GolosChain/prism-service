@@ -141,6 +141,7 @@ class AbstractContent extends BasicController {
             _id: false,
             usernames: true,
             [`personal.${app}.avatarUrl`]: true,
+            'stats.reputation': true,
         };
 
         if (withSubscribers) {
@@ -169,6 +170,7 @@ class AbstractContent extends BasicController {
         modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
         modelObject.username =
             profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
+        modelObject.stats = { reputation: profile.stats.reputation };
 
         if (withSubscribers) {
             modelObject.subscribers = profile.subscribers;
