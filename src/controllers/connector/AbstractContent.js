@@ -21,10 +21,8 @@ class AbstractContent extends BasicController {
 
         const modelObject = await Model.findOne(
             {
-                contentId: {
-                    userId: requestedUserId,
-                    permlink,
-                },
+                'contentId.userId': requestedUserId,
+                'contentId.permlink': permlink,
             },
             this._makeContentProjection(contentType),
             { lean: true }
@@ -104,11 +102,13 @@ class AbstractContent extends BasicController {
 
     async _detectVotes(Model, contentId, currentUserId) {
         const upVoteCount = await Model.countDocuments({
-            contentId,
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
             'votes.upVotes.userId': currentUserId,
         });
         const downVoteCount = await Model.countDocuments({
-            contentId,
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
             'votes.downVotes.userId': currentUserId,
         });
 
@@ -317,7 +317,14 @@ class AbstractContent extends BasicController {
         if (resolvedPosts.has(contentId)) {
             post = resolvedPosts.get(contentId);
         } else {
-            post = await PostModel.findOne({ contentId }, projection, { lean: true });
+            post = await PostModel.findOne(
+                {
+                    'contentId.userId': contentId.userId,
+                    'contentId.permlink': contentId.permlink,
+                },
+                projection,
+                { lean: true }
+            );
 
             if (!post) {
                 Logger.warn(`Repost - unknown post - ${JSON.stringify(contentId)}`);

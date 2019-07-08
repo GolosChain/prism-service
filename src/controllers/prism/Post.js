@@ -43,9 +43,11 @@ class Post extends AbstractContent {
             return;
         }
 
+        const contentId = this._extractContentId(content);
         const previousModel = await PostModel.findOneAndUpdate(
             {
-                contentId: this._extractContentId(content),
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
             },
             {
                 $set: {
@@ -74,7 +76,10 @@ class Post extends AbstractContent {
         }
 
         const contentId = this._extractContentId(content);
-        const previousModel = await PostModel.findOneAndRemove({ contentId });
+        const previousModel = await PostModel.findOneAndRemove({
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
+        });
 
         await this.registerForkChanges({
             type: 'remove',
@@ -103,10 +108,12 @@ class Post extends AbstractContent {
     }
 
     async handleRemoveRepost({ rebloger: userId, ...content }, { communityId }) {
+        const contentId = this._extractContentId(content);
         const previousModel = await PostModel.findOneAndRemove({
             communityId,
             'repost.userId': userId,
-            contentId: this._extractContentId(content),
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
         });
 
         if (!previousModel) {

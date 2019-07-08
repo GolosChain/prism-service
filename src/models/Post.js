@@ -235,9 +235,14 @@ module.exports = MongoDB.makeModel(
             // Default
             {
                 fields: {
-                    'repost.isRepost': 1,
                     'contentId.userId': 1,
                     'contentId.permlink': 1,
+                },
+            },
+            // Repost search
+            {
+                fields: {
+                    'repost.isRepost': 1,
                 },
             },
             // Community/Subscriptions feed

@@ -52,9 +52,11 @@ class Comment extends AbstractContent {
             return;
         }
 
+        const contentId = this._extractContentId(content);
         const previousModel = await CommentModel.findOneAndUpdate(
             {
-                contentId: this._extractContentId(content),
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
             },
             {
                 $set: {
@@ -84,8 +86,10 @@ class Comment extends AbstractContent {
             return;
         }
 
+        const contentId = this._extractContentId(content);
         const model = await CommentModel.findOne({
-            contentId: this._extractContentId(content),
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
         });
 
         if (!model) {
@@ -106,8 +110,12 @@ class Comment extends AbstractContent {
     }
 
     async updatePostCommentsCount(model, increment) {
+        const contentId = model.parent.post.contentId;
         const previousModel = await PostModel.findOneAndUpdate(
-            { contentId: model.parent.post.contentId },
+            {
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
+            },
             { $inc: { 'stats.commentsCount': increment } }
         );
 
@@ -168,7 +176,10 @@ class Comment extends AbstractContent {
 
         const parentCommentId = model.parent.comment.contentId;
         const parentComment = await CommentModel.findOne(
-            { contentId: parentCommentId },
+            {
+                'contentId.userId': parentCommentId.userId,
+                'contentId.permlink': parentCommentId.permlink,
+            },
             { 'ordering.byTime': true }
         );
 
@@ -181,11 +192,23 @@ class Comment extends AbstractContent {
     }
 
     async _getParentPost(contentId) {
-        return await PostModel.findOne({ contentId }, { contentId: true });
+        return await PostModel.findOne(
+            {
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
+            },
+            { contentId: true }
+        );
     }
 
     async _getParentComment(contentId) {
-        return await CommentModel.findOne({ contentId }, { contentId: true, parent: true });
+        return await CommentModel.findOne(
+            {
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
+            },
+            { contentId: true, parent: true }
+        );
     }
 }
 

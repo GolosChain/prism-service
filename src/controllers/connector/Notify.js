@@ -77,7 +77,7 @@ class Notify extends AbstractContent {
 
     async _getPostData(contentId) {
         const data = await Post.findOne(
-            { contentId },
+            { 'contentId.userId': contentId.userId, 'contentId.permlink': contentId.permlink },
             { _id: false, 'content.title': true },
             { lean: true }
         );
@@ -94,7 +94,7 @@ class Notify extends AbstractContent {
 
     async _getCommentData(contentId) {
         const data = await Comment.findOne(
-            { contentId },
+            { 'contentId.userId': contentId.userId, 'contentId.permlink': contentId.permlink },
             { _id: false, 'content.body.preview': true, 'parent.post': true },
             { lean: true }
         );

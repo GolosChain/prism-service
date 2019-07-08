@@ -227,7 +227,10 @@ class AbstractContent extends Abstract {
 
     async _getModel(content, projection = {}) {
         const contentId = this._extractContentId(content);
-        const query = { contentId };
+        const query = {
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
+        };
         const post = await PostModel.findOne(query, projection);
 
         if (post) {
@@ -261,8 +264,10 @@ class AbstractContent extends Abstract {
             return !id.author;
         }
 
+        const contentId = this._extractContentId(content);
         const postCount = await PostModel.countDocuments({
-            contentId: this._extractContentId(content),
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
         });
 
         return Boolean(postCount);
@@ -275,8 +280,10 @@ class AbstractContent extends Abstract {
             return Boolean(id.author);
         }
 
+        const contentId = this._extractContentId(content);
         const postCount = await CommentModel.countDocuments({
-            contentId: this._extractContentId(content),
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
         });
 
         return Boolean(postCount);
@@ -334,7 +341,10 @@ class AbstractContent extends Abstract {
     async _setPayouts(model, payouts) {
         const Model = model.constructor;
         const previousModel = await Model.findOneAndUpdate(
-            { contentId: model.contentId },
+            {
+                'contentId.userId': model.contentId.userId,
+                'contentId.permlink': model.contentId.permlink,
+            },
             {
                 $set: {
                     'payout.done': true,

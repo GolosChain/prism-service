@@ -105,7 +105,13 @@ class HashTag extends AbstractContent {
 
     async _tryGetModel(content, projection) {
         const contentId = this._extractContentId(content);
-        const model = await PostModel.findOne({ contentId }, projection);
+        const model = await PostModel.findOne(
+            {
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
+            },
+            projection
+        );
 
         if (!model) {
             Logger.warn(`Unknown post - ${JSON.stringify(contentId)}`);

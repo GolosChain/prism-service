@@ -113,7 +113,7 @@ class Comment extends AbstractFeed {
         if (modelObject.parent.post) {
             id = modelObject.parent.post.contentId;
             post = await PostModel.findOne(
-                { contentId: id },
+                { 'contentId.userId': id.userId, 'contentId.permlink': id.permlink },
                 { 'content.title': true, communityId: true }
             );
         }
@@ -142,7 +142,7 @@ class Comment extends AbstractFeed {
     async _populateUserParentCommentMeta(modelObject) {
         const id = modelObject.parent.comment.contentId;
         const comment = await CommentModel.findOne(
-            { contentId: id },
+            { 'contentId.userId': id.userId, 'contentId.permlink': id.permlink },
             { 'content.body.preview': true, 'parent.contentId': true }
         );
 
