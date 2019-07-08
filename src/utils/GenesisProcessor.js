@@ -162,7 +162,7 @@ class GenesisProcessor {
     }
 
     _onNatsError(err) {
-        Logger.error('Nats error:', err);
+        Logger.error('Nats error:', err.message);
         this._connectingPromise.reject(err);
         this._resetAndReconnect();
     }
