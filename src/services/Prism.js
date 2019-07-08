@@ -1,11 +1,12 @@
 const core = require('gls-core-service');
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
-const Logger = core.utils.Logger;
+const { Logger, GenesisProcessor } = core.utils;
+
 const env = require('../data/env');
 const MainPrismController = require('../controllers/prism/Main');
+const GenesisController = require('../controllers/prism/GenesisContent');
 const ServiceMetaModel = require('../models/ServiceMeta');
-const GenesisProcessor = require('../utils/GenesisProcessor');
 
 class Prism extends BasicService {
     constructor(...args) {
@@ -167,8 +168,11 @@ class Prism extends BasicService {
     }
 
     async _processGenesis() {
-        const genesis = new GenesisProcessor();
-        await genesis.process();
+        const genesisProcessor = new GenesisProcessor({
+            genesisController: new GenesisController(),
+        });
+
+        await genesisProcessor.process();
     }
 }
 
