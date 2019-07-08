@@ -1,5 +1,5 @@
 const core = require('gls-core-service');
-const Logger = core.utils.Logger;
+const { Logger, metrics } = core.utils;
 const Post = require('./Post');
 const Comment = require('./Comment');
 const Profile = require('./Profile');
@@ -33,6 +33,8 @@ class Main {
     }
 
     async disperse({ transactions, blockNum, blockTime }) {
+        const end = metrics.startTimer('block_dispersing_time');
+
         for (const transaction of transactions) {
             let previous;
 
@@ -41,10 +43,22 @@ class Main {
             }
 
             for (const action of transaction.actions) {
+                const start = Date.now();
                 await this._disperseAction(action, previous, { blockNum, blockTime });
+                const delta = Date.now() - start;
+
+                if (delta > 1000) {
+                    Logger.warn(
+                        `Slow transaction action processing (>1000ms), blockNum: ${blockNum}, trxId: ${
+                            transaction.id
+                        }, action: ${action.code}->${action.action}`
+                    );
+                }
                 previous = action;
             }
         }
+
+        end();
     }
 
     async _disperseAction(action, previous = { args: {} }, { blockTime }) {
@@ -62,8 +76,6 @@ class Main {
         const actionArgs = action.args;
         const previousArgs = previous.args;
         const events = action.events;
-
-        console.log('processing:', pathName);
 
         switch (pathName) {
             case `${communityId}.charge->use`:
