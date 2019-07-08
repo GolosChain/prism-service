@@ -86,8 +86,6 @@ class Fork extends BasicService {
         }
 
         await subscriber.setLastBlockMetaData(update);
-
-        Logger.info('Revert last block done!');
     }
 
     async _clean() {

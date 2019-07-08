@@ -44,6 +44,7 @@ class Prism extends BasicService {
         });
 
         const lastBlockInfo = await this._subscriber.getLastBlockMetaData();
+        Logger.info('Last block info:', lastBlockInfo);
 
         if (lastBlockInfo.lastBlockNum !== 0) {
             await this._revertLastBlock();
@@ -65,6 +66,8 @@ class Prism extends BasicService {
     }
 
     async _registerNewBlock(block) {
+        Logger.info('block handled:', block.blockNum);
+
         this._blockQueue.push(block);
         await this._handleBlockQueue(block.blockNum);
     }

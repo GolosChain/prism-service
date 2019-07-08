@@ -63,6 +63,8 @@ class Main {
         const previousArgs = previous.args;
         const events = action.events;
 
+        console.log('processing:', pathName);
+
         switch (pathName) {
             case `${communityId}.charge->use`:
                 await this._profile.handleChargeState(events);
