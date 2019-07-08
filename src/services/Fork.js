@@ -91,8 +91,6 @@ class Fork extends BasicService {
     }
 
     async _clean() {
-        Logger.log('Start fork cleaning');
-
         try {
             const currentLastBlock = await this._getCurrentLastBlock();
 
