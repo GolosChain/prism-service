@@ -110,7 +110,7 @@ class AbstractFeedCache extends BasicService {
         try {
             await this._actualizeBy(...variant);
         } catch (error) {
-            Logger.error(`Cant actualize feed cache - ${error.stack}`);
+            Logger.error('Cant actualize feed cache:', error);
             process.exit(1);
         }
     }

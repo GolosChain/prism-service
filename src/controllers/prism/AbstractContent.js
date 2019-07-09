@@ -231,6 +231,7 @@ class AbstractContent extends Abstract {
             'contentId.userId': contentId.userId,
             'contentId.permlink': contentId.permlink,
         };
+
         const post = await PostModel.findOne(query, projection);
 
         if (post) {
@@ -281,12 +282,12 @@ class AbstractContent extends Abstract {
         }
 
         const contentId = this._extractContentId(content);
-        const postCount = await CommentModel.countDocuments({
+        const commentsCount = await CommentModel.countDocuments({
             'contentId.userId': contentId.userId,
             'contentId.permlink': contentId.permlink,
         });
 
-        return Boolean(postCount);
+        return Boolean(commentsCount);
     }
 
     async _extractContentObject(rawContent) {

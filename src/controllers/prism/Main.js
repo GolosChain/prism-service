@@ -1,5 +1,5 @@
 const core = require('gls-core-service');
-const Logger = core.utils.Logger;
+const { Logger, metrics } = core.utils;
 const Post = require('./Post');
 const Comment = require('./Comment');
 const Profile = require('./Profile');
@@ -7,6 +7,8 @@ const Vote = require('./Vote');
 const Subscribe = require('./Subscribe');
 const HashTag = require('./HashTag');
 const Leader = require('./Leader');
+
+const ACTION_PROCESSING_WARNING_LIMIT = 1000;
 
 // TODO Change after MVP
 const communityRegistry = [
@@ -33,6 +35,8 @@ class Main {
     }
 
     async disperse({ transactions, blockNum, blockTime }) {
+        const end = metrics.startTimer('block_dispersing_time');
+
         for (const transaction of transactions) {
             let previous;
 
@@ -41,10 +45,22 @@ class Main {
             }
 
             for (const action of transaction.actions) {
+                const start = Date.now();
                 await this._disperseAction(action, previous, { blockNum, blockTime });
+                const delta = Date.now() - start;
+
+                if (delta > ACTION_PROCESSING_WARNING_LIMIT) {
+                    Logger.warn(
+                        `Slow transaction action processing (>${ACTION_PROCESSING_WARNING_LIMIT}ms), blockNum: ${blockNum}, trxId: ${
+                            transaction.id
+                        }, action: ${action.code}->${action.action}`
+                    );
+                }
                 previous = action;
             }
         }
+
+        end();
     }
 
     async _disperseAction(action, previous = { args: {} }, { blockTime }) {
