@@ -8,6 +8,8 @@ const Subscribe = require('./Subscribe');
 const HashTag = require('./HashTag');
 const Leader = require('./Leader');
 
+const ACTION_PROCESSING_WARNING_LIMIT = 1000;
+
 // TODO Change after MVP
 const communityRegistry = [
     'gls.publish',
@@ -47,9 +49,9 @@ class Main {
                 await this._disperseAction(action, previous, { blockNum, blockTime });
                 const delta = Date.now() - start;
 
-                if (delta > 1000) {
+                if (delta > ACTION_PROCESSING_WARNING_LIMIT) {
                     Logger.warn(
-                        `Slow transaction action processing (>1000ms), blockNum: ${blockNum}, trxId: ${
+                        `Slow transaction action processing (>${ACTION_PROCESSING_WARNING_LIMIT}ms), blockNum: ${blockNum}, trxId: ${
                             transaction.id
                         }, action: ${action.code}->${action.action}`
                     );
