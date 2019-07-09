@@ -106,7 +106,7 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                if (tags) {
+                if (Array.isArray(tags) && tags.length) {
                     this._applyPopularSortingByTags({ options, sequenceKey });
                 } else {
                     this._applyCachedPopularSorting({
@@ -202,7 +202,7 @@ class Feed extends AbstractFeed {
                 query['repost.isRepost'] = { $ne: true };
                 projection.repost = false;
 
-                if (tags) {
+                if (Array.isArray(tags) && tags.length) {
                     query['content.tags'] = { $in: tags };
                 }
 
@@ -305,7 +305,7 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                if (!tags || !tags.length) {
+                if (!Array.isArray(tags) || !tags.length) {
                     return this._getCachedSequenceKey(models, limit, meta);
                 }
 
