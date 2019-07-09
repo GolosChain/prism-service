@@ -106,7 +106,12 @@ class GenesisContent {
             votes,
             parent_author: parentAuthor,
             parent_permlink: parentPermlink,
+            created,
         } = data;
+
+        const meta = {
+            time: new Date(created + 'Z'),
+        };
 
         const contentId = {
             userId,
@@ -129,6 +134,7 @@ class GenesisContent {
                 title,
                 body,
                 votes,
+                meta,
             });
         } else {
             this._processPost({
@@ -138,16 +144,18 @@ class GenesisContent {
                 body,
                 tags,
                 votes,
+                meta,
             });
         }
     }
 
-    _processPost({ contentId, contentIdString, title, body, tags, votes }) {
+    _processPost({ contentId, contentIdString, title, body, tags, votes, meta }) {
         const postModel = new PostModel({
             communityId: 'gls',
             contentId,
             content: this._postController.extractContentObjectFromGenesis({ title, body }),
             tags,
+            meta,
         }).toObject();
 
         const postInfo = {
@@ -171,11 +179,13 @@ class GenesisContent {
         title,
         body,
         votes,
+        meta,
     }) {
         const commentModel = new CommentModel({
             communityId: 'gls',
             contentId,
             content: this._commentController.extractContentObjectFromGenesis({ title, body }),
+            meta,
         }).toObject();
 
         const commentInfo = {
