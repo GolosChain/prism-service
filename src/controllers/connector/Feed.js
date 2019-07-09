@@ -1,3 +1,5 @@
+const core = require('gls-core-service');
+const { Logger } = core.utils;
 const AbstractFeed = require('./AbstractFeed');
 const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
@@ -24,7 +26,16 @@ class Feed extends AbstractFeed {
             tags,
             sequenceKey,
         } = await this._prepareQuery(params);
+
+        const start = Date.now();
+
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
+
+        const time = Date.now() - start > 1000;
+
+        if (time) {
+            Logger.warn(`Slow PostModel.find(), time: ${time}, options:`, Object.values(fullQuery));
+        }
 
         if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
