@@ -1,7 +1,7 @@
 const core = require('gls-core-service');
 const { Logger, metrics, ParallelPool, BulkSaver } = core.utils;
 const { NESTED_COMMENTS_MAX_INDEX_DEPTH } = require('../../data/constants');
-const LimitedCache = require('../../utils/LimitedCache');
+const GenesisLimitedCache = require('../../utils/GenesisLimitedCache');
 const SubscribesSaver = require('../../utils/SubscribesSaver');
 const ProfileModel = require('../../models/Profile');
 const LeaderModel = require('../../models/Leader');
@@ -13,7 +13,7 @@ const CommentController = require('./Comment');
 class GenesisContent {
     constructor() {
         this._posts = new Map();
-        this._commentsCache = new LimitedCache({ fetch: this._fetchCommentInfo.bind(this) });
+        this._commentsCache = new GenesisLimitedCache({ fetch: this._fetchCommentInfo.bind(this) });
         this._users = new Map();
         this._isEnd = false;
 

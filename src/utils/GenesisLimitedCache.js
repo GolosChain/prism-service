@@ -1,6 +1,6 @@
 const SLOT_SIZE = 100000;
 
-class LimitedCache {
+class GenesisLimitedCache {
     constructor({ fetch }) {
         this._fetch = fetch;
         this._slots = [new Map(), new Map(), new Map(), new Map()];
@@ -36,4 +36,4 @@ class LimitedCache {
     }
 }
 
-module.exports = LimitedCache;
+module.exports = GenesisLimitedCache;
