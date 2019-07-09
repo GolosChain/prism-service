@@ -1,7 +1,6 @@
 const core = require('gls-core-service');
-const { Logger, metrics, ParallelPool } = core.utils;
+const { Logger, metrics, ParallelPool, BulkSaver } = core.utils;
 const { NESTED_COMMENTS_MAX_INDEX_DEPTH } = require('../../data/constants');
-const BulkSaver = require('../../utils/BulkSaver');
 const LimitedCache = require('../../utils/LimitedCache');
 const SubscribesSaver = require('../../utils/SubscribesSaver');
 const ProfileModel = require('../../models/Profile');
