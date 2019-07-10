@@ -243,7 +243,7 @@ module.exports = MongoDB.makeModel(
             // Repost search
             {
                 fields: {
-                    'repost.isRepost': 1,
+                    'repost.isRepost': -1,
                 },
             },
 
@@ -271,7 +271,22 @@ module.exports = MongoDB.makeModel(
                 },
             },
 
-            // Shares feed
+            // Feed search
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    _id: 1,
+                },
+            },
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'content.tags': 1,
+                    communityId: 1,
+                },
+            },
+
+            // Shares feed cache
             {
                 fields: {
                     'repost.isRepost': 1,
@@ -288,7 +303,7 @@ module.exports = MongoDB.makeModel(
                 },
             },
 
-            // Actual feed
+            // Actual feed cache
             {
                 fields: {
                     'repost.isRepost': 1,
@@ -305,7 +320,7 @@ module.exports = MongoDB.makeModel(
                 },
             },
 
-            // Popular feed
+            // Popular feed cache
             {
                 fields: {
                     'repost.isRepost': 1,
