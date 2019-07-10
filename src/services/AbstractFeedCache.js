@@ -93,7 +93,7 @@ class AbstractFeedCache extends BasicService {
         );
     }
 
-    async _actualize(sync = false) {
+    async _actualize(sync = true) {
         for await (const variant of this._makeVariantsIterator()) {
             if (sync) {
                 await this._tryActualizeBy(...variant);
