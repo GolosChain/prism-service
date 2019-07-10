@@ -15,8 +15,7 @@ class AbstractFeedCache extends BasicService {
 
         this._controller = controller;
 
-        await this._actualize(true);
-        this.startLoop(env.GLS_FEED_CACHE_INTERVAL, env.GLS_FEED_CACHE_INTERVAL);
+        this.startLoop(0, env.GLS_FEED_CACHE_INTERVAL);
     }
 
     _getController() {
