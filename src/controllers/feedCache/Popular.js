@@ -65,7 +65,7 @@ class Popular extends Abstract {
 
     _applySortByWilson(options, type) {
         options.sort = options.sort || {};
-        options.sort[`stats.wilson.${type}`] = -1;
+        options.sort[`stats.${type}`] = -1;
     }
 }
 

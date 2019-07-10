@@ -239,12 +239,14 @@ module.exports = MongoDB.makeModel(
                     'contentId.permlink': 1,
                 },
             },
+
             // Repost search
             {
                 fields: {
                     'repost.isRepost': 1,
                 },
             },
+
             // Community/Subscriptions feed
             // ...with sort by time
             {
@@ -253,6 +255,7 @@ module.exports = MongoDB.makeModel(
                     'meta.time': -1,
                 },
             },
+
             // By user feed
             // ...with sort by time
             {
@@ -267,28 +270,55 @@ module.exports = MongoDB.makeModel(
                     'meta.time': -1,
                 },
             },
+
             // Shares feed
             {
                 fields: {
                     'repost.isRepost': 1,
                     'meta.time': -1,
-                    'stats.rShares': 1,
+                    'stats.rShares': -1,
                 },
             },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'meta.time': -1,
+                    'stats.rShares': -1,
+                },
+            },
+
             // Actual feed
             {
                 fields: {
                     'repost.isRepost': 1,
                     'meta.time': -1,
-                    'stats.hot': 1,
+                    'stats.hot': -1,
                 },
             },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'meta.time': -1,
+                    'stats.hot': -1,
+                },
+            },
+
             // Popular feed
             {
                 fields: {
                     'repost.isRepost': 1,
                     'meta.time': -1,
-                    'stats.trending': 1,
+                    'stats.trending': -1,
+                },
+            },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'meta.time': -1,
+                    'stats.trending': -1,
                 },
             },
         ],
