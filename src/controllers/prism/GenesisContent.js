@@ -3,6 +3,7 @@ const { Logger, metrics, ParallelPool, BulkSaver } = core.utils;
 const { NESTED_COMMENTS_MAX_INDEX_DEPTH } = require('../../data/constants');
 const GenesisLimitedCache = require('../../utils/GenesisLimitedCache');
 const SubscribesSaver = require('../../utils/SubscribesSaver');
+const Payouts = require('../../utils/Payouts');
 const ProfileModel = require('../../models/Profile');
 const LeaderModel = require('../../models/Leader');
 const PostModel = require('../../models/Post');
@@ -107,6 +108,9 @@ class GenesisContent {
             parent_author: parentAuthor,
             parent_permlink: parentPermlink,
             created,
+            author_reward,
+            benefactor_reward,
+            curator_reward,
         } = data;
 
         const meta = {
@@ -135,6 +139,9 @@ class GenesisContent {
                 body,
                 votes,
                 meta,
+                author_reward,
+                benefactor_reward,
+                curator_reward,
             });
         } else {
             this._processPost({
@@ -145,11 +152,25 @@ class GenesisContent {
                 tags,
                 votes,
                 meta,
+                author_reward,
+                benefactor_reward,
+                curator_reward,
             });
         }
     }
 
-    _processPost({ contentId, contentIdString, title, body, tags, votes, meta }) {
+    _processPost({
+        contentId,
+        contentIdString,
+        title,
+        body,
+        tags,
+        votes,
+        meta,
+        author_reward,
+        benefactor_reward,
+        curator_reward,
+    }) {
         const postModel = new PostModel({
             communityId: 'gls',
             contentId,
@@ -167,6 +188,7 @@ class GenesisContent {
         this._posts.set(contentIdString, postInfo);
         this._incUserPostsCounter(contentId.userId);
         this._applyVotes(postModel, votes);
+        this._applyPayouts(postModel, { author_reward, benefactor_reward, curator_reward });
         this._postsBulk.addEntry(postModel);
         metrics.inc('genesis_type_posts_processed');
     }
@@ -180,6 +202,9 @@ class GenesisContent {
         body,
         votes,
         meta,
+        author_reward,
+        benefactor_reward,
+        curator_reward,
     }) {
         const commentModel = new CommentModel({
             communityId: 'gls',
@@ -196,6 +221,7 @@ class GenesisContent {
         };
 
         this._applyVotes(commentModel, votes);
+        this._applyPayouts(commentModel, { author_reward, benefactor_reward, curator_reward });
         await this._setCommentParent(commentInfo, commentModel, parentContentIdString);
         this._commentsCache.add(contentIdString, commentInfo);
         this._incUserCommentsCounter(contentId.userId);
@@ -289,6 +315,34 @@ class GenesisContent {
                 model.votes.downVotes.push(vote);
                 model.votes.downCount++;
             }
+        }
+    }
+
+    _applyPayouts(model, payouts) {
+        const rewardTypes = ['author_reward', 'curator_reward', 'benefactor_reward'];
+
+        model.payout = {
+            done: true,
+        };
+
+        for (const rewardType of rewardTypes) {
+            const rewardTypeKey = Payouts.getRewardTypeKey(rewardType);
+
+            if (!rewardTypeKey) {
+                return;
+            }
+
+            const { tokenName, tokenValue } = Payouts.extractTokenInfo(payouts[rewardType]);
+
+            if (!tokenName) {
+                return;
+            }
+
+            model.payout[rewardTypeKey] = {};
+            model.payout[rewardTypeKey].token = {
+                name: tokenName,
+                value: tokenValue,
+            };
         }
     }
 

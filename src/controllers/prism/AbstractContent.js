@@ -8,6 +8,7 @@ const env = require('../../data/env');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
+const Payouts = require('../../utils/Payouts');
 
 class AbstractContent extends Abstract {
     async handlePayout(content, { events }) {
@@ -28,13 +29,13 @@ class AbstractContent extends Abstract {
         const payouts = {};
 
         for (const rewardType of rewardTypes) {
-            const rewardTypeKey = this._getRewardTypeKey(rewardType);
+            const rewardTypeKey = Payouts.getRewardTypeKey(rewardType);
 
             if (!rewardTypeKey) {
                 return;
             }
 
-            const { tokenName, tokenValue } = this._extractTokenInfo(event.args[rewardType]);
+            const { tokenName, tokenValue } = Payouts.extractTokenInfo(event.args[rewardType]);
 
             if (!tokenName) {
                 return;
@@ -307,36 +308,6 @@ class AbstractContent extends Abstract {
             metadata,
             embeds,
         };
-    }
-
-    _getRewardTypeKey(rewardType) {
-        switch (rewardType) {
-            case 'author_reward':
-                return 'author';
-
-            case 'curator_reward':
-                return 'curator';
-
-            case 'benefactor_reward':
-                return 'benefactor';
-
-            default:
-                Logger.warn(`Payout - unknown reward type - ${rewardType}`);
-                return null;
-        }
-    }
-
-    _extractTokenInfo(quantity) {
-        let [tokenValue, tokenName] = quantity.split(' ');
-
-        tokenValue = new BigNum(tokenValue);
-
-        if (!tokenName || tokenValue.isNaN()) {
-            Logger.warn(`Payout - invalid quantity - ${quantity}`);
-            return { tokenName: null, tokenValue: null };
-        }
-
-        return { tokenName, tokenValue };
     }
 
     async _setPayouts(model, payouts) {
