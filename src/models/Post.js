@@ -302,10 +302,16 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     'stats.hot': -1,
                 },
+                options: {
+                    sparse: true,
+                },
             },
             {
                 fields: {
                     'stats.trending': -1,
+                },
+                options: {
+                    sparse: true,
                 },
             },
 
