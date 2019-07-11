@@ -285,6 +285,29 @@ module.exports = MongoDB.makeModel(
                     communityId: 1,
                 },
             },
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'meta.time': -1,
+                    communityId: 1,
+                },
+            },
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    communityId: 1,
+                },
+            },
+            {
+                fields: {
+                    'stats.hot': -1,
+                },
+            },
+            {
+                fields: {
+                    'stats.trending': -1,
+                },
+            },
 
             // Shares feed cache
             {
