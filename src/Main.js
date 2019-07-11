@@ -26,7 +26,9 @@ class Main extends BasicMain {
         prism.setForkService(fork);
         prism.setConnector(connector);
 
-        this.startMongoBeforeBoot();
+        this.startMongoBeforeBoot(null, {
+            poolSize: 100,
+        });
         this.addNested(fork, prism, postFeedCache, leaderFeedCache);
 
         if (env.GLS_SEARCH_ENABLED) {
