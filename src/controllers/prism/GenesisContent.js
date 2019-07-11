@@ -330,13 +330,13 @@ class GenesisContent {
             const rewardTypeKey = Payouts.getRewardTypeKey(rewardType);
 
             if (!rewardTypeKey) {
-                return;
+                continue;
             }
 
             const { tokenName, tokenValue } = Payouts.extractTokenInfo(payouts[rewardType]);
 
             if (!tokenName) {
-                return;
+                continue;
             }
 
             model.payout[rewardTypeKey] = {};

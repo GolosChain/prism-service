@@ -32,13 +32,13 @@ class AbstractContent extends Abstract {
             const rewardTypeKey = Payouts.getRewardTypeKey(rewardType);
 
             if (!rewardTypeKey) {
-                return;
+                continue;
             }
 
             const { tokenName, tokenValue } = Payouts.extractTokenInfo(event.args[rewardType]);
 
             if (!tokenName) {
-                return;
+                continue;
             }
 
             payouts[`payout.${rewardTypeKey}.token`] = {
