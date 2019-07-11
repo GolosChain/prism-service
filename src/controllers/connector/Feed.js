@@ -199,7 +199,7 @@ class Feed extends AbstractFeed {
                 break;
 
             case 'community':
-                query['repost.isRepost'] = { $ne: true };
+                query['repost.isRepost'] = false;
                 projection.repost = false;
 
                 if (Array.isArray(tags) && tags.length) {

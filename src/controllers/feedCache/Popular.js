@@ -9,7 +9,7 @@ class Popular extends Abstract {
 
             const { query, projection, options } = this._getDefaultRequestOptions(communityId);
 
-            query['repost.isRepost'] = { $ne: true };
+            query['repost.isRepost'] = false;
 
             this._applyTimeCond(query, options, timeframe);
 
