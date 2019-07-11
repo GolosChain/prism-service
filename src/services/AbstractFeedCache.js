@@ -80,11 +80,15 @@ class AbstractFeedCache extends BasicService {
             return;
         }
 
+        const start = Date.now();
+        Logger.log('Start actualization feed cache.');
+
         this._inActualization = true;
 
         this._actualize().then(
             () => {
                 this._inActualization = false;
+                Logger.log(`Stop actualization feed cache: ${(Date.now() - start) / 1000}s`);
             },
             error => {
                 Logger.error(`Critical feed cache error - ${error.stack}`);
