@@ -158,7 +158,7 @@ class Feed extends AbstractFeed {
                 break;
 
             case 'WilsonTrending':
-                options.sort[`stats.tranding`] = -1;
+                options.sort[`stats.trending`] = -1;
                 break;
 
             default:
