@@ -1,3 +1,4 @@
+const env = require('../../data/env');
 const AbstractFeed = require('./AbstractFeed');
 const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
@@ -106,7 +107,7 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                if (Array.isArray(tags) && tags.length) {
+                if ((Array.isArray(tags) && tags.length) || env.GLS_USE_IN_MEMORY_FEED_CACHE) {
                     this._applyPopularSortingByTags({ options, sequenceKey });
                 } else {
                     this._applyCachedPopularSorting({
@@ -305,7 +306,7 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                if (!Array.isArray(tags) || !tags.length) {
+                if ((!Array.isArray(tags) || !tags.length) && env.GLS_USE_IN_MEMORY_FEED_CACHE) {
                     return this._getCachedSequenceKey(models, limit, meta);
                 }
 

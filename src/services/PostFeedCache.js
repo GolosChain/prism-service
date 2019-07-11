@@ -1,9 +1,17 @@
+const core = require('gls-core-service');
+const Logger = core.utils.Logger;
+const env = require('../data/env');
 const AbstractFeedCache = require('./AbstractFeedCache');
 const PopularCache = require('../controllers/feedCache/Popular');
 
 class PostFeedCache extends AbstractFeedCache {
     async start() {
-        await super.start(new PopularCache());
+        if (env.GLS_USE_IN_MEMORY_FEED_CACHE) {
+            Logger.info('Enable in-memory feed cache.');
+            await super.start(new PopularCache());
+        } else {
+            Logger.info('In-memory feed cache disabled.');
+        }
     }
 
     getIdsWithSequenceKey({ communityId = '~all', sortBy, timeframe = 'day', sequenceKey, limit }) {
