@@ -112,6 +112,7 @@ class GenesisContent {
             author_reward,
             benefactor_reward,
             curator_reward,
+            reblogs,
         } = data;
 
         const meta = {
@@ -160,6 +161,7 @@ class GenesisContent {
                 meta,
                 archived,
                 payouts,
+                reblogs,
             });
         }
     }
@@ -174,6 +176,7 @@ class GenesisContent {
         meta,
         archived,
         payouts,
+        reblogs,
     }) {
         const postModel = new PostModel({
             communityId: 'gls',
@@ -193,6 +196,7 @@ class GenesisContent {
         this._incUserPostsCounter(contentId.userId);
         this._applyVotes(postModel, votes);
         this._applyPayouts(postModel, { archived, payouts });
+        this._processReblogs({ contentId, reblogs });
         this._postsBulk.addEntry(postModel);
         metrics.inc('genesis_type_posts_processed');
     }
@@ -230,6 +234,27 @@ class GenesisContent {
         this._incUserCommentsCounter(contentId.userId);
         this._commentsBulk.addEntry(commentModel);
         metrics.inc('genesis_type_comments_processed');
+    }
+
+    _processReblogs({ contentId, reblogs }) {
+        for (const reblog of reblogs) {
+            const postModel = new PostModel({
+                communityId: 'gls',
+                contentId,
+                repost: {
+                    isRepost: true,
+                    userId: reblog.account,
+                    time: reblog.time,
+                },
+            }).toObject();
+
+            if (reblog.body !== '') {
+                postModel.repost.body = {};
+                postModel.repost.body.raw = reblog.body;
+            }
+
+            this._postsBulk.addEntry(postModel);
+        }
     }
 
     async _setCommentParent(commentInfo, commentModel, parentContentIdString) {
