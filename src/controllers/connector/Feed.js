@@ -1,3 +1,4 @@
+const moment = require('moment');
 const env = require('../../data/env');
 const AbstractFeed = require('./AbstractFeed');
 const PostModel = require('../../models/Post');
@@ -25,6 +26,7 @@ class Feed extends AbstractFeed {
             tags,
             sequenceKey,
         } = await this._prepareQuery(params);
+
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -74,6 +76,7 @@ class Feed extends AbstractFeed {
             requestedUserId,
             communityId,
             tags,
+            timeframe,
         });
         this._applySortingAndSequence(
             fullQuery,
@@ -107,8 +110,8 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                if ((Array.isArray(tags) && tags.length) || env.GLS_USE_IN_MEMORY_FEED_CACHE) {
-                    this._applyPopularSortingByTags({ options, sequenceKey });
+                if ((Array.isArray(tags) && tags.length) || !env.GLS_USE_IN_MEMORY_FEED_CACHE) {
+                    this._applyPopularSortingByTags({ timeframe, options, sequenceKey });
                 } else {
                     this._applyCachedPopularSorting({
                         query,
@@ -137,8 +140,30 @@ class Feed extends AbstractFeed {
         query._id = { $in: ids };
     }
 
-    _applyPopularSortingByTags({ options, sequenceKey }) {
+    _applyPopularSortingByTags({ timeframe, options, sequenceKey }) {
         options.skip = Number(sequenceKey) || 0;
+        options.sort = options.sort || {};
+
+        switch (timeframe) {
+            case 'day':
+            case 'week':
+            case 'month':
+            case 'year':
+            case 'all':
+                options.sort['stats.rShares'] = -1;
+                break;
+
+            case 'WilsonHot':
+                options.sort[`stats.hot`] = -1;
+                break;
+
+            case 'WilsonTrending':
+                options.sort[`stats.tranding`] = -1;
+                break;
+
+            default:
+                Logger.warn('Unknown timeframe:', timeframe);
+        }
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {
@@ -185,7 +210,7 @@ class Feed extends AbstractFeed {
 
     async _applyFeedTypeConditions(
         { query, projection },
-        { type, requestedUserId, communityId, tags }
+        { type, requestedUserId, communityId, tags, timeframe }
     ) {
         switch (type) {
             case 'subscriptions':
@@ -207,9 +232,55 @@ class Feed extends AbstractFeed {
                     query['content.tags'] = { $in: tags };
                 }
 
+                if (!env.GLS_USE_IN_MEMORY_FEED_CACHE) {
+                    this._applyNotInMemoryFeedQuery({ query, timeframe });
+                }
+
             default:
                 query.communityId = communityId;
         }
+    }
+
+    _applyNotInMemoryFeedQuery({ query, timeframe }) {
+        let timeAgo = null;
+
+        switch (timeframe) {
+            case 'day':
+                timeAgo = this._daysAgo(1);
+                break;
+
+            case 'week':
+                timeAgo = this._daysAgo(7);
+                break;
+
+            case 'month':
+                timeAgo = this._daysAgo(30);
+                break;
+
+            case 'year':
+                timeAgo = this._daysAgo(365);
+                break;
+
+            case 'all':
+            case 'WilsonHot':
+            case 'WilsonTrending':
+                // Do nothing
+                break;
+
+            default:
+                Logger.warn('Unknown timeframe:', timeframe);
+        }
+
+        if (timeAgo) {
+            query['meta.time'] = query['meta.time'] || {};
+            query['meta.time'].$gte = timeAgo;
+        }
+    }
+
+    _daysAgo(amount) {
+        return moment()
+            .subtract(amount, 'days')
+            .toDate();
     }
 
     async _applyUserSubscriptions(query, requestedUserId) {
@@ -324,7 +395,7 @@ class Feed extends AbstractFeed {
     _finalizeSorting(modelObjects, sortBy, fullQuery) {
         switch (sortBy) {
             case 'popular':
-                if (!fullQuery.query['content.tags']) {
+                if (!fullQuery.query['content.tags'] && env.GLS_USE_IN_MEMORY_FEED_CACHE) {
                     return this._finalizeCachedSorting(modelObjects, fullQuery.query);
                 }
 
