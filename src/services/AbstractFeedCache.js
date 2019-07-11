@@ -81,14 +81,17 @@ class AbstractFeedCache extends BasicService {
         }
 
         const start = Date.now();
-        Logger.log('Start actualization feed cache.');
+        Logger.log('Start actualization feed cache:', this.constructor.name);
 
         this._inActualization = true;
 
         this._actualize().then(
             () => {
                 this._inActualization = false;
-                Logger.log(`Stop actualization feed cache: ${(Date.now() - start) / 1000}s`);
+                Logger.log(
+                    `Stop actualization feed cache: ${(Date.now() - start) / 1000}s,`,
+                    this.constructor.name
+                );
             },
             error => {
                 Logger.error(`Critical feed cache error - ${error.stack}`);
@@ -99,6 +102,8 @@ class AbstractFeedCache extends BasicService {
 
     async _actualize(sync = true) {
         for await (const variant of this._makeVariantsIterator()) {
+            Logger.log('Actualize feed for:', variant);
+
             if (sync) {
                 await this._tryActualizeBy(...variant);
             } else {
