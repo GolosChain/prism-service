@@ -39,7 +39,7 @@
     "cyberwayjs": "^20.0.0-beta7",
     "elasticsearch": "^15.5.0",
     "gls-core-service": "^3.47.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.14",
     "moment": "^2.24.0",
     "mongodb": "^3.2.7",
     "node-fetch": "^2.6.0",
