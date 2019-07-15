@@ -1,30 +1,56 @@
+const { MongoClient } = require('mongodb');
 const moment = require('moment');
 const PostModel = require('../../models/Post');
 const Abstract = require('./Abstract');
 
+let connection = null;
+
 class Popular extends Abstract {
-    getFor(communityId, timeframe) {
-        return new Promise((resolve, reject) => {
-            const modelObjects = [];
+    constructor(...args) {
+        super(...args);
 
-            const { query, projection, options } = this._getDefaultRequestOptions(communityId);
-
-            query['repost.isRepost'] = false;
-
-            this._applyTimeCond(query, options, timeframe);
-
-            PostModel.find(query, projection, options)
-                .stream()
-                .on('data', document => {
-                    modelObjects.push(document);
-                })
-                .on('end', () => {
-                    resolve(this._makeResult(modelObjects));
-                })
-                .on('error', error => {
-                    reject(error);
-                });
+        connection = MongoClient.connect(
+            'mongodb://prism-mongo',
+            {
+                useNewUrlParser: true,
+            }
+        ).catch(err => {
+            console.error('MONGO ERROR', err);
+            process.exit(1);
         });
+    }
+
+    async getFor(communityId, timeframe) {
+        const { query, projection, options } = this._getDefaultRequestOptions(communityId);
+
+        query['repost.isRepost'] = false;
+
+        this._applyTimeCond(query, options, timeframe);
+
+        console.log('PostModel.find:', query, projection, options);
+
+        const db = (await connection).db('admin');
+
+        const modelObjects = await db
+            .collection('posts')
+            .find(query, projection)
+            .sort(options.sort)
+            .limit(options.limit)
+            .toArray();
+
+        return this._makeResult(modelObjects);
+
+        // PostModel.find(query, projection, options)
+        //     .stream()
+        //     .on('data', document => {
+        //         modelObjects.push(document);
+        //     })
+        //     .on('end', () => {
+        //         resolve(this._makeResult(modelObjects));
+        //     })
+        //     .on('error', error => {
+        //         reject(error);
+        //     });
     }
 
     _applyTimeCond(query, options, timeframe) {

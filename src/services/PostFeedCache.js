@@ -13,7 +13,13 @@ class PostFeedCache extends AbstractFeedCache {
     async _getIds(sortBy, communityId, timeframe) {
         switch (sortBy) {
             case 'popular':
-                return await this._getController().getFor(communityId, timeframe);
+                const start = Date.now();
+
+                const result = await this._getController().getFor(communityId, timeframe);
+
+                console.log(`it takes: ${Date.now() - start}ms`);
+
+                return result;
 
             default:
                 return [];
