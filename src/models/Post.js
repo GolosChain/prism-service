@@ -307,7 +307,6 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.hot': -1,
                 },
             },
@@ -315,7 +314,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     communityId: 1,
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.hot': -1,
                 },
             },
@@ -324,7 +322,6 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.trending': -1,
                 },
             },
@@ -332,7 +329,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     communityId: 1,
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.trending': -1,
                 },
             },
