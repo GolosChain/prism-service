@@ -17,17 +17,35 @@ class Connector extends BasicConnector {
         super();
 
         const linking = { connector: this };
+        const empty = {};
 
-        this._feed = new Feed({ postFeedCache, ...linking });
-        this._comment = new Comment(linking);
-        this._post = new Post(linking);
-        this._profile = new Profile(linking);
-        this._notify = new Notify(linking);
-        this._hashTag = new HashTag(linking);
-        this._leaders = new Leaders({ leaderFeedCache, ...linking });
-        this._block = new Block({ prismService: prism, ...linking });
-        this._search = new Search(linking);
-        this._vote = new Vote(linking);
+        if (env.GLS_ENABLE_BLOCK_HANDLE) {
+            this._block = new Block({ prismService: prism, ...linking });
+        } else {
+            this._block = empty;
+        }
+
+        if (env.GLS_ENABLE_PUBLIC_API) {
+            this._feed = new Feed({ postFeedCache, ...linking });
+            this._comment = new Comment(linking);
+            this._post = new Post(linking);
+            this._profile = new Profile(linking);
+            this._notify = new Notify(linking);
+            this._hashTag = new HashTag(linking);
+            this._leaders = new Leaders({ leaderFeedCache, ...linking });
+            this._search = new Search(linking);
+            this._vote = new Vote(linking);
+        } else {
+            this._feed = empty;
+            this._comment = empty;
+            this._post = empty;
+            this._profile = empty;
+            this._notify = empty;
+            this._hashTag = empty;
+            this._leaders = empty;
+            this._search = empty;
+            this._vote = empty;
+        }
     }
 
     async start() {
@@ -36,6 +54,7 @@ class Connector extends BasicConnector {
                 search: {
                     handler: this._search.search,
                     scope: this._search,
+                    inherits: ['onlyWhenPublicApiEnabled'],
                     validation: {
                         required: ['text'],
                         properties: {
@@ -77,6 +96,7 @@ class Connector extends BasicConnector {
                         'contentId',
                         'contentType',
                         'userRelativity',
+                        'onlyWhenPublicApiEnabled',
                     ],
                     validation: {
                         required: ['permlink'],
@@ -92,6 +112,7 @@ class Connector extends BasicConnector {
                         'contentId',
                         'contentType',
                         'userRelativity',
+                        'onlyWhenPublicApiEnabled',
                     ],
                     validation: {
                         required: ['permlink'],
@@ -108,6 +129,7 @@ class Connector extends BasicConnector {
                         'contentId',
                         'contentType',
                         'optionalUserRelativity',
+                        'onlyWhenPublicApiEnabled',
                     ],
                     validation: {
                         required: [],
@@ -134,6 +156,7 @@ class Connector extends BasicConnector {
                         'userByName',
                         'contentType',
                         'optionalUserRelativity',
+                        'onlyWhenPublicApiEnabled',
                     ],
                     validation: {
                         required: [],
@@ -176,7 +199,12 @@ class Connector extends BasicConnector {
                 getProfile: {
                     handler: this._profile.getProfile,
                     scope: this._profile,
-                    inherits: ['appSpecify', 'userByName', 'userRelativity'],
+                    inherits: [
+                        'appSpecify',
+                        'userByName',
+                        'userRelativity',
+                        'onlyWhenPublicApiEnabled',
+                    ],
                     validation: {
                         required: [],
                         properties: {
@@ -189,6 +217,7 @@ class Connector extends BasicConnector {
                 getChargers: {
                     handler: this._profile.getChargers,
                     scope: this._profile,
+                    inherits: ['onlyWhenPublicApiEnabled'],
                     validation: {
                         required: ['userId'],
                         properties: {
@@ -201,7 +230,7 @@ class Connector extends BasicConnector {
                 suggestNames: {
                     handler: this._profile.suggestNames,
                     scope: this._profile,
-                    inherits: ['appSpecify'],
+                    inherits: ['appSpecify', 'onlyWhenPublicApiEnabled'],
                     validation: {
                         required: ['text'],
                         properties: {
@@ -214,7 +243,7 @@ class Connector extends BasicConnector {
                 getNotifyMeta: {
                     handler: this._notify.getMeta,
                     scope: this._notify,
-                    inherits: ['appSpecify', 'userByName'],
+                    inherits: ['appSpecify', 'userByName', 'onlyWhenPublicApiEnabled'],
                     validation: {
                         properties: {
                             userId: {
@@ -238,7 +267,7 @@ class Connector extends BasicConnector {
                 getHashTagTop: {
                     handler: this._hashTag.getTop,
                     scope: this._hashTag,
-                    inherits: ['feedPagination'],
+                    inherits: ['feedPagination', 'onlyWhenPublicApiEnabled'],
                     validation: {
                         required: ['communityId'],
                         properties: {
@@ -251,7 +280,12 @@ class Connector extends BasicConnector {
                 getLeadersTop: {
                     handler: this._leaders.getTop,
                     scope: this._leaders,
-                    inherits: ['feedPagination', 'appSpecify', 'userRelativity'],
+                    inherits: [
+                        'feedPagination',
+                        'appSpecify',
+                        'userRelativity',
+                        'onlyWhenPublicApiEnabled',
+                    ],
                     validation: {
                         required: ['communityId'],
                         properties: {
@@ -264,7 +298,7 @@ class Connector extends BasicConnector {
                 getProposals: {
                     handler: this._leaders.getProposals,
                     scope: this._leaders,
-                    inherits: ['feedPagination', 'appSpecify'],
+                    inherits: ['feedPagination', 'appSpecify', 'onlyWhenPublicApiEnabled'],
                     validation: {
                         required: ['communityId'],
                         properties: {
@@ -277,6 +311,7 @@ class Connector extends BasicConnector {
                 waitForBlock: {
                     handler: this._block.waitForBlock,
                     scope: this._block,
+                    inherits: ['onlyWhenBlockHandleEnabled'],
                     validation: {
                         required: ['blockNum'],
                         properties: {
@@ -290,6 +325,7 @@ class Connector extends BasicConnector {
                 waitForTransaction: {
                     handler: this._block.waitForTransaction,
                     scope: this._block,
+                    inherits: ['onlyWhenBlockHandleEnabled'],
                     validation: {
                         required: ['transactionId'],
                         properties: {
@@ -302,7 +338,13 @@ class Connector extends BasicConnector {
                 getPostVotes: {
                     handler: this._vote.getPostVotes,
                     scope: this._vote,
-                    inherits: ['contentId', 'userRelativity', 'feedPagination', 'appSpecify'],
+                    inherits: [
+                        'contentId',
+                        'userRelativity',
+                        'feedPagination',
+                        'appSpecify',
+                        'onlyWhenPublicApiEnabled',
+                    ],
                     validation: {
                         required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
@@ -316,7 +358,13 @@ class Connector extends BasicConnector {
                 getCommentVotes: {
                     handler: this._vote.getCommentVotes,
                     scope: this._vote,
-                    inherits: ['contentId', 'userRelativity', 'feedPagination', 'appSpecify'],
+                    inherits: [
+                        'contentId',
+                        'userRelativity',
+                        'feedPagination',
+                        'appSpecify',
+                        'onlyWhenPublicApiEnabled',
+                    ],
                     validation: {
                         required: ['requestedUserId', 'permlink', 'type'],
                         properties: {
@@ -330,7 +378,7 @@ class Connector extends BasicConnector {
                 resolveProfile: {
                     handler: this._profile.resolveProfile,
                     scope: this._profile,
-                    inherits: ['appSpecify', 'userByName'],
+                    inherits: ['appSpecify', 'userByName', 'onlyWhenPublicApiEnabled'],
                     validation: {
                         required: ['username', 'app'],
                         properties: {},
@@ -339,7 +387,12 @@ class Connector extends BasicConnector {
                 getSubscriptions: {
                     handler: this._profile.getSubscriptions,
                     scope: this._profile,
-                    inherits: ['feedPagination', 'appSpecify', 'userRelativity'],
+                    inherits: [
+                        'feedPagination',
+                        'appSpecify',
+                        'userRelativity',
+                        'onlyWhenPublicApiEnabled',
+                    ],
                     validation: {
                         required: ['requestedUserId'],
                         properties: {
@@ -356,7 +409,12 @@ class Connector extends BasicConnector {
                 getSubscribers: {
                     handler: this._profile.getSubscribers,
                     scope: this._profile,
-                    inherits: ['feedPagination', 'appSpecify', 'userRelativity'],
+                    inherits: [
+                        'feedPagination',
+                        'appSpecify',
+                        'userRelativity',
+                        'onlyWhenPublicApiEnabled',
+                    ],
                     validation: {
                         required: ['requestedUserId'],
                         properties: {
@@ -449,6 +507,12 @@ class Connector extends BasicConnector {
                             },
                         },
                     },
+                    onlyWhenBlockHandleEnabled: {
+                        before: [{ handler: this._onlyWhenBlockHandleEnabled, scope: this }],
+                    },
+                    onlyWhenPublicApiEnabled: {
+                        before: [{ handler: this._onlyWhenPublicApiEnabled, scope: this }],
+                    },
                 },
             },
             requiredClients: {
@@ -456,6 +520,18 @@ class Connector extends BasicConnector {
                 meta: env.GLS_META_CONNECT,
             },
         });
+    }
+
+    _onlyWhenBlockHandleEnabled() {
+        if (!env.GLS_ENABLE_BLOCK_HANDLE) {
+            throw { code: 405, message: 'Method disabled by configuration' };
+        }
+    }
+
+    _onlyWhenPublicApiEnabled() {
+        if (!env.GLS_ENABLE_PUBLIC_API) {
+            throw { code: 405, message: 'Method disabled by configuration' };
+        }
     }
 }
 
