@@ -303,6 +303,21 @@ module.exports = MongoDB.makeModel(
                 },
             },
 
+            // Shares feed cache (without meta.time)
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'stats.rShares': -1,
+                },
+            },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'stats.rShares': -1,
+                },
+            },
+
             // Actual feed cache
             {
                 fields: {
