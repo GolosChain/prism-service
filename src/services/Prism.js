@@ -41,7 +41,7 @@ class Prism extends BasicService {
         });
 
         this._subscriber = new BlockSubscribe({
-            blockHandler: this._registerNewBlock.bind(this),
+            handler: this._handleEvent.bind(this),
         });
 
         const lastBlockInfo = await this._subscriber.getLastBlockMetaData();
@@ -64,6 +64,30 @@ class Prism extends BasicService {
 
     hasRecentTransaction(id) {
         return this._recentTransactions.has(id);
+    }
+
+    /**
+     * Обработка событий из BlockSubscribe.
+     * @param {'BLOCK'|'FORK'|'IRREVERSIBLE_BLOCK'} type
+     * @param {Object} data
+     * @private
+     */
+    async _handleEvent({ type, data }) {
+        switch (type) {
+            case 'BLOCK':
+                await this._registerNewBlock(data);
+                break;
+            case 'IRREVERSIBLE_BLOCK':
+                // TODO: Добавить обработку неоткатных блоков (удалять старые данные)
+                break;
+            case 'FORK':
+                Logger.warn(`Fork detected, new safe base on block num: ${data.baseBlockNum}`);
+                // TODO: Доделать обработку форков
+                // await this._handleFork();
+                process.exit(1);
+                break;
+            default:
+        }
     }
 
     async _registerNewBlock(block) {
