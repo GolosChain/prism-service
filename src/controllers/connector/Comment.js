@@ -73,7 +73,7 @@ class Comment extends AbstractFeed {
         this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit, contentType });
         this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink });
 
-        return { type, fullQuery, currentUserId, sortBy, limit };
+        return { type, fullQuery, currentUserId, sortBy, limit, app };
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {

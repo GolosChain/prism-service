@@ -1,12 +1,12 @@
 const AbstractContent = require('./AbstractContent');
 
 class AbstractFeed extends AbstractContent {
-    _normalizeParams({ sortBy, sequenceKey, limit, contentType }) {
+    _normalizeParams({ sortBy, sequenceKey, limit, contentType, app }) {
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
         }
 
-        return { sortBy, sequenceKey, limit, contentType };
+        return { sortBy, sequenceKey, limit, contentType, app };
     }
 
     _packSequenceKey(sequenceKey) {
