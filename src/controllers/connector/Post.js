@@ -10,6 +10,7 @@ class Post extends AbstractContent {
             contentType,
             username,
             app,
+            noReposts: true,
         });
 
         await Promise.all([
