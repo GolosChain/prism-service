@@ -21,7 +21,6 @@ module.exports = MongoDB.makeModel(
             },
             time: {
                 type: Date,
-                default: new Date(),
             },
         },
         contentId: {
