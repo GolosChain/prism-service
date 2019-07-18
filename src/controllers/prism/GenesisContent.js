@@ -4,6 +4,7 @@ const { NESTED_COMMENTS_MAX_INDEX_DEPTH } = require('../../data/constants');
 const GenesisLimitedCache = require('../../utils/GenesisLimitedCache');
 const SubscribesSaver = require('../../utils/SubscribesSaver');
 const Payouts = require('../../utils/Payouts');
+const WilsonScoring = require('../../utils/WilsonScoring');
 const ProfileModel = require('../../models/Profile');
 const LeaderModel = require('../../models/Leader');
 const PostModel = require('../../models/Post');
@@ -113,6 +114,7 @@ class GenesisContent {
             benefactor_reward,
             curator_reward,
             reblogs,
+            net_rshares: rShares,
         } = data;
 
         const meta = {
@@ -162,6 +164,7 @@ class GenesisContent {
                 archived,
                 payouts,
                 reblogs,
+                rShares,
             });
         }
     }
@@ -177,6 +180,7 @@ class GenesisContent {
         archived,
         payouts,
         reblogs,
+        rShares,
     }) {
         const postModel = new PostModel({
             communityId: 'gls',
@@ -196,6 +200,7 @@ class GenesisContent {
         this._incUserPostsCounter(contentId.userId);
         this._applyVotes(postModel, votes);
         this._applyPayouts(postModel, { archived, payouts });
+        this._addPayoutScoring(postModel, { netshares: rShares });
         this._processReblogs({ contentId, reblogs });
         this._postsBulk.addEntry(postModel);
         metrics.inc('genesis_type_posts_processed');
@@ -374,6 +379,15 @@ class GenesisContent {
         if (archived) {
             model.payout.done = true;
         }
+    }
+
+    _addPayoutScoring(model, postState) {
+        const rShares = Number(postState.netshares);
+
+        model.stats = model.stats || {};
+        model.stats.rShares = rShares;
+        model.stats.hot = WilsonScoring.calcHot(rShares, model.meta.time);
+        model.stats.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
     }
 
     _incUserPostsCounter(userId) {
