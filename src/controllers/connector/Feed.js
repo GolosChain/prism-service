@@ -56,6 +56,10 @@ class Feed extends AbstractFeed {
             app,
         } = this._normalizeParams(params);
 
+        if (sortBy === 'popular' && type !== 'community') {
+            throw { code: 452, message: 'Sort by popular implemented only for community feed.' };
+        }
+
         const query = {};
         const projection = {
             'content.body.full': false,
