@@ -543,13 +543,13 @@ class GenesisContent {
         this._subscribesSaver.add({ pinner, pinning });
     }
 
-    _handleWitnessState({ witness, weight, active }) {
+    _handleWitnessState({ name, total_weight: rating, url, votes, active }) {
         this._leadersBulk.addEntry({
             communityId: 'gls',
-            userId: witness,
-            url: '',
-            rating: weight,
-            votes: [],
+            userId: name,
+            url,
+            rating: parseInt(rating, 10),
+            votes,
             active,
         });
     }

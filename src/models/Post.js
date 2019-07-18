@@ -21,7 +21,6 @@ module.exports = MongoDB.makeModel(
             },
             time: {
                 type: Date,
-                default: new Date(),
             },
         },
         contentId: {
@@ -290,7 +289,6 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.rShares': -1,
                 },
             },
@@ -298,8 +296,24 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     communityId: 1,
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.rShares': -1,
+                },
+            },
+
+            // Shares feed cache (with meta.time)
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'stats.rShares': -1,
+                    'meta.time': 1,
+                },
+            },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'stats.rShares': -1,
+                    'meta.time': 1,
                 },
             },
 
@@ -307,7 +321,6 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.hot': -1,
                 },
             },
@@ -315,7 +328,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     communityId: 1,
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.hot': -1,
                 },
             },
@@ -324,7 +336,6 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.trending': -1,
                 },
             },
@@ -332,7 +343,6 @@ module.exports = MongoDB.makeModel(
                 fields: {
                     communityId: 1,
                     'repost.isRepost': 1,
-                    'meta.time': -1,
                     'stats.trending': -1,
                 },
             },

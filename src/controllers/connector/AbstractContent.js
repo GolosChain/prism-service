@@ -9,7 +9,7 @@ const PoolModel = require('../../models/Pool');
 class AbstractContent extends BasicController {
     async _getContent(
         Model,
-        { currentUserId, requestedUserId, permlink, contentType, username, app }
+        { currentUserId, requestedUserId, permlink, contentType, username, app, noReposts }
     ) {
         if (!requestedUserId && !username) {
             throw { code: 400, message: 'Invalid user identification' };
@@ -19,14 +19,18 @@ class AbstractContent extends BasicController {
             requestedUserId = this._getUserIdByName(username, app);
         }
 
-        const modelObject = await Model.findOne(
-            {
-                'contentId.userId': requestedUserId,
-                'contentId.permlink': permlink,
-            },
-            this._makeContentProjection(contentType),
-            { lean: true }
-        );
+        const query = {
+            'contentId.userId': requestedUserId,
+            'contentId.permlink': permlink,
+        };
+
+        if (noReposts) {
+            query['repost.isRepost'] = false;
+        }
+
+        const modelObject = await Model.findOne(query, this._makeContentProjection(contentType), {
+            lean: true,
+        });
 
         if (!modelObject) {
             this._throwNotFound();
