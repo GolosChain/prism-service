@@ -43,7 +43,7 @@
     "moment": "^2.24.0",
     "mongodb": "^3.2.7",
     "node-fetch": "^2.6.0",
-    "node-nats-streaming": "^0.2.2",
+    "node-nats-streaming": "^0.2.4",
     "pluralize": "^7.0.0",
     "text-encoding": "^0.7.0",
     "uuid": "^3.3.2",

@@ -16,23 +16,36 @@ class Main extends BasicMain {
     constructor() {
         super(env);
 
-        const postFeedCache = new PostFeedCache();
-        const leaderFeedCache = new LeaderFeedCache();
-        const prism = new Prism();
+        let postFeedCache;
+        let leaderFeedCache;
+        let prism;
+
+        if (env.GLS_ENABLE_BLOCK_HANDLE) {
+            const fork = new Fork();
+
+            prism = new Prism();
+            prism.setForkService(fork);
+
+            this.addNested(fork, prism);
+        }
+
+        if (env.GLS_ENABLE_PUBLIC_API) {
+            postFeedCache = new PostFeedCache();
+            leaderFeedCache = new LeaderFeedCache();
+
+            this.addNested(postFeedCache, leaderFeedCache);
+        }
+
         const connector = new Connector({ postFeedCache, leaderFeedCache, prism });
-        const searchSync = new SearchSync();
-        const fork = new Fork();
 
-        prism.setForkService(fork);
-        prism.setConnector(connector);
+        if (env.GLS_ENABLE_BLOCK_HANDLE) {
+            prism.setConnector(connector);
+        }
 
-        this.startMongoBeforeBoot(null, {
-            poolSize: 100,
-        });
-        this.addNested(fork, prism, postFeedCache, leaderFeedCache);
+        this.startMongoBeforeBoot(null, { poolSize: 100 });
 
-        if (env.GLS_SEARCH_ENABLED) {
-            this.addNested(searchSync);
+        if (env.GLS_ENABLE_PUBLIC_API && env.GLS_SEARCH_ENABLED) {
+            this.addNested(new SearchSync());
         }
 
         this.addNested(connector);
