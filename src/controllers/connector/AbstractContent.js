@@ -325,6 +325,7 @@ class AbstractContent extends BasicController {
                 {
                     'contentId.userId': contentId.userId,
                     'contentId.permlink': contentId.permlink,
+                    'repost.isRepost': false,
                 },
                 projection,
                 { lean: true }
