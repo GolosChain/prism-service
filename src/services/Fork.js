@@ -36,7 +36,7 @@ class Fork extends BasicService {
 
         const newBase = documents.pop();
 
-        if (newBase.blockNum !== baseBlockNum) {
+        if (!newBase || newBase.blockNum !== baseBlockNum) {
             Logger.error('Critical Error! Not found base block in the fork data!');
             process.exit(1);
         }
