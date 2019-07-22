@@ -270,6 +270,11 @@ getProposals:                    // Получить список предлаг
           cyber                  // CyberWay
         | gls                    // Golos
         ]
+        
+content.getHeaders               // Получить список заголовков для указанных постов
+    contentIds <Array>           // Массив идентификаторов контента
+        userId <string>          // Идентификатор пользователя
+        permlink <string>        // Пермлинк поста        
 
 waitForBlock                     // Дождаться и получить ответ когда призма обработает указанный блок
     blockNum <number>            // Номер блока

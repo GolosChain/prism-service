@@ -428,6 +428,31 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                getHeaders: {
+                    handler: this._post.getHeaders,
+                    scope: this._post,
+                    inherits: ['onlyWhenPublicApiEnabled'],
+                    validation: {
+                        required: ['contentIds'],
+                        properties: {
+                            contentIds: {
+                                type: 'array',
+                                items: {
+                                    type: 'object',
+                                    required: ['userId', 'permlink'],
+                                    validation: {
+                                        userId: {
+                                            type: 'string',
+                                        },
+                                        permlink: {
+                                            type: 'string',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
             },
             serverDefaults: {
                 parents: {
