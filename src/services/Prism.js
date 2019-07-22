@@ -74,17 +74,15 @@ class Prism extends BasicService {
      */
     async _handleEvent({ type, data }) {
         switch (type) {
-            case 'BLOCK':
+            case BlockSubscribe.EVENT_TYPES.BLOCK:
                 await this._registerNewBlock(data);
                 break;
-            case 'IRREVERSIBLE_BLOCK':
-                // TODO: Добавить обработку неоткатных блоков (удалять старые данные)
+            case BlockSubscribe.EVENT_TYPES.IRREVERSIBLE_BLOCK:
+                await this._handleIrreversibleBlock(data);
                 break;
-            case 'FORK':
+            case BlockSubscribe.EVENT_TYPES.FORK:
                 Logger.warn(`Fork detected, new safe base on block num: ${data.baseBlockNum}`);
-                // TODO: Доделать обработку форков
-                // await this._handleFork();
-                process.exit(1);
+                await this._handleFork(data.baseBlockNum);
                 break;
             default:
         }
@@ -152,11 +150,13 @@ class Prism extends BasicService {
         }
     }
 
-    async _handleFork() {
+    async _handleIrreversibleBlock(block) {
+        await this._forkService.registerIrreversibleBlock(block);
+    }
+
+    async _handleFork(baseBlockNum) {
         try {
-            await this._forkService.revert(this._subscriber);
-            Logger.log('Shutdown on fork revert complete.');
-            process.exit(0);
+            await this._forkService.revert(this._subscriber, baseBlockNum);
         } catch (error) {
             Logger.error('Critical error!');
             Logger.error('Cant revert on fork:', error);
