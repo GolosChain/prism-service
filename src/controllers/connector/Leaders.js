@@ -49,12 +49,14 @@ class Leaders extends AbstractFeed {
     _prepareQuery({ communityId, sequenceKey, limit }) {
         const query = {};
         const projection = {
-            __v: false,
-            createdAt: false,
-            updatedAt: false,
-            votes: false,
+            _id: true,
+            communityId: true,
+            userId: true,
+            url: true,
+            rating: true,
+            active: true,
         };
-        const options = { lean: true };
+        const options = { lean: true, sort: { rating: -1 } };
 
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
@@ -97,13 +99,13 @@ class Leaders extends AbstractFeed {
         const items = await ProposalModel.find(
             query,
             {
-                userId: 1,
-                proposalId: 1,
-                code: 1,
-                action: 1,
-                expiration: 1,
-                'changes.structureName': 1,
-                'changes.values': 1,
+                userId: true,
+                proposalId: true,
+                code: true,
+                action: true,
+                expiration: true,
+                'changes.structureName': true,
+                'changes.values': true,
             },
             { lean: true, limit }
         );

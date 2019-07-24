@@ -17,8 +17,8 @@ module.exports = MongoDB.makeModel(
             default: '',
         },
         rating: {
-            type: Number,
-            default: 0,
+            type: String,
+            default: '0',
         },
         votes: {
             type: [String],

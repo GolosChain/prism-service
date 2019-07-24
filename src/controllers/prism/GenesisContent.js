@@ -562,7 +562,7 @@ class GenesisContent {
             communityId: 'gls',
             userId: name,
             url,
-            rating: parseInt(rating, 10),
+            rating,
             votes,
             active,
         });
