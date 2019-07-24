@@ -115,11 +115,11 @@ class Leaders extends AbstractFeed {
         const users = {};
 
         for (const item of items) {
-            const user = {
-                userId: item.userId,
-            };
-            users[user.userId] = user;
-            item.author = user;
+            users[item.userId] = true;
+
+            for (const { userId } of item.approves) {
+                users[userId] = true;
+            }
         }
 
         let resultSequenceKey = null;
@@ -128,20 +128,18 @@ class Leaders extends AbstractFeed {
             resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
         }
 
-        for (const item of items) {
-            delete item._id;
-            delete item.userId;
-
-            for (const { userId } of item.approves) {
-                if (!users[userId]) {
-                    users[userId] = { userId };
-                }
-            }
+        for (const userId of Object.keys(users)) {
+            users[userId] = { userId };
         }
 
         await this._populateUsers(Array.from(Object.values(users)), app);
 
         for (const item of items) {
+            item.author = {
+                userId: item.userId,
+                ...users[item.userId],
+            };
+
             item.approves = item.approves.map(approve => ({
                 userId: approve.userId,
                 username: users[approve.userId].username,
@@ -149,6 +147,9 @@ class Leaders extends AbstractFeed {
                 permission: approve.permission,
                 isSigned: approve.isSigned,
             }));
+
+            delete item._id;
+            delete item.userId;
         }
 
         return {
