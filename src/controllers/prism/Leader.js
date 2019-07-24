@@ -193,8 +193,9 @@ class Leader extends Abstract {
      * @param {string} proposalId
      * @param {[{ actor: string, permission: string }]} requested
      * @param {Object} trx
+     * @param {Date} blockTime
      */
-    async handleNewProposal({ proposer, proposal_name: proposalId, requested, trx }) {
+    async handleNewProposal({ proposer, proposal_name: proposalId, requested, trx }, blockTime) {
         if (trx.actions.length !== 1) {
             return;
         }
@@ -219,6 +220,7 @@ class Leader extends Abstract {
             proposalId,
             code: action.account,
             action: action.name,
+            blockTime,
             expiration: expiration,
             changes: data.params.map(([structureName, values]) => ({
                 structureName,

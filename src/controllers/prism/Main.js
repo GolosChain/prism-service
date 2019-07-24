@@ -174,7 +174,7 @@ class Main {
                 break;
 
             case 'cyber.msig->propose':
-                await this._leader.handleNewProposal(actionArgs);
+                await this._leader.handleNewProposal(actionArgs, blockTime);
                 break;
 
             case 'cyber.msig->approve':

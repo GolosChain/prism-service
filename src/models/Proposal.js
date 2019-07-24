@@ -24,6 +24,10 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
+        blockTime: {
+            type: Date,
+            required: true,
+        },
         expiration: {
             type: Date,
             required: true,
@@ -68,6 +72,7 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     communityId: 1,
+                    blockTime: -1,
                 },
             },
             {

@@ -97,12 +97,19 @@ class Leaders extends AbstractFeed {
                 proposalId: true,
                 code: true,
                 action: true,
+                blockTime: true,
                 expiration: true,
                 approves: true,
                 'changes.structureName': true,
                 'changes.values': true,
             },
-            { lean: true, limit }
+            {
+                lean: true,
+                limit,
+                sort: {
+                    blockTime: -1,
+                },
+            }
         );
 
         const users = {};
@@ -125,9 +132,9 @@ class Leaders extends AbstractFeed {
             delete item._id;
             delete item.userId;
 
-            for (const { actor } of item.approves) {
-                if (!users[actor]) {
-                    users[actor] = { userId: actor };
+            for (const { userId } of item.approves) {
+                if (!users[userId]) {
+                    users[userId] = { userId };
                 }
             }
         }
@@ -136,9 +143,9 @@ class Leaders extends AbstractFeed {
 
         for (const item of items) {
             item.approves = item.approves.map(approve => ({
-                userId: approve.actor,
-                username: users[approve.actor].username,
-                avatarUrl: users[approve.actor].avatarUrl,
+                userId: approve.userId,
+                username: users[approve.userId].username,
+                avatarUrl: users[approve.userId].avatarUrl,
                 permission: approve.permission,
                 isSigned: approve.isSigned,
             }));
