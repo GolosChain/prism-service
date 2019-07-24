@@ -74,13 +74,7 @@ class Leaders extends AbstractFeed {
     }
 
     async _populateUsers(modelObjects, app) {
-        const results = [];
-
-        for (const modelObject of modelObjects) {
-            results.push(this._populateUser(modelObject, app));
-        }
-
-        await Promise.all(results);
+        await Promise.all(modelObjects.map(modelObject => this._populateUser(modelObject, app)));
     }
 
     async getProposals({ communityId, limit, sequenceKey, app }) {
@@ -104,25 +98,22 @@ class Leaders extends AbstractFeed {
                 code: true,
                 action: true,
                 expiration: true,
+                approves: true,
                 'changes.structureName': true,
                 'changes.values': true,
             },
             { lean: true, limit }
         );
 
-        const users = [];
+        const users = {};
 
         for (const item of items) {
             const user = {
                 userId: item.userId,
             };
-
-            users.push(user);
-
+            users[user.userId] = user;
             item.author = user;
         }
-
-        await this._populateUsers(users, app);
 
         let resultSequenceKey = null;
 
@@ -133,6 +124,24 @@ class Leaders extends AbstractFeed {
         for (const item of items) {
             delete item._id;
             delete item.userId;
+
+            for (const { actor } of item.approves) {
+                if (!users[actor]) {
+                    users[actor] = { userId: actor };
+                }
+            }
+        }
+
+        await this._populateUsers(Array.from(Object.values(users)), app);
+
+        for (const item of items) {
+            item.approves = item.approves.map(approve => ({
+                userId: approve.actor,
+                username: users[approve.actor].username,
+                avatarUrl: users[approve.actor].avatarUrl,
+                permission: approve.permission,
+                isSigned: approve.isSigned,
+            }));
         }
 
         return {

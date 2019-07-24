@@ -43,12 +43,40 @@ module.exports = MongoDB.makeModel(
             ],
             required: true,
         },
+        approves: {
+            type: [
+                {
+                    userId: {
+                        type: String,
+                        required: true,
+                    },
+                    permission: {
+                        type: String,
+                        required: true,
+                    },
+                    isSigned: {
+                        type: Boolean,
+                        default: false,
+                    },
+                },
+            ],
+            required: true,
+        },
     },
     {
         index: [
             {
                 fields: {
                     communityId: 1,
+                },
+            },
+            {
+                fields: {
+                    userId: 1,
+                    proposalId: 1,
+                },
+                options: {
+                    unique: true,
                 },
             },
         ],

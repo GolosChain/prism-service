@@ -177,6 +177,10 @@ class Main {
                 await this._leader.handleNewProposal(actionArgs);
                 break;
 
+            case 'cyber.msig->approve':
+                await this._leader.handleProposalApprove(actionArgs);
+                break;
+
             default:
             // unknown action, do nothing
         }
