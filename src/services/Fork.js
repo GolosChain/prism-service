@@ -1,7 +1,6 @@
 const core = require('gls-core-service');
 const BasicService = core.services.Basic;
 const Logger = core.utils.Logger;
-const env = require('../data/env');
 const ForkModel = require('../models/Fork');
 
 class Fork extends BasicService {
@@ -62,11 +61,11 @@ class Fork extends BasicService {
 
     async registerIrreversibleBlock({ blockNum }) {
         try {
-            // Удаляем все записи до неоткатного блока, запись о неоткатном блоке сохраняем,
-            // чтобы можно было до него откатиться.
+            // Удаляем все записи до неоткатного блока и блока до него,
+            // Запись о неоткатном блоке сохраняем, чтобы можно было до него откатиться.
             await ForkModel.deleteMany({
                 blockNum: {
-                    $lt: blockNum,
+                    $lt: blockNum - 1,
                 },
             });
         } catch (err) {
@@ -90,33 +89,14 @@ class Fork extends BasicService {
 
         await this._restoreBy(current);
 
+        if (!previous) {
+            Logger.warn('No previous block, resetting block num to 0');
+        }
+
         await subscriber.setLastBlockMetaData({
             lastBlockNum: (previous && previous.blockNum) || 0,
             lastBlockSequence: (previous && previous.blockSequence) || 0,
         });
-    }
-
-    async _clean() {
-        try {
-            const currentLastBlock = await this._getCurrentLastBlock();
-
-            if (currentLastBlock) {
-                const edge = this._calcEdge(currentLastBlock);
-            }
-        } catch (error) {
-            Logger.error('Fork cleaner error:', error);
-            process.exit(1);
-        }
-    }
-
-    async _getCurrentLastBlock() {
-        const latest = await ForkModel.findOne({}, { blockNum: 1 }, { sort: { blockNum: -1 } });
-
-        if (!latest) {
-            return null;
-        }
-
-        return latest.blockNum;
     }
 
     async _restoreBy(document) {
