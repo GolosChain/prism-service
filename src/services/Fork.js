@@ -5,12 +5,6 @@ const env = require('../data/env');
 const ForkModel = require('../models/Fork');
 
 class Fork extends BasicService {
-    async start() {
-        setInterval(async () => {
-            await this._clean();
-        }, env.GLS_FORK_CLEANER_INTERVAL);
-    }
-
     async initBlock({ blockNum, blockTime, sequence }) {
         await ForkModel.create({ blockNum, blockTime, blockSequence: sequence });
     }
@@ -27,30 +21,57 @@ class Fork extends BasicService {
         );
     }
 
-    async revert(subscriber) {
+    async revert(subscriber, baseBlockNum) {
         Logger.info('Revert on fork...');
 
-        const documents = await ForkModel.find({}, {}, { sort: { blockNum: -1 } });
+        const documents = await ForkModel.find(
+            {
+                blockNum: {
+                    $gte: baseBlockNum,
+                },
+            },
+            {},
+            { sort: { blockNum: -1 } }
+        );
 
-        if (!documents.length) {
-            Logger.warn('Empty fork data.');
-            return;
+        const newBase = documents.pop();
+
+        if (!newBase || newBase.blockNum !== baseBlockNum) {
+            Logger.error('Critical Error! Not found base block in the fork data!');
+            process.exit(1);
         }
 
-        const lastBlock = documents[documents.length - 1];
-
         for (const document of documents) {
+            Logger.info(`Reverting block num: ${document.blockNum}`);
             await this._restoreBy(document.toObject());
         }
 
-        // TODO: Need to set correct block data, not calculated
+        await ForkModel.deleteMany({
+            blockNum: {
+                $gt: baseBlockNum,
+            },
+        });
+
         await subscriber.setLastBlockMetaData({
-            lastBlockNum: lastBlock.blockNum - 1,
-            lastBlockTime: new Date(lastBlock.blockTime.getTime() - 3000),
-            lastBlockSequence: lastBlock.blockSequence - 1,
+            lastBlockNum: newBase.blockNum,
+            lastBlockSequence: newBase.blockSequence,
         });
 
         Logger.info('Revert on fork done!');
+    }
+
+    async registerIrreversibleBlock({ blockNum }) {
+        try {
+            // Удаляем все записи до неоткатного блока, запись о неоткатном блоке сохраняем,
+            // чтобы можно было до него откатиться.
+            await ForkModel.deleteMany({
+                blockNum: {
+                    $lt: blockNum,
+                },
+            });
+        } catch (err) {
+            Logger.warn("Can't clear outdated fork data:", err);
+        }
     }
 
     async revertLastBlock(subscriber) {
@@ -69,23 +90,10 @@ class Fork extends BasicService {
 
         await this._restoreBy(current);
 
-        let update;
-
-        if (previous) {
-            update = {
-                lastBlockNum: previous.blockNum,
-                lastBlockTime: previous.blockTime,
-                lastBlockSequence: previous.blockSequence,
-            };
-        } else {
-            update = {
-                lastBlockNum: 0,
-                lastBlockTime: null,
-                lastBlockSequence: 0,
-            };
-        }
-
-        await subscriber.setLastBlockMetaData(update);
+        await subscriber.setLastBlockMetaData({
+            lastBlockNum: (previous && previous.blockNum) || 0,
+            lastBlockSequence: (previous && previous.blockSequence) || 0,
+        });
     }
 
     async _clean() {
@@ -94,8 +102,6 @@ class Fork extends BasicService {
 
             if (currentLastBlock) {
                 const edge = this._calcEdge(currentLastBlock);
-
-                await this._clearOutdated(edge);
             }
         } catch (error) {
             Logger.error('Fork cleaner error:', error);
@@ -111,14 +117,6 @@ class Fork extends BasicService {
         }
 
         return latest.blockNum;
-    }
-
-    _calcEdge(currentLastBlock) {
-        return currentLastBlock - env.GLS_DELEGATION_ROUND_LENGTH * 3;
-    }
-
-    async _clearOutdated(edge) {
-        await ForkModel.deleteMany({ blockNum: { $lt: edge } });
     }
 
     async _restoreBy(document) {
