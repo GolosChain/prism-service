@@ -197,7 +197,7 @@ class Feed extends AbstractFeed {
 
             case 'byUser':
                 query.$or = [
-                    { 'contentId.userId': requestedUserId },
+                    { 'contentId.userId': requestedUserId, 'repost.isRepost': false },
                     { 'repost.userId': requestedUserId },
                 ];
                 break;
