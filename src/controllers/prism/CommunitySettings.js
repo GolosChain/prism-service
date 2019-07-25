@@ -16,31 +16,34 @@ class CommunitySettings {
             });
 
             if (current) {
-                const prevData = current.data;
-                current.data = data;
-                await current.save();
-
-                await this._forkService.registerChanges({
-                    type: 'update',
-                    Model: CommunitySettingsModel,
-                    documentId: current._id,
-                    data: { $set: { data: prevData } },
-                });
+                await this._updateExisted({ current, data });
             } else {
-                const newObject = await CommunitySettingsModel.create({
-                    communityId,
-                    contractName,
-                    structureName,
-                    data,
-                });
-
-                await this._forkService.registerChanges({
-                    type: 'create',
-                    Model: CommunitySettingsModel,
-                    documentId: newObject._id,
-                });
+                await this._createNew({ communityId, contractName, structureName, data });
             }
         }
+    }
+
+    async _updateExisted({ current, data }) {
+        const prevData = current.data;
+        current.data = data;
+        await current.save();
+
+        await this._forkService.registerChanges({
+            type: 'update',
+            Model: CommunitySettingsModel,
+            documentId: current._id,
+            data: { $set: { data: prevData } },
+        });
+    }
+
+    async _createNew(modelData) {
+        const newObject = await CommunitySettingsModel.create(modelData);
+
+        await this._forkService.registerChanges({
+            type: 'create',
+            Model: CommunitySettingsModel,
+            documentId: newObject._id,
+        });
     }
 }
 
