@@ -11,6 +11,7 @@ const Leaders = require('../controllers/connector/Leaders');
 const Block = require('../controllers/connector/Block');
 const Search = require('../controllers/connector/Search');
 const Vote = require('../controllers/connector/Vote');
+const CommunitySettings = require('../controllers/connector/CommunitySettings');
 
 class Connector extends BasicConnector {
     constructor({ postFeedCache, leaderFeedCache, prism }) {
@@ -35,6 +36,7 @@ class Connector extends BasicConnector {
             this._leaders = new Leaders({ leaderFeedCache, ...linking });
             this._search = new Search(linking);
             this._vote = new Vote(linking);
+            this._communitySettings = new CommunitySettings(linking);
         } else {
             this._feed = empty;
             this._comment = empty;
@@ -45,6 +47,7 @@ class Connector extends BasicConnector {
             this._leaders = empty;
             this._search = empty;
             this._vote = empty;
+            this._communitySettings = empty;
         }
     }
 
@@ -424,6 +427,24 @@ class Connector extends BasicConnector {
                             type: {
                                 type: 'string',
                                 enum: ['user', 'community'],
+                            },
+                        },
+                    },
+                },
+                getCommunitySettings: {
+                    handler: this._communitySettings.getSettings,
+                    scope: this._communitySettings,
+                    validation: {
+                        required: ['communityId'],
+                        properties: {
+                            communityId: {
+                                type: 'string',
+                            },
+                            contractTypes: {
+                                type: 'array',
+                                items: {
+                                    type: 'string',
+                                },
                             },
                         },
                     },

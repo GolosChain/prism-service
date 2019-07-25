@@ -7,6 +7,7 @@ const Vote = require('./Vote');
 const Subscribe = require('./Subscribe');
 const HashTag = require('./HashTag');
 const Leader = require('./Leader');
+const CommunitySettings = require('./CommunitySettings');
 
 const ACTION_PROCESSING_WARNING_LIMIT = 1000;
 
@@ -16,10 +17,10 @@ const communityRegistry = [
     'gls.social',
     'gls.vesting',
     'gls.ctrl',
+    'gls.charge',
     'cyber',
     'cyber.domain',
     'cyber.token',
-    'gls.charge',
     'cyber.msig',
 ];
 
@@ -32,6 +33,7 @@ class Main {
         this._subscribe = new Subscribe({ connector, forkService });
         this._hashTag = new HashTag({ connector, forkService });
         this._leader = new Leader({ connector, forkService });
+        this._communitySettings = new CommunitySettings({ connector, forkService });
     }
 
     async disperse({ transactions, blockNum, blockTime }) {
@@ -183,6 +185,18 @@ class Main {
 
             default:
             // unknown action, do nothing
+        }
+
+        if (action.action === 'setparams') {
+            const [communityId, contractType] = action.code.split('.');
+
+            if (contractType) {
+                await this._communitySettings.handleSetParams(
+                    communityId,
+                    contractType,
+                    actionArgs.params
+                );
+            }
         }
     }
 
