@@ -176,11 +176,15 @@ class Main {
                 break;
 
             case 'cyber.msig->propose':
-                await this._leader.handleNewProposal(actionArgs, blockTime);
+                await this._leader.handleNewProposal(actionArgs, { blockTime });
                 break;
 
             case 'cyber.msig->approve':
                 await this._leader.handleProposalApprove(actionArgs);
+                break;
+
+            case 'cyber.msig->exec':
+                await this._leader.handleProposalExec(actionArgs, { blockTime });
                 break;
 
             default:

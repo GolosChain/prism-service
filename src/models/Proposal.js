@@ -32,6 +32,16 @@ module.exports = MongoDB.makeModel(
             type: Date,
             required: true,
         },
+        executer: {
+            type: String,
+        },
+        isExecuted: {
+            type: Boolean,
+            required: true,
+        },
+        executedBlockTime: {
+            type: Date,
+        },
         changes: {
             type: [
                 {
@@ -72,6 +82,7 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     communityId: 1,
+                    isExecuted: -1,
                     blockTime: -1,
                 },
             },
