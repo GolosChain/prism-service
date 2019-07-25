@@ -74,13 +74,7 @@ class Leaders extends AbstractFeed {
     }
 
     async _populateUsers(modelObjects, app) {
-        const results = [];
-
-        for (const modelObject of modelObjects) {
-            results.push(this._populateUser(modelObject, app));
-        }
-
-        await Promise.all(results);
+        await Promise.all(modelObjects.map(modelObject => this._populateUser(modelObject, app)));
     }
 
     async getProposals({ communityId, limit, sequenceKey, app }) {
@@ -103,26 +97,30 @@ class Leaders extends AbstractFeed {
                 proposalId: true,
                 code: true,
                 action: true,
+                blockTime: true,
                 expiration: true,
+                approves: true,
                 'changes.structureName': true,
                 'changes.values': true,
             },
-            { lean: true, limit }
+            {
+                lean: true,
+                limit,
+                sort: {
+                    blockTime: -1,
+                },
+            }
         );
 
-        const users = [];
+        const users = {};
 
         for (const item of items) {
-            const user = {
-                userId: item.userId,
-            };
+            users[item.userId] = true;
 
-            users.push(user);
-
-            item.author = user;
+            for (const { userId } of item.approves) {
+                users[userId] = true;
+            }
         }
-
-        await this._populateUsers(users, app);
 
         let resultSequenceKey = null;
 
@@ -130,7 +128,26 @@ class Leaders extends AbstractFeed {
             resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
         }
 
+        for (const userId of Object.keys(users)) {
+            users[userId] = { userId };
+        }
+
+        await this._populateUsers(Array.from(Object.values(users)), app);
+
         for (const item of items) {
+            item.author = {
+                userId: item.userId,
+                ...users[item.userId],
+            };
+
+            item.approves = item.approves.map(approve => ({
+                userId: approve.userId,
+                username: users[approve.userId].username,
+                avatarUrl: users[approve.userId].avatarUrl,
+                permission: approve.permission,
+                isSigned: approve.isSigned,
+            }));
+
             delete item._id;
             delete item.userId;
         }

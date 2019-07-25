@@ -2,6 +2,7 @@ const { JsonRpc, Api } = require('cyberwayjs');
 const fetch = require('node-fetch');
 const { TextEncoder, TextDecoder } = require('text-encoding');
 const core = require('gls-core-service');
+const { cloneDeep } = require('lodash');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
 const env = require('../../data/env');
@@ -187,9 +188,14 @@ class Leader extends Abstract {
         });
     }
 
-    async handleNewProposal(proposal) {
-        const { proposer, proposal_name: proposalId, trx } = proposal;
-
+    /**
+     * @param {string} proposer
+     * @param {string} proposalId
+     * @param {[{ actor: string, permission: string }]} requested
+     * @param {Object} trx
+     * @param {Date} blockTime
+     */
+    async handleNewProposal({ proposer, proposal_name: proposalId, requested, trx }, blockTime) {
         if (trx.actions.length !== 1) {
             return;
         }
@@ -214,11 +220,13 @@ class Leader extends Abstract {
             proposalId,
             code: action.account,
             action: action.name,
+            blockTime,
             expiration: expiration,
             changes: data.params.map(([structureName, values]) => ({
                 structureName,
                 values,
             })),
+            approves: requested.map(({ actor, permission }) => ({ userId: actor, permission })),
         });
         const saved = await proposalModel.save();
 
@@ -226,6 +234,71 @@ class Leader extends Abstract {
             type: 'create',
             Model: ProposalModel,
             documentId: saved._id,
+        });
+    }
+
+    /**
+     * @param {string} proposer
+     * @param {string} proposalId
+     * @param {{ actor: string, permission: string }} level
+     * @returns {Promise<void>}
+     */
+    async handleProposalApprove({ proposer, proposal_name: proposalId, level }) {
+        const proposal = await ProposalModel.findOne(
+            {
+                userId: proposer,
+                proposalId,
+            },
+            {
+                _id: true,
+                approves: true,
+            },
+            {
+                lean: true,
+            }
+        );
+
+        if (!proposal) {
+            Logger.warn(`Proposal (${proposer}/${proposalId}) not found.`);
+            return;
+        }
+
+        const approvesUpdated = cloneDeep(proposal.approves);
+
+        const approve = approvesUpdated.find(approve => approve.userId === level.actor);
+
+        if (!approve) {
+            Logger.warn(
+                `Proposal (${proposer}/${proposalId}) approve: approve by ${
+                    level.actor
+                } not found in requested list (skipping).`
+            );
+            return;
+        }
+
+        approve.isSigned = true;
+
+        await ProposalModel.updateOne(
+            {
+                userId: proposer,
+                proposalId,
+            },
+            {
+                $set: {
+                    approves: approvesUpdated,
+                },
+            }
+        );
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProposalModel,
+            documentId: proposal._id,
+            data: {
+                $set: {
+                    approves: proposal.approves,
+                },
+            },
         });
     }
 }
