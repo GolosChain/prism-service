@@ -7,11 +7,11 @@ class CommunitySettings {
         this._forkService = forkService;
     }
 
-    async handleSetParams(communityId, contractType, structures) {
+    async handleSetParams(communityId, contractName, structures) {
         for (const [structureName, data] of structures) {
             const current = await CommunitySettingsModel.findOne({
                 communityId,
-                contractType,
+                contractName,
                 structureName,
             });
 
@@ -29,7 +29,7 @@ class CommunitySettings {
             } else {
                 const newObject = await CommunitySettingsModel.create({
                     communityId,
-                    contractType,
+                    contractName,
                     structureName,
                     data,
                 });

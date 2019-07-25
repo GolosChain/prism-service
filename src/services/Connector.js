@@ -440,7 +440,7 @@ class Connector extends BasicConnector {
                             communityId: {
                                 type: 'string',
                             },
-                            contractTypes: {
+                            contracts: {
                                 type: 'array',
                                 items: {
                                     type: 'string',

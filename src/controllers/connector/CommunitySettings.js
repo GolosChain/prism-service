@@ -4,36 +4,36 @@ const BasicController = core.controllers.Basic;
 const Model = require('../../models/CommunitySettings');
 
 class CommunitySettings extends BasicController {
-    async getSettings({ communityId, contractTypes }) {
+    async getSettings({ communityId, contracts }) {
         const query = { communityId };
 
-        if (contractTypes) {
-            query.contractType = {
-                $in: contractTypes,
+        if (contracts) {
+            query.contractName = {
+                $in: contracts,
             };
         }
 
         const items = await Model.find(
             query,
-            { contractType: true, structureName: true, data: true },
+            { contractName: true, structureName: true, data: true },
             { lean: true }
         );
 
-        const groupedByTypes = {};
+        const groupedByContracts = {};
 
-        for (const { contractType, structureName, data } of items) {
-            let structures = groupedByTypes[contractType];
+        for (const { contractName, structureName, data } of items) {
+            let structures = groupedByContracts[contractName];
 
             if (!structures) {
                 structures = {};
-                groupedByTypes[contractType] = structures;
+                groupedByContracts[contractName] = structures;
             }
 
             structures[structureName] = data;
         }
 
         return {
-            contractTypes: groupedByTypes,
+            contracts: groupedByContracts,
         };
     }
 }

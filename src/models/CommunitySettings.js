@@ -8,7 +8,7 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        contractType: {
+        contractName: {
             type: String,
             required: true,
         },

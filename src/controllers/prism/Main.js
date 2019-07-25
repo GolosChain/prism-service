@@ -192,12 +192,12 @@ class Main {
         }
 
         if (action.action === 'setparams') {
-            const [communityId, contractType] = action.code.split('.');
+            const [communityId, contractName] = action.code.split('.');
 
-            if (contractType) {
+            if (contractName) {
                 await this._communitySettings.handleSetParams(
                     communityId,
-                    contractType,
+                    contractName,
                     actionArgs.params
                 );
             }

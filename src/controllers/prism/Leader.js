@@ -225,6 +225,7 @@ class Leader extends Abstract {
             action: action.name,
             blockTime,
             expiration: expiration,
+            isExecuted: false,
             changes: data.params.map(([structureName, values]) => ({
                 structureName,
                 values,
