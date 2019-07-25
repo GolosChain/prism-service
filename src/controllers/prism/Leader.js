@@ -195,7 +195,10 @@ class Leader extends Abstract {
      * @param {Object} trx
      * @param {Date} blockTime
      */
-    async handleNewProposal({ proposer, proposal_name: proposalId, requested, trx }, blockTime) {
+    async handleNewProposal(
+        { proposer, proposal_name: proposalId, requested, trx },
+        { blockTime }
+    ) {
         if (trx.actions.length !== 1) {
             return;
         }
@@ -222,6 +225,7 @@ class Leader extends Abstract {
             action: action.name,
             blockTime,
             expiration: expiration,
+            isExecuted: false,
             changes: data.params.map(([structureName, values]) => ({
                 structureName,
                 values,
@@ -297,6 +301,44 @@ class Leader extends Abstract {
             data: {
                 $set: {
                     approves: proposal.approves,
+                },
+            },
+        });
+    }
+
+    async handleProposalExec(
+        { proposer, proposal_name: proposalId, executer },
+        { communityId, blockTime }
+    ) {
+        const prev = await ProposalModel.findOneAndUpdate(
+            {
+                communityId,
+                proposer,
+                proposalId,
+            },
+            {
+                $set: {
+                    executer,
+                    isExecuted: true,
+                    executedBlockTime: blockTime,
+                },
+            }
+        );
+
+        // Если такого пропозала не было, значит это был пропозл не настроек сообщества, ничего не делаем.
+        if (!prev) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProposalModel,
+            documentId: prev._id,
+            data: {
+                $set: {
+                    executer: prev.executer,
+                    isExecuted: prev.isExecuted,
+                    executedBlockTime: prev.executedBlockTime,
                 },
             },
         });

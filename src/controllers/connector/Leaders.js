@@ -100,6 +100,8 @@ class Leaders extends AbstractFeed {
                 blockTime: true,
                 expiration: true,
                 approves: true,
+                isExecuted: true,
+                executedBlockTime: true,
                 'changes.structureName': true,
                 'changes.values': true,
             },
@@ -107,6 +109,7 @@ class Leaders extends AbstractFeed {
                 lean: true,
                 limit,
                 sort: {
+                    isExecuted: -1,
                     blockTime: -1,
                 },
             }
