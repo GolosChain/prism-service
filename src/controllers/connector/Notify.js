@@ -78,12 +78,26 @@ class Notify extends AbstractContent {
     async _getPostData(contentId) {
         const data = await Post.findOne(
             { 'contentId.userId': contentId.userId, 'contentId.permlink': contentId.permlink },
-            { _id: false, 'content.title': true },
+            { _id: false, 'content.title': true, repost: true },
             { lean: true }
         );
 
         if (!data) {
             throw { code: 404, message: 'Post not found' };
+        }
+
+        if (data.repost.isRepost === true) {
+            const reposted = await Post.findOne(
+                {
+                    'contentId.userId': contentId.userId,
+                    'contentId.permlink': contentId.permlink,
+                    'repost.isRepost': false,
+                },
+                { _id: false, 'content.title': true },
+                { lean: true }
+            );
+
+            data.content.title = reposted.content.title;
         }
 
         return {
