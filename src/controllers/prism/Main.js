@@ -198,7 +198,7 @@ class Main {
                 await this._communitySettings.handleSetParams(
                     communityId,
                     contractName,
-                    actionArgs.params
+                    actionArgs
                 );
             }
         }
