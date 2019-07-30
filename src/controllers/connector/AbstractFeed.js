@@ -60,9 +60,9 @@ class AbstractFeed extends AbstractContent {
         }
 
         if (direction > 0) {
-            query.createdAt = { $gt: new Date(sequenceKey) };
+            query['meta.time'] = { $gt: new Date(sequenceKey) };
         } else {
-            query.createdAt = { $lt: new Date(sequenceKey) };
+            query['meta.time'] = { $lt: new Date(sequenceKey) };
         }
     }
 
