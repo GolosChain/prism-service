@@ -79,7 +79,7 @@ class Comment extends AbstractFeed {
     _applySortByTime({ query, options, sequenceKey, direction }) {
         super._applySortByTime({ query, options, sequenceKey, direction });
 
-        options.sort = { 'ordering.byTime': direction };
+        options.sort = { 'meta.time': direction };
     }
 
     async _populate(modelObjects, currentUserId, type, app) {
