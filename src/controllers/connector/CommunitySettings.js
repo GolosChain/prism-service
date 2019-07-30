@@ -15,13 +15,13 @@ class CommunitySettings extends BasicController {
 
         const items = await Model.find(
             query,
-            { contractName: true, structureName: true, symbol: true, data: true },
+            { contractName: true, structureName: true, data: true },
             { lean: true }
         );
 
         const groupedByContracts = {};
 
-        for (const { contractName, structureName, symbol, data } of items) {
+        for (const { contractName, structureName, data } of items) {
             let structures = groupedByContracts[contractName];
 
             if (!structures) {
@@ -29,15 +29,7 @@ class CommunitySettings extends BasicController {
                 groupedByContracts[contractName] = structures;
             }
 
-            if (contractName === 'vesting') {
-                if (!structures[symbol]) {
-                    structures[symbol] = {};
-                }
-
-                structures[symbol][structureName] = data;
-            } else {
-                structures[structureName] = data;
-            }
+            structures[structureName] = data;
         }
 
         return {
