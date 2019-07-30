@@ -24,11 +24,6 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        // Используется только для контракта vesting
-        symbol: {
-            type: String,
-            default: null,
-        },
         blockTime: {
             type: Date,
             required: true,

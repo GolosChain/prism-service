@@ -97,7 +97,6 @@ class Leaders extends AbstractFeed {
                 proposalId: true,
                 code: true,
                 action: true,
-                symbol: true,
                 blockTime: true,
                 expiration: true,
                 approves: true,

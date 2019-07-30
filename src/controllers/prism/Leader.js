@@ -1,6 +1,5 @@
 const { JsonRpc, Api } = require('cyberwayjs');
 const fetch = require('node-fetch');
-const { omit } = require('lodash');
 const { TextEncoder, TextDecoder } = require('text-encoding');
 const core = require('gls-core-service');
 const { cloneDeep } = require('lodash');
@@ -224,7 +223,6 @@ class Leader extends Abstract {
             proposalId,
             code: action.account,
             action: action.name,
-            params: omit(data, ['params']),
             blockTime,
             expiration: expiration,
             isExecuted: false,

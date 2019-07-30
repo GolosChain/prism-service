@@ -7,19 +7,18 @@ class CommunitySettings {
         this._forkService = forkService;
     }
 
-    async handleSetParams(communityId, contractName, { params: structures, symbol = null }) {
+    async handleSetParams(communityId, contractName, structures) {
         for (const [structureName, data] of structures) {
             const current = await CommunitySettingsModel.findOne({
                 communityId,
                 contractName,
                 structureName,
-                symbol,
             });
 
             if (current) {
                 await this._updateExisted({ current, data });
             } else {
-                await this._createNew({ communityId, contractName, symbol, structureName, data });
+                await this._createNew({ communityId, contractName, structureName, data });
             }
         }
     }
