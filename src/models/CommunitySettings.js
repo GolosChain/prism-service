@@ -12,6 +12,11 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
+        // Используется только для контракта vesting
+        symbol: {
+            type: String,
+            default: null,
+        },
         structureName: {
             type: String,
             required: true,
@@ -29,6 +34,7 @@ module.exports = MongoDB.makeModel(
                     communityId: 1,
                     contractName: 1,
                     structureName: 1,
+                    symbol: 1,
                 },
                 options: {
                     unique: true,
