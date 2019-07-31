@@ -3,8 +3,6 @@ const core = require('gls-core-service');
 const Logger = core.utils.Logger;
 const BigNum = core.types.BigNum;
 const AbstractContent = require('./AbstractContent');
-const PostModel = require('../../models/Post');
-const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
 const WilsonScoring = require('../../utils/WilsonScoring');
 const PoolModel = require('../../models/Pool');
@@ -53,7 +51,12 @@ class Vote extends AbstractContent {
     }
 
     async _getModel(content) {
-        return await super._getModel(content, { votes: true, payout: true, meta: true, stats: true });
+        return await super._getModel(content, {
+            votes: true,
+            payout: true,
+            meta: true,
+            stats: true,
+        });
     }
 
     async _tryUpdateProfileReputation({ voter, author, rshares: rShares }) {

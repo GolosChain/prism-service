@@ -273,9 +273,7 @@ class Leader extends Abstract {
 
         if (!approve) {
             Logger.warn(
-                `Proposal (${proposer}/${proposalId}) approve: approve by ${
-                    level.actor
-                } not found in requested list (skipping).`
+                `Proposal (${proposer}/${proposalId}) approve: approve by ${level.actor} not found in requested list (skipping).`
             );
             return;
         }
