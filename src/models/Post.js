@@ -1,7 +1,7 @@
 const core = require('gls-core-service');
 const MongoDB = core.services.MongoDB;
 const MongoBigNum = core.types.MongoBigNum;
-const BigNum = core.types.MongoBigNum;
+const BigNum = core.types.BigNum;
 
 module.exports = MongoDB.makeModel(
     'Post',
