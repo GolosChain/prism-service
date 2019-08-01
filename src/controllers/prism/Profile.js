@@ -160,68 +160,74 @@ class Profile extends Abstract {
         const query = {};
 
         for (const key of Object.keys(data)) {
+            const value = data[key];
+
             switch (key) {
                 case 'profile_image':
                 case 'user_image':
-                    query['personal.cyber.avatarUrl'] = data[key];
-                    query['personal.gls.avatarUrl'] = data[key];
+                    query['personal.cyber.avatarUrl'] = value;
+                    query['personal.gls.avatarUrl'] = value;
                     break;
 
                 case 'background_image':
                 case 'cover_image':
-                    query['personal.cyber.coverUrl'] = data[key];
-                    query['personal.gls.coverUrl'] = data[key];
+                    query['personal.cyber.coverUrl'] = value;
+                    query['personal.gls.coverUrl'] = value;
                     break;
 
                 case 'about':
-                    query['personal.cyber.biography'] = data[key];
-                    query['personal.gls.about'] = data[key];
+                    query['personal.cyber.biography'] = value;
+                    query['personal.gls.about'] = value;
                     break;
 
                 case 'vk':
-                    query['personal.cyber.contacts.vkontakte'] = data[key];
-                    query['personal.gls.contacts.vkontakte'] = data[key];
+                    query['personal.cyber.contacts.vkontakte'] = value;
+                    query['personal.gls.contacts.vkontakte'] = value;
                     break;
 
                 case 'facebook':
-                    query['personal.cyber.contacts.facebook'] = data[key];
-                    query['personal.gls.contacts.facebook'] = data[key];
+                    query['personal.cyber.contacts.facebook'] = value;
+                    query['personal.gls.contacts.facebook'] = value;
                     break;
 
                 case 'instagram':
-                    query['personal.cyber.contacts.instagram'] = data[key];
-                    query['personal.gls.contacts.instagram'] = data[key];
+                    query['personal.cyber.contacts.instagram'] = value;
+                    query['personal.gls.contacts.instagram'] = value;
                     break;
 
                 case 'telegram':
-                    query['personal.cyber.contacts.telegram'] = data[key];
-                    query['personal.gls.contacts.telegram'] = data[key];
+                    query['personal.cyber.contacts.telegram'] = value;
+                    query['personal.gls.contacts.telegram'] = value;
                     break;
 
                 case 'whatsapp':
-                    query['personal.cyber.contacts.whatsApp'] = data[key];
-                    query['personal.gls.contacts.whatsApp'] = data[key];
+                    query['personal.cyber.contacts.whatsApp'] = value;
+                    query['personal.gls.contacts.whatsApp'] = value;
                     break;
 
                 case 'wechat':
-                    query['personal.cyber.contacts.weChat'] = data[key];
-                    query['personal.gls.contacts.weChat'] = data[key];
+                    query['personal.cyber.contacts.weChat'] = value;
+                    query['personal.gls.contacts.weChat'] = value;
                     break;
 
                 case 'name':
-                    query['personal.gls.name'] = data[key];
+                    query['personal.gls.name'] = value;
                     break;
 
                 case 'gender':
-                    query['personal.gls.gender'] = data[key];
+                    query['personal.gls.gender'] = value;
+                    break;
+
+                case 'email':
+                    query['personal.gls.email'] = value;
                     break;
 
                 case 'location':
-                    query['personal.gls.location'] = data[key];
+                    query['personal.gls.location'] = value;
                     break;
 
                 case 'website':
-                    query['personal.gls.website'] = data[key];
+                    query['personal.gls.website'] = value;
                     break;
             }
         }

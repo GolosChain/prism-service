@@ -98,6 +98,9 @@ module.exports = MongoDB.makeModel(
                 gender: {
                     type: String,
                 },
+                email: {
+                    type: String,
+                },
                 about: {
                     type: String,
                 },
