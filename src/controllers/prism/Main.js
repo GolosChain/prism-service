@@ -175,6 +175,10 @@ class Main {
                 await this._post.handleRemoveRepost(actionArgs, { communityId, blockTime });
                 break;
 
+            case `${communityId}.vesting->open`:
+                await this._profile.handleVestingOpening(actionArgs);
+                break;
+
             case 'cyber.msig->propose':
                 await this._leader.handleNewProposal(actionArgs, { blockTime });
                 break;

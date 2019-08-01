@@ -54,6 +54,10 @@ class Profile extends AbstractFeed {
 
         await this._detectSubscription(modelObject, currentUserId, requestedUserId);
 
+        if (app !== 'gls') {
+            delete modelObject.isGolosVestingOpened;
+        }
+
         return modelObject;
     }
 
