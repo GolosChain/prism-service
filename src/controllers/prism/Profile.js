@@ -258,6 +258,30 @@ class Profile extends Abstract {
 
         return result;
     }
+
+    async handleVestingOpening({ owner, symbol }) {
+        if (symbol !== '6,GOLOS') {
+            return;
+        }
+
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            { userId: owner },
+            { $set: { isGolosVestingOpened: true } }
+        );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: previousModel._id,
+            data: {
+                $set: { isGolosVestingOpened: previousModel.isGolosVestingOpened },
+            },
+        });
+    }
 }
 
 module.exports = Profile;

@@ -194,6 +194,10 @@ module.exports = MongoDB.makeModel(
             type: [String],
             default: [],
         },
+        isGolosVestingOpened: {
+            type: Boolean,
+            default: false,
+        },
     },
     {
         index: [
