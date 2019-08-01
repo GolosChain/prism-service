@@ -90,6 +90,7 @@ class GenesisContent {
         this._profilesBulk.addEntry({
             userId,
             usernames: { gls: name },
+            isGenesisUser: true,
             registration: {
                 time: registrationTime,
             },

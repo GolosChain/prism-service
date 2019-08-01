@@ -13,6 +13,10 @@ module.exports = MongoDB.makeModel(
             type: Object,
             default: {},
         },
+        isGenesisUser: {
+            type: Boolean,
+            default: false,
+        },
         chargersRaw: {
             votes: {
                 value: {
