@@ -218,10 +218,13 @@ class AbstractContent extends BasicController {
 
     async _populateWithCache(modelObjects, method, ...args) {
         const cacheMap = new Map();
+        const promises = [];
 
         for (const modelObject of modelObjects) {
-            await method.call(this, modelObject, cacheMap, ...args);
+            promises.push(method.call(this, modelObject, cacheMap, ...args));
         }
+
+        await Promise.all(promises);
     }
 
     _removeEmptyParentsForAll(modelObjects) {
