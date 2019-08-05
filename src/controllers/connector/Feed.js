@@ -2,14 +2,64 @@ const AbstractFeed = require('./AbstractFeed');
 const PostModel = require('../../models/Post');
 const ProfileModel = require('../../models/Profile');
 
+class TTLCache {
+    constructor(ttl = 10000, checkInterval = 10000) {
+        this._ttl = ttl;
+        this._cache = new Map();
+        this._timeouts = new Map();
+        this._checkInterval = checkInterval;
+
+        setInterval(() => {
+            for (const key of this._timeouts.keys()) {
+                const expDate = this._timeouts.get(key);
+                if (expDate - Date.now() <= 0) {
+                    this._cache.delete(key);
+                    this._timeouts.delete(key);
+                }
+            }
+        }, this._checkInterval);
+    }
+
+    set(key, value) {
+        const normalizedKey = TTLCache.normalizeKey(key);
+
+        const expirationDate = Date.now() + this._ttl;
+        this._cache.set(normalizedKey, value);
+        this._timeouts.set(normalizedKey, expirationDate);
+    }
+
+    get(key) {
+        const normalizedKey = TTLCache.normalizeKey(key);
+        return this._cache.get(normalizedKey);
+    }
+
+    has(key) {
+        const normalizedKey = TTLCache.normalizeKey(key);
+        return this._cache.has(normalizedKey);
+    }
+
+    static normalizeKey(key) {
+        if (typeof key === 'object') {
+            return JSON.stringify(key);
+        }
+        return key;
+    }
+}
+
 class Feed extends AbstractFeed {
     constructor({ postFeedCache, ...other }) {
         super(other);
 
         this._postFeedCache = postFeedCache;
+
+        this._feedCache = new TTLCache();
     }
 
     async getFeed(params) {
+        if (this._feedCache.has(params)) {
+            return this._feedCache.get(params);
+        }
+
         await this._tryApplyUserIdByName(params);
 
         const {
@@ -38,7 +88,15 @@ class Feed extends AbstractFeed {
 
         await this._applyPayouts(modelObjects, communityId);
 
-        return this._makeFeedResult(modelObjects, { sortBy, limit, tags, sequenceKey }, meta);
+        const result = this._makeFeedResult(
+            modelObjects,
+            { sortBy, limit, tags, sequenceKey },
+            meta
+        );
+
+        this._feedCache.set(params, result);
+
+        return result;
     }
 
     async _prepareQuery(params) {
@@ -150,6 +208,7 @@ class Feed extends AbstractFeed {
         options.sort = { _id: direction };
     }
 
+    //FIXME: this is very insufficient
     async _populate({ modelObjects, currentUserId, contentType, app, type, fullQuery }) {
         if (type === 'byUser' || type === 'subscriptions') {
             await this._populateReposts(modelObjects, fullQuery.projection);
