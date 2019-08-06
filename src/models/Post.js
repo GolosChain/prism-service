@@ -346,6 +346,15 @@ module.exports = MongoDB.makeModel(
                     'stats.trending': -1,
                 },
             },
+
+            // Post with votes
+            {
+                fields: {
+                    'contentId.userId': 1,
+                    'contentId.permlink': 1,
+                    'repost.isRepost': 1,
+                },
+            },
         ],
     }
 );
