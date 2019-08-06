@@ -58,6 +58,7 @@ class Vote extends AbstractFeed {
         const query = {
             'contentId.userId': requestedUserId,
             'contentId.permlink': permlink,
+            'repost.isRepost': false,
         };
 
         const targetType = this._getVotesTargetType(type);
