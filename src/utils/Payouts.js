@@ -14,6 +14,9 @@ class Payouts {
             case 'benefactor_reward':
                 return 'benefactor';
 
+            case 'unclaimed_reward':
+                return 'unclaimed';
+
             default:
                 Logger.warn(`Payout - unknown reward type - ${rewardType}`);
                 return null;

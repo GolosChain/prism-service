@@ -15,7 +15,7 @@ class Vote extends AbstractContent {
             return;
         }
 
-        const votesManager = this._makeVotesManager(model, content);
+        const votesManager = this._makeVotesManager(model, content, events);
 
         await votesManager('up', 'add');
         await votesManager('down', 'remove');
@@ -108,15 +108,15 @@ class Vote extends AbstractContent {
         });
     }
 
-    _makeVotesManager(model, content) {
-        const vote = this._extractVote(content);
+    _makeVotesManager(model, content, events) {
+        const vote = this._extractVote(content, events);
 
         return async (type, action) => {
             await this._manageVotes({ model, vote, type, action });
         };
     }
 
-    async _manageVotes({ model, vote, type, action }) {
+    async _manageVotes({ model, vote, type, action, events }) {
         const [addAction, removeAction, increment] = this._getArrayEntityCommands(action);
         const Model = model.constructor;
         const votesArrayPath = `votes.${type}Votes`;
@@ -165,8 +165,16 @@ class Vote extends AbstractContent {
         });
     }
 
-    _extractVote(content) {
-        return { userId: content.voter, weight: content.weight };
+    _extractVote(content, events = []) {
+        const vote = { userId: content.voter, weight: content.weight };
+
+        const votestate = events.find(({ event }) => event === 'votestate');
+
+        if (votestate) {
+            vote.curatorsw = votestate.args.curatorsw;
+        }
+
+        return vote;
     }
 
     async _updatePayout(model, communityId, events) {
