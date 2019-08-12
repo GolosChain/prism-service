@@ -195,6 +195,28 @@ module.exports = MongoDB.makeModel(
                     },
                 },
             },
+            unclaimed: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+                vesting: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
             meta: {
                 rewardWeight: {
                     type: MongoBigNum,

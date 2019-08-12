@@ -40,6 +40,9 @@ class AbstractContent extends BasicController {
         await this._tryApplyVotes({ Model, modelObject, currentUserId });
         await this._populateAuthors([modelObject], app);
 
+        delete modelObject.votes.upVotes;
+        delete modelObject.votes.downVotes;
+
         return modelObject;
     }
 
@@ -70,8 +73,6 @@ class AbstractContent extends BasicController {
 
         return {
             'content.body.preview': false,
-            'votes.upVotes': false,
-            'votes.downVotes': false,
             _id: false,
             __v: false,
             createdAt: false,
@@ -387,21 +388,29 @@ class AbstractContent extends BasicController {
 
     _applyPayout(modelObject, pool) {
         const payoutMeta = modelObject.payout.meta;
+
         const totalPayout = this._calcTotalPayout({
             rewardWeight: payoutMeta.rewardWeight,
             funds: pool.funds.value,
             sharesFn: payoutMeta.sharesFn,
             rSharesFn: pool.rSharesFn,
         });
-        const curationPayout = this._calcCuratorPayout({
+
+        const {
+            curationPayout,
+            actualCurationPayout,
+            unclaimedCurationPayout,
+        } = this._calcCuratorPayout(modelObject, {
             totalPayout,
             curatorsPercent: payoutMeta.curatorsPercent,
         });
+
         const benefactorPayout = this._calcBenefactorPayout({
             totalPayout,
             curationPayout,
             percents: payoutMeta.benefactorPercents,
         });
+
         const { tokens: authorTokenPayout, vesting: authorVestingPayout } = this._calcAuthorPayout({
             totalPayout,
             curationPayout,
@@ -416,10 +425,12 @@ class AbstractContent extends BasicController {
         payout.author.token.value = Number(authorTokenPayout) || 0;
         payout.author.vesting.name = name;
         payout.author.vesting.value = Number(authorVestingPayout) || 0;
-        payout.curator.vesting.name = name;
-        payout.curator.vesting.value = Number(curationPayout) || 0;
-        payout.benefactor.vesting.name = name;
-        payout.benefactor.vesting.value = Number(benefactorPayout) || 0;
+        payout.curator.token.name = name;
+        payout.curator.token.value = Number(actualCurationPayout) || 0;
+        payout.benefactor.token.name = name;
+        payout.benefactor.token.value = Number(benefactorPayout) || 0;
+        payout.unclaimed.token.name = name;
+        payout.unclaimed.token.value = Number(unclaimedCurationPayout) || 0;
     }
 
     _calcTotalPayout({ rewardWeight, funds, sharesFn, rSharesFn }) {
@@ -437,8 +448,20 @@ class AbstractContent extends BasicController {
         return { tokens, vesting };
     }
 
-    _calcCuratorPayout({ totalPayout, curatorsPercent }) {
-        return totalPayout.times(new BigNum(curatorsPercent).div(10000));
+    _calcCuratorPayout(modelObject, { totalPayout, curatorsPercent }) {
+        const curationPayout = totalPayout.times(new BigNum(curatorsPercent).div(10000));
+
+        let actualCurationPayout = new BigNum(0);
+        for (const vote of modelObject.votes.upVotes) {
+            const curatorReward = curationPayout.times(
+                new BigNum(vote.curatorsw).div(modelObject.payout.meta.sumCuratorSw)
+            );
+            actualCurationPayout = actualCurationPayout.plus(curatorReward);
+        }
+
+        const unclaimedCurationPayout = curationPayout.minus(actualCurationPayout);
+
+        return { curationPayout, actualCurationPayout, unclaimedCurationPayout };
     }
 
     _calcBenefactorPayout({ totalPayout, curationPayout, percents }) {

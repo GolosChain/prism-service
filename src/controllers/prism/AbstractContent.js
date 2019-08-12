@@ -24,7 +24,12 @@ class AbstractContent extends Abstract {
             return;
         }
 
-        const rewardTypes = ['author_reward', 'curator_reward', 'benefactor_reward'];
+        const rewardTypes = [
+            'author_reward',
+            'curator_reward',
+            'benefactor_reward',
+            'unclaimed_reward',
+        ];
 
         const payouts = {};
 
