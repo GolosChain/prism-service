@@ -452,7 +452,7 @@ class AbstractContent extends BasicController {
         const curationPayout = totalPayout.times(new BigNum(curatorsPercent).div(10000));
 
         let actualCurationPayout = new BigNum(0);
-        if (modelObject.votes.upVotes) {
+        if (Array.isArray(modelObject.votes.upVotes)) {
             for (const vote of modelObject.votes.upVotes) {
                 const curatorReward = curationPayout.times(
                     new BigNum(vote.curatorsw).div(modelObject.payout.meta.sumCuratorSw)
