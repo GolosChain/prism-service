@@ -461,7 +461,10 @@ class AbstractContent extends BasicController {
             }
         }
 
-        const unclaimedCurationPayout = curationPayout.minus(actualCurationPayout);
+        let unclaimedCurationPayout = new BigNum(0);
+        if (curationPayout.isGreaterThan(actualCurationPayout)) {
+            unclaimedCurationPayout = curationPayout.minus(actualCurationPayout);
+        }
 
         return { curationPayout, actualCurationPayout, unclaimedCurationPayout };
     }
