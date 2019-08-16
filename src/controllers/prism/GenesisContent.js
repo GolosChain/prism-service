@@ -12,6 +12,8 @@ const CommentModel = require('../../models/Comment');
 const PostController = require('./Post');
 const CommentController = require('./Comment');
 
+const chardet = require('chardet');
+
 class GenesisContent {
     constructor() {
         this._posts = new Map();
@@ -79,8 +81,7 @@ class GenesisContent {
     }
 
     _handleAccount(data) {
-        const { owner: userId, name, created } = data;
-
+        const { owner: userId, name, created, reputation } = data;
         let registrationTime = null;
 
         if (created !== '1970-01-01T00:00:00.000') {
@@ -93,6 +94,9 @@ class GenesisContent {
             isGenesisUser: true,
             registration: {
                 time: registrationTime,
+            },
+            stats: {
+                reputation,
             },
         });
 
