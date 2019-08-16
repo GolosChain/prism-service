@@ -58,8 +58,11 @@ class Vote extends AbstractFeed {
         const query = {
             'contentId.userId': requestedUserId,
             'contentId.permlink': permlink,
-            'repost.isRepost': false,
         };
+
+        if (Model.modelName !== 'Comments') {
+            query['repost.isRepost'] = false;
+        }
 
         const targetType = this._getVotesTargetType(type);
         const targetPath = `votes.${targetType}`;
