@@ -60,7 +60,7 @@ class Vote extends AbstractFeed {
             'contentId.permlink': permlink,
         };
 
-        if (Model.modelName !== 'Comments') {
+        if (Model.modelName !== 'Comment') {
             query['repost.isRepost'] = false;
         }
 
