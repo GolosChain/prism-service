@@ -225,7 +225,10 @@ class Feed extends AbstractFeed {
             throw { code: 400, message: 'Bad user id' };
         }
 
-        query['communityId'] = { $in: model.subscriptions.communityIds };
+        query.$or = query.$or || [];
+
+        query.$or.push({ communityId: { $in: model.subscriptions.communityIds } });
+        query.$or.push({ 'contentId.userId': { $in: model.subscriptions.userIds } });
     }
 
     _prepareMobile(modelObjects) {
