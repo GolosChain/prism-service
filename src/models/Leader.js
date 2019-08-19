@@ -60,5 +60,8 @@ module.exports = MongoDB.makeModel(
                 },
             },
         ],
+        schema: {
+            collation: { locale: 'en_US', numericOrdering: true },
+        },
     }
 );
