@@ -56,11 +56,7 @@ class Leaders extends AbstractFeed {
             rating: true,
             active: true,
         };
-        const options = {
-            lean: true,
-            sort: { rating: -1, username: 1 },
-            collation: { locale: 'en_US', numericOrdering: true },
-        };
+        const options = { lean: true, sort: { rating: -1 } };
 
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
