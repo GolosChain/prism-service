@@ -96,6 +96,7 @@ class Connector extends BasicConnector {
                     inherits: [
                         'appSpecify',
                         'userByName',
+                        'userByAnyName',
                         'contentId',
                         'contentType',
                         'userRelativity',
@@ -112,6 +113,7 @@ class Connector extends BasicConnector {
                     inherits: [
                         'appSpecify',
                         'userByName',
+                        'userByAnyName',
                         'contentId',
                         'contentType',
                         'userRelativity',
@@ -207,6 +209,7 @@ class Connector extends BasicConnector {
                         'userByName',
                         'userRelativity',
                         'onlyWhenPublicApiEnabled',
+                        'userByAnyName',
                     ],
                     validation: {
                         required: [],
@@ -482,6 +485,15 @@ class Connector extends BasicConnector {
                         validation: {
                             properties: {
                                 username: {
+                                    type: 'string',
+                                },
+                            },
+                        },
+                    },
+                    userByAnyName: {
+                        validation: {
+                            properties: {
+                                user: {
                                     type: 'string',
                                 },
                             },

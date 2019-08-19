@@ -9,14 +9,18 @@ const PoolModel = require('../../models/Pool');
 class AbstractContent extends BasicController {
     async _getContent(
         Model,
-        { currentUserId, requestedUserId, permlink, contentType, username, app, noReposts }
+        { currentUserId, requestedUserId, permlink, contentType, username, user, app, noReposts }
     ) {
-        if (!requestedUserId && !username) {
+        if (!requestedUserId && !username && !user) {
             throw { code: 400, message: 'Invalid user identification' };
         }
 
+        if (user) {
+            requestedUserId = await this._getUserByAnyName(user, app);
+        }
+
         if (!requestedUserId) {
-            requestedUserId = this._getUserIdByName(username, app);
+            requestedUserId = await this._getUserIdByUsername(username, app);
         }
 
         const query = {
@@ -243,13 +247,27 @@ class AbstractContent extends BasicController {
 
     async _tryApplyUserIdByName(params) {
         if (!params.requestedUserId && params.username) {
-            params.requestedUserId = this._getUserIdByName(params.username, params.app);
+            params.requestedUserId = this._getUserIdByUsername(params.username, params.app);
         }
     }
 
-    async _getUserIdByName(username, app) {
+    async _getUserIdByUsername(username, app) {
         const profile = await ProfileModel.findOne(
             { [`usernames.${app}`]: username },
+            { userId: true, _id: false },
+            { lean: true }
+        );
+
+        if (!profile) {
+            this._throwNotFound();
+        }
+
+        return profile.userId;
+    }
+
+    async _getUserByAnyName(name, app) {
+        const profile = await ProfileModel.findOne(
+            { $or: [{ [`usernames.${app}`]: name }, { userId: name }] },
             { userId: true, _id: false },
             { lean: true }
         );

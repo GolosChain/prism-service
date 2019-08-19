@@ -40,6 +40,7 @@ search:                            // Поиск по данным из приз
 getProfile:                        // Получение профиля пользователя
     requestedUserId <string>       // Идентификатор пользователя
     username <string>              // Имя пользователя относительно домена
+    user <string>                  // Любое из имен выше
     app <string>('cyber')          // Тип приложения / домена
         [
           cyber                    // CyberWay
@@ -60,6 +61,7 @@ getPost:                           // Получение конкретного 
     currentUserId <string/null>    // Идентификатор текущего пользователя
     requestedUserId <string>       // Идетификатор запрошенного пользователя
     username <string>              // Имя пользователя относительно домена
+    user <string>                  // Любое из имен выше
     app <string>('cyber')          // Тип приложения / домена
         [
           cyber                    // CyberWay
@@ -77,6 +79,7 @@ getComment:                        // Получение конкретного 
     currentUserId <string/null>    // Идентификатор текущего пользователя
     requestedUserId <string/null>  // Идетификатор запрошенного пользователя
     username <string>              // Имя пользователя относительно домена
+    user <string>                  // Любое из имен выше
     app <string>('cyber')          // Тип приложения / домена
         [
           cyber                    // CyberWay
