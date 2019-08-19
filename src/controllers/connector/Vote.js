@@ -52,7 +52,7 @@ class Vote extends AbstractFeed {
         }
 
         if (!requestedUserId) {
-            requestedUserId = this._getUserIdByName(username, app);
+            requestedUserId = this._getUserIdByUsername(username, app);
         }
 
         const query = {
