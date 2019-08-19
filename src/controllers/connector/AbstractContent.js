@@ -247,7 +247,7 @@ class AbstractContent extends BasicController {
 
     async _tryApplyUserIdByName(params) {
         if (!params.requestedUserId && params.username) {
-            params.requestedUserId = this._getUserIdByUsername(params.username, params.app);
+            params.requestedUserId = await this._getUserIdByUsername(params.username, params.app);
         }
     }
 
