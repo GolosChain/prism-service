@@ -12,8 +12,6 @@ const CommentModel = require('../../models/Comment');
 const PostController = require('./Post');
 const CommentController = require('./Comment');
 
-const chardet = require('chardet');
-
 class GenesisContent {
     constructor() {
         this._posts = new Map();
