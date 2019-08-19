@@ -267,6 +267,14 @@ module.exports = MongoDB.makeModel(
                     'contentId.permlink': 1,
                 },
             },
+            // Replies
+            {
+                fields: {
+                    'parent.post.contentId.userId': 1,
+                    'parent.comment.contentId.userId': 1,
+                    'meta.time': 1,
+                },
+            },
             // Post comments, sorted by time
             {
                 fields: {
