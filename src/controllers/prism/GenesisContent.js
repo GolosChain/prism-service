@@ -79,7 +79,28 @@ class GenesisContent {
     }
 
     _handleAccount(data) {
-        const { owner: userId, name, created, reputation } = data;
+        const { owner: userId, name, created, reputation, json_metadata } = data;
+
+        let metadata = {};
+
+        if (json_metadata && json_metadata !== "{created_at: 'GENESIS'}") {
+            const { profile } = JSON.parse(json_metadata);
+
+            if (profile) {
+                metadata = {
+                    name: profile.name,
+                    gender: profile.gender,
+                    email: profile.email,
+                    about: profile.about,
+                    location: profile.location,
+                    website: profile.website,
+                    avatarUrl: profile.profile_image,
+                    coverUrl: profile.cover_image,
+                    contacts: profile.social,
+                };
+            }
+        }
+
         let registrationTime = null;
 
         if (created !== '1970-01-01T00:00:00.000') {
@@ -90,12 +111,14 @@ class GenesisContent {
             userId,
             usernames: { gls: name },
             isGenesisUser: true,
+            isGolosVestingOpened: true,
             registration: {
                 time: registrationTime,
             },
             stats: {
                 reputation,
             },
+            personal: { gls: metadata },
         });
 
         metrics.inc('genesis_type_account_processed');
