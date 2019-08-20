@@ -84,23 +84,21 @@ class GenesisContent {
         let metadata = {};
 
         if (json_metadata && json_metadata !== "{created_at: 'GENESIS'}") {
-            const mapMetadata = ({ profile }) => {
-                if (profile)
-                    return {
-                        name: profile.name,
-                        gender: profile.gender,
-                        email: profile.email,
-                        about: profile.about,
-                        location: profile.location,
-                        website: profile.website,
-                        avatarUrl: profile.profile_image,
-                        coverUrl: profile.cover_image,
-                        contacts: profile.social,
-                    };
+            const { profile } = JSON.parse(json_metadata);
 
-                return {};
-            };
-            metadata = mapMetadata(JSON.parse(json_metadata));
+            if (profile) {
+                metadata = {
+                    name: profile.name,
+                    gender: profile.gender,
+                    email: profile.email,
+                    about: profile.about,
+                    location: profile.location,
+                    website: profile.website,
+                    avatarUrl: profile.profile_image,
+                    coverUrl: profile.cover_image,
+                    contacts: profile.social,
+                };
+            }
         }
 
         let registrationTime = null;
