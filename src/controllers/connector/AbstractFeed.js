@@ -1,3 +1,6 @@
+const core = require('gls-core-service');
+const { Logger } = core.utils;
+
 const AbstractContent = require('./AbstractContent');
 
 class AbstractFeed extends AbstractContent {
@@ -105,7 +108,15 @@ class AbstractFeed extends AbstractContent {
             return null;
         }
 
-        const time = modelObjects[modelObjects.length - 1].createdAt.toString();
+        const lastModel = modelObjects[modelObjects.length - 1];
+        let time;
+
+        if (lastModel.meta && lastModel.meta.time) {
+            time = lastModel.meta.time;
+        } else {
+            Logger.warn("Feed: model does not have 'meta.time' field", new Error().stack);
+            time = lastModel.createdAt;
+        }
 
         return this._packSequenceKey(time);
     }
