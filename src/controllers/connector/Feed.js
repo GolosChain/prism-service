@@ -24,6 +24,7 @@ class Feed extends AbstractFeed {
             tags,
             sequenceKey,
         } = await this._prepareQuery(params);
+
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {

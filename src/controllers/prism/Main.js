@@ -53,7 +53,9 @@ class Main {
 
                 if (delta > ACTION_PROCESSING_WARNING_LIMIT) {
                     Logger.warn(
-                        `Slow transaction action processing (>${ACTION_PROCESSING_WARNING_LIMIT}ms), blockNum: ${blockNum}, trxId: ${transaction.id}, action: ${action.code}->${action.action}`
+                        `Slow transaction action processing (>${ACTION_PROCESSING_WARNING_LIMIT}ms), blockNum: ${blockNum}, trxId: ${
+                            transaction.id
+                        }, action: ${action.code}->${action.action}`
                     );
                 }
                 previous = action;
@@ -187,6 +189,12 @@ class Main {
 
             case 'cyber.msig->exec':
                 await this._leader.handleProposalExec(actionArgs, { blockTime });
+                break;
+
+            case `${communityId}.charge->setrestorer`:
+                await this._communitySettings.handleSetParams(communityId, 'charge', [
+                    ['setrestorer', actionArgs.params],
+                ]);
                 break;
 
             default:

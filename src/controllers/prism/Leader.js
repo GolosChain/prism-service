@@ -10,6 +10,16 @@ const LeaderModel = require('../../models/Leader');
 const ProfileModel = require('../../models/Profile');
 const ProposalModel = require('../../models/Proposal');
 
+const ACTIONS = {
+    SET_PARAMS: 'setparams',
+    SET_RESTORER: 'setrestorer',
+};
+
+const ALLOWED_ACTIONS = {
+    [ACTIONS.SET_PARAMS]: ['publish', 'ctrl', 'referral', 'emit', 'vesting'],
+    [ACTIONS.SET_RESTORER]: ['charge'],
+};
+
 class Leader extends Abstract {
     constructor(...args) {
         super(...args);
@@ -204,14 +214,11 @@ class Leader extends Abstract {
         }
 
         const action = trx.actions[0];
-
-        if (action.name !== 'setparams') {
-            return;
-        }
-
         const [communityId, type] = action.account.split('.');
 
-        if (!['publish', 'ctrl', 'referral', 'emit', 'vesting'].includes(type)) {
+        const allowedTypes = ALLOWED_ACTIONS[action.name];
+
+        if (!allowedTypes || !allowedTypes.includes(type)) {
             return;
         }
 
@@ -224,12 +231,9 @@ class Leader extends Abstract {
             code: action.account,
             action: action.name,
             blockTime,
-            expiration: expiration,
+            expiration,
             isExecuted: false,
-            changes: data.params.map(([structureName, values]) => ({
-                structureName,
-                values,
-            })),
+            changes: this._extractProposalChanges(data, action.name),
             approves: requested.map(({ actor, permission }) => ({ userId: actor, permission })),
         });
         const saved = await proposalModel.save();
@@ -273,7 +277,9 @@ class Leader extends Abstract {
 
         if (!approve) {
             Logger.warn(
-                `Proposal (${proposer}/${proposalId}) approve: approve by ${level.actor} not found in requested list (skipping).`
+                `Proposal (${proposer}/${proposalId}) approve: approve by ${
+                    level.actor
+                } not found in requested list (skipping).`
             );
             return;
         }
@@ -340,6 +346,22 @@ class Leader extends Abstract {
                 },
             },
         });
+    }
+
+    _extractProposalChanges(data, actionName) {
+        if (actionName === ACTIONS.SET_PARAMS) {
+            return data.params.map(([structureName, values]) => ({
+                structureName,
+                values,
+            }));
+        }
+
+        return [
+            {
+                structureName: actionName,
+                values: data,
+            },
+        ];
     }
 }
 
