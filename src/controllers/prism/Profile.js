@@ -124,7 +124,7 @@ class Profile extends Abstract {
                     return;
             }
 
-            const chargePercent = 100 - (value / 4096) * 100;
+            const chargePercent = (10000 - value) / 100;
 
             await this._updateChargeState(user, chargeType, chargePercent);
         }
