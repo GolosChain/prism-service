@@ -583,7 +583,7 @@ class GenesisContent {
         this._subscribesSaver.add({ pinner, pinning });
     }
 
-    _handleWitnessState({ name, total_weight: rating, url, votes, active }) {
+    async _handleWitnessState({ name, total_weight: rating, url, votes, active }) {
         this._leadersBulk.addEntry({
             communityId: 'gls',
             userId: name,
@@ -592,6 +592,17 @@ class GenesisContent {
             votes,
             active,
         });
+
+        await ProfileModel.updateOne(
+            {
+                userId: name,
+            },
+            {
+                $push: {
+                    leaderIn: 'gls',
+                },
+            }
+        );
     }
 }
 
