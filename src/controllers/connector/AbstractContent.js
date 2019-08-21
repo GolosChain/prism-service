@@ -128,6 +128,10 @@ class AbstractContent extends BasicController {
         await this._populateWithCache(modelObjects, this._populateAuthor, app);
     }
 
+    async _populateRepostsAuthors(modelObjects, app) {
+        await this._populateWithCache(modelObjects, this._populateRepostAuthor, app);
+    }
+
     async _populateAuthor(modelObject, authors, app) {
         const id = modelObject.contentId.userId;
 
@@ -137,6 +141,22 @@ class AbstractContent extends BasicController {
             const user = { userId: id };
             await this._populateUser(user, app);
             modelObject.author = user;
+        }
+    }
+
+    async _populateRepostAuthor(modelObject, authors, app) {
+        if (!modelObject.repost || !modelObject.repost.isRepost) {
+            return;
+        }
+
+        const id = modelObject.repost.userId;
+
+        if (authors.has(id)) {
+            modelObject.repost.author = authors.get(id);
+        } else {
+            const user = { userId: id };
+            await this._populateUser(user, app);
+            modelObject.repost.author = user;
         }
     }
 
