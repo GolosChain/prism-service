@@ -1,12 +1,64 @@
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
 const ProposalModel = require('../../models/Proposal');
+const ProfileModel = require('../../models/Profile');
 
 class Leaders extends AbstractFeed {
     constructor({ leaderFeedCache }) {
         super();
 
         this._leaderFeedCache = leaderFeedCache;
+    }
+
+    async findLeaders({ username, limit, app = 'gls', sequenceKey }) {
+        const filter = { [`usernames.${app}`]: new RegExp(`.*${username}.*`, 'i').toString() };
+
+        if (sequenceKey) {
+            filter._id = { $gt: sequenceKey };
+        }
+
+        const pipeline = [
+            {
+                $match: filter,
+            },
+            {
+                $project: {
+                    userId: true,
+                    _id: true,
+                },
+            },
+            {
+                $lookup: {
+                    from: 'leaders',
+                    localField: 'userId',
+                    foreignField: 'userId',
+                    as: 'leader',
+                },
+            },
+            {
+                $limit: limit,
+            },
+        ];
+
+        const profiles = await ProfileModel.aggregate(pipeline);
+
+        const leaders = profiles.reduce((leaders, profile) => {
+            if (profile.leaders.length > 0) {
+                leaders.push({ username: profile.usernames[app], ...profile.leaders[0] });
+            }
+            return leaders;
+        }, []);
+
+        let newSequenceKey = null;
+
+        if (leaders.length === limit) {
+            newSequenceKey = profiles[profiles.length - 1]._id;
+        }
+
+        return {
+            leaders,
+            newSequenceKey,
+        };
     }
 
     async getTop({ currentUserId, communityId, limit, sequenceKey, app }) {

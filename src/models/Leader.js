@@ -32,6 +32,15 @@ module.exports = MongoDB.makeModel(
     {
         index: [
             {
+                // search for find leader aggregation
+                fields: {
+                    userId: 1,
+                },
+                options: {
+                    unique: true,
+                },
+            },
+            {
                 // Search for change
                 fields: {
                     communityId: 1,
