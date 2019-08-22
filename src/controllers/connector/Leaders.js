@@ -1,3 +1,5 @@
+const escape = require('escape-string-regexp');
+
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
 const ProposalModel = require('../../models/Proposal');
@@ -11,7 +13,9 @@ class Leaders extends AbstractFeed {
     }
 
     async findLeaders({ username, currentUserId, limit, app = 'gls', sequenceKey }) {
-        const filter = { [`usernames.${app}`]: { $regex: `.*${username}.*`, $options: 'i' } };
+        const filter = {
+            [`usernames.${app}`]: { $regex: `^${escape(username.trim().toLowerCase())}` },
+        };
 
         if (sequenceKey) {
             filter._id = { $gt: sequenceKey };
@@ -24,7 +28,7 @@ class Leaders extends AbstractFeed {
             {
                 $project: {
                     userId: true,
-                    'usernames.gls': true,
+                    usernames: true,
                     _id: true,
                 },
             },
@@ -44,7 +48,6 @@ class Leaders extends AbstractFeed {
         const profiles = await ProfileModel.aggregate(pipeline);
 
         const leaders = profiles.reduce((leaders, profile) => {
-
             if (profile.leaders.length > 0) {
                 leaders.push({ username: profile.usernames[app], ...profile.leaders[0] });
             }

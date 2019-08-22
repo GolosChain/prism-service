@@ -1,3 +1,5 @@
+const escape = require('escape-string-regexp');
+
 const AbstractFeed = require('./AbstractFeed');
 const Model = require('../../models/Profile');
 
@@ -281,6 +283,8 @@ class Profile extends AbstractFeed {
     }
 
     async suggestNames({ text, app }) {
+        text = text.trim();
+
         if (text.length < 2 || text.includes('@')) {
             return [];
         }
@@ -288,7 +292,7 @@ class Profile extends AbstractFeed {
         const results = await Model.find(
             {
                 [`usernames.${app}`]: {
-                    $regex: `^${text}`,
+                    $regex: `^${escape(text.toLowerCase())}`,
                 },
             },
             {
