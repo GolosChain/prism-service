@@ -43,6 +43,7 @@ class Fork extends BasicService {
         for (const document of documents) {
             Logger.info(`Reverting block num: ${document.blockNum}`);
             await this._restoreBy(document.toObject());
+            await document.remove();
         }
 
         await ForkModel.deleteMany({
@@ -87,7 +88,8 @@ class Fork extends BasicService {
             return;
         }
 
-        await this._restoreBy(current);
+        await this._restoreBy(current.toObject());
+        await current.remove();
 
         if (!previous) {
             Logger.warn('No previous block, resetting block num to 0');
@@ -122,8 +124,6 @@ class Fork extends BasicService {
                     break;
             }
         }
-
-        await document.remove();
     }
 
     async _removeDocument(Model, documentId) {
