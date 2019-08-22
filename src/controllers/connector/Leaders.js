@@ -44,8 +44,9 @@ class Leaders extends AbstractFeed {
         const profiles = await ProfileModel.aggregate(pipeline);
 
         const leaders = profiles.reduce((leaders, profile) => {
-            if (profile.leader.length > 0) {
-                leaders.push({ username: profile.usernames[app], ...profile.leader[0] });
+
+            if (profile.leaders.length > 0) {
+                leaders.push({ username: profile.usernames[app], ...profile.leaders[0] });
             }
             return leaders;
         }, []);
