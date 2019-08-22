@@ -301,6 +301,19 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                findLeaders: {
+                    handler: this._leaders.findLeaders,
+                    scope: this._leaders,
+                    inherits: ['feedPagination', 'appSpecify', 'onlyWhenPublicApiEnabled'],
+                    validation: {
+                        required: ['username'],
+                        properties: {
+                            username: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
                 getProposals: {
                     handler: this._leaders.getProposals,
                     scope: this._leaders,
