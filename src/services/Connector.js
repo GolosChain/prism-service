@@ -304,7 +304,12 @@ class Connector extends BasicConnector {
                 findLeaders: {
                     handler: this._leaders.findLeaders,
                     scope: this._leaders,
-                    inherits: ['feedPagination', 'appSpecify', 'onlyWhenPublicApiEnabled'],
+                    inherits: [
+                        'feedPagination',
+                        'appSpecify',
+                        'userRelativity',
+                        'onlyWhenPublicApiEnabled',
+                    ],
                     validation: {
                         required: ['username'],
                         properties: {
