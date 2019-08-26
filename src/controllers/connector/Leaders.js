@@ -39,7 +39,6 @@ class Leaders extends AbstractFeed {
                     _id: true,
                     userId: true,
                     usernames: true,
-                    position: true,
                 },
             },
             {
@@ -72,6 +71,7 @@ class Leaders extends AbstractFeed {
                     rating: leader.rating,
                     stats: leader.stats,
                     votes: leader.votes,
+                    position: leader.position,
                 });
             }
         }
