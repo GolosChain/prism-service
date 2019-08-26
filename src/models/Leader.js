@@ -28,6 +28,10 @@ module.exports = MongoDB.makeModel(
             type: Boolean,
             default: true,
         },
+        position: {
+            type: Number,
+            default: null,
+        },
     },
     {
         index: [
@@ -53,9 +57,8 @@ module.exports = MongoDB.makeModel(
             {
                 // Top
                 fields: {
-                    active: 1,
                     communityId: 1,
-                    rating: -1,
+                    position: 1,
                 },
             },
             {
