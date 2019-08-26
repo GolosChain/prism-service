@@ -311,7 +311,7 @@ class Connector extends BasicConnector {
                         'onlyWhenPublicApiEnabled',
                     ],
                     validation: {
-                        required: ['username'],
+                        required: ['query'],
                         properties: {
                             username: {
                                 type: 'string',
