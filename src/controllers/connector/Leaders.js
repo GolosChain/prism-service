@@ -61,10 +61,17 @@ class Leaders extends AbstractFeed {
 
         for (const profile of profiles) {
             if (profile.leader.length > 0) {
+                const leader = profile.leader[0];
+
                 leaders.push({
+                    userId: leader.userId,
                     username: profile.usernames[app],
-                    ...profile.leader[0],
-                    _id: undefined,
+                    communityId: leader.communityId,
+                    active: leader.active,
+                    url: leader.url,
+                    rating: leader.rating,
+                    stats: leader.stats,
+                    votes: leader.votes,
                 });
             }
         }
