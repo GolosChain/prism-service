@@ -313,7 +313,7 @@ class Connector extends BasicConnector {
                     validation: {
                         required: ['query'],
                         properties: {
-                            username: {
+                            query: {
                                 type: 'string',
                             },
                         },
