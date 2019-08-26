@@ -15,7 +15,7 @@ class Leaders extends AbstractFeed {
     async findLeaders({ query, currentUserId, communityId, limit, app = 'gls', sequenceKey }) {
         const filter = {
             [`usernames.${app}`]: { $regex: `^${escape(query.trim().toLowerCase())}` },
-            leaderIn: { communityId },
+            leaderIn: communityId,
         };
 
         if (sequenceKey) {
