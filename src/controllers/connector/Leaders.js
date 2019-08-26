@@ -12,9 +12,9 @@ class Leaders extends AbstractFeed {
         this._leaderFeedCache = leaderFeedCache;
     }
 
-    async findLeaders({ username, currentUserId, limit, app = 'gls', sequenceKey }) {
+    async findLeaders({ query, currentUserId, limit, app = 'gls', sequenceKey }) {
         const filter = {
-            [`usernames.${app}`]: { $regex: `^${escape(username.trim().toLowerCase())}` },
+            [`usernames.${app}`]: { $regex: `^${escape(query.trim().toLowerCase())}` },
         };
 
         if (sequenceKey) {
@@ -48,8 +48,8 @@ class Leaders extends AbstractFeed {
         const profiles = await ProfileModel.aggregate(pipeline);
 
         const leaders = profiles.reduce((leaders, profile) => {
-            if (profile.leaders.length > 0) {
-                leaders.push({ username: profile.usernames[app], ...profile.leaders[0] });
+            if (profile.leader.length > 0) {
+                leaders.push({ username: profile.usernames[app], ...profile.leader[0] });
             }
             return leaders;
         }, []);
