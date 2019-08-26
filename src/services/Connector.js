@@ -311,9 +311,12 @@ class Connector extends BasicConnector {
                         'onlyWhenPublicApiEnabled',
                     ],
                     validation: {
-                        required: ['query'],
+                        required: ['query', 'communityId'],
                         properties: {
                             query: {
+                                type: 'string',
+                            },
+                            communityId: {
                                 type: 'string',
                             },
                         },
