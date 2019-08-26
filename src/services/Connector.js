@@ -298,25 +298,7 @@ class Connector extends BasicConnector {
                             communityId: {
                                 type: 'string',
                             },
-                        },
-                    },
-                },
-                findLeaders: {
-                    handler: this._leaders.findLeaders,
-                    scope: this._leaders,
-                    inherits: [
-                        'feedPagination',
-                        'appSpecify',
-                        'userRelativity',
-                        'onlyWhenPublicApiEnabled',
-                    ],
-                    validation: {
-                        required: ['query', 'communityId'],
-                        properties: {
                             query: {
-                                type: 'string',
-                            },
-                            communityId: {
                                 type: 'string',
                             },
                         },
