@@ -76,18 +76,22 @@ class Leaders extends AbstractFeed {
             }
         }
 
+        leaders.sort((a, b) => {
+            const diff = Number(b.rating) - Number(a.rating);
+
+            if (diff === 0) {
+                return a.userId.localeCompare(b.userId);
+            }
+
+            return diff;
+        });
+
         await this._populateUsers(leaders, app);
         await this._tryApplyVotesForModels(leaders, currentUserId);
 
-        let newSequenceKey = null;
-
-        if (leaders.length === limit) {
-            newSequenceKey = profiles[profiles.length - 1]._id;
-        }
-
         return {
             items: leaders,
-            sequenceKey: newSequenceKey,
+            sequenceKey: null,
         };
     }
 
