@@ -274,6 +274,10 @@ module.exports = MongoDB.makeModel(
                     'parent.comment.contentId.userId': 1,
                     'meta.time': 1,
                 },
+                options: {
+                    sparse: true,
+                    background: true,
+                },
             },
             // Post comments, sorted by time
             {
