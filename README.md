@@ -258,6 +258,7 @@ getLeadersTop:                   // Получить топ лидеров
     communityId <string>         // Идентификатор комьюнити
     sequenceKey <string/null>    // Идентификатор пагинации для получения следующего контента
     limit <number>(10)           // Количество элементов
+    query <string>               // Префиксный поиск по имени аккаунта
     app <string>('cyber')        // Тип приложения / домена
         [
           cyber                  // CyberWay

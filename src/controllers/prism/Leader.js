@@ -116,6 +116,8 @@ class Leader extends Abstract {
                 $set: { rating: previousModel.rating },
             },
         });
+
+        await this._reorderLeaders({ communityId });
     }
 
     async unvote({ voter, witness }, { communityId, events }) {
@@ -141,6 +143,8 @@ class Leader extends Abstract {
                 $set: { rating: previousModel.rating },
             },
         });
+
+        await this._reorderLeaders({ communityId });
     }
 
     async _setActiveState(userId, communityId, active) {
@@ -277,7 +281,8 @@ class Leader extends Abstract {
 
         if (!approve) {
             Logger.warn(
-                `Proposal (${proposer}/${proposalId}) approve: approve by ${level.actor} not found in requested list (skipping).`
+                `Proposal (${proposer}/${proposalId})`,
+                `approve by ${level.actor} not found in requested list (skipping).`
             );
             return;
         }
@@ -360,6 +365,34 @@ class Leader extends Abstract {
                 values: data,
             },
         ];
+    }
+
+    async _reorderLeaders({ communityId }) {
+        try {
+            const leaders = await LeaderModel.find(
+                { communityId },
+                { _id: false, userId: true, position: true, rating: true },
+                { sort: { rating: -1, userId: 1 }, lean: true }
+            );
+
+            for (let i = 0; i < leaders.length; i++) {
+                const { userId, position, rating } = leaders[i];
+
+                let updatedPosition;
+
+                if (!rating || rating === '0') {
+                    updatedPosition = null;
+                } else {
+                    updatedPosition = i;
+                }
+
+                if (position !== updatedPosition) {
+                    await LeaderModel.updateOne({ userId }, { position: updatedPosition });
+                }
+            }
+        } catch (err) {
+            Logger.error('Leaders reordering failed:', err);
+        }
     }
 }
 

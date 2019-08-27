@@ -53,7 +53,9 @@ class Main {
 
                 if (delta > ACTION_PROCESSING_WARNING_LIMIT) {
                     Logger.warn(
-                        `Slow transaction action processing (>${ACTION_PROCESSING_WARNING_LIMIT}ms), blockNum: ${blockNum}, trxId: ${transaction.id}, action: ${action.code}->${action.action}`
+                        `Slow transaction action processing (>${ACTION_PROCESSING_WARNING_LIMIT}ms),`,
+                        `blockNum: ${blockNum}, trxId: ${transaction.id},`,
+                        `action: ${action.code}->${action.action}`
                     );
                 }
                 previous = action;
@@ -76,7 +78,6 @@ class Main {
         const pathName = [action.code, action.action].join('->');
         const communityId = this._extractCommunityId(action);
         const actionArgs = action.args;
-        const previousArgs = previous.args;
         const events = action.events;
 
         switch (pathName) {

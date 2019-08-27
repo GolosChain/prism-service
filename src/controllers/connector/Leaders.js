@@ -12,10 +12,18 @@ class Leaders extends AbstractFeed {
         this._leaderFeedCache = leaderFeedCache;
     }
 
-    async findLeaders({ query, currentUserId, communityId, limit, app = 'gls', sequenceKey }) {
+    async getTop({ query, ...params }) {
+        if (query) {
+            return await this._findLeaders({ query, ...params });
+        } else {
+            return await this._getTop(params);
+        }
+    }
+
+    async _findLeaders({ query, currentUserId, communityId, limit, app = 'gls', sequenceKey }) {
         const filter = {
             [`usernames.${app}`]: { $regex: `^${escape(query.trim().toLowerCase())}` },
-            leaderIn: { $all: [communityId] },
+            leaderIn: communityId,
         };
 
         if (sequenceKey) {
@@ -28,9 +36,9 @@ class Leaders extends AbstractFeed {
             },
             {
                 $project: {
+                    _id: true,
                     userId: true,
                     usernames: true,
-                    _id: true,
                 },
             },
             {
@@ -52,26 +60,42 @@ class Leaders extends AbstractFeed {
 
         for (const profile of profiles) {
             if (profile.leader.length > 0) {
-                leaders.push({ username: profile.usernames[app], ...profile.leader[0] });
+                const leader = profile.leader[0];
+
+                leaders.push({
+                    userId: leader.userId,
+                    username: profile.usernames[app],
+                    communityId: leader.communityId,
+                    active: leader.active,
+                    url: leader.url,
+                    rating: leader.rating,
+                    stats: leader.stats,
+                    votes: leader.votes,
+                    position: leader.position,
+                });
             }
         }
+
+        leaders.sort((a, b) => {
+            const diff = Number(b.rating) - Number(a.rating);
+
+            if (diff === 0) {
+                return a.userId.localeCompare(b.userId);
+            }
+
+            return diff;
+        });
 
         await this._populateUsers(leaders, app);
         await this._tryApplyVotesForModels(leaders, currentUserId);
 
-        let newSequenceKey = null;
-
-        if (leaders.length === limit) {
-            newSequenceKey = profiles[profiles.length - 1]._id;
-        }
-
         return {
-            leaders,
-            newSequenceKey,
+            items: leaders,
+            sequenceKey: null,
         };
     }
 
-    async getTop({ currentUserId, communityId, limit, sequenceKey, app }) {
+    async _getTop({ currentUserId, communityId, limit, sequenceKey, app }) {
         const queryData = { communityId, sequenceKey, limit };
         const { query, projection, options, meta } = this._prepareQuery(queryData);
 
@@ -109,7 +133,9 @@ class Leaders extends AbstractFeed {
     }
 
     _prepareQuery({ communityId, sequenceKey, limit }) {
-        const query = {};
+        const query = {
+            communityId,
+        };
         const projection = {
             _id: true,
             communityId: true,
@@ -117,8 +143,9 @@ class Leaders extends AbstractFeed {
             url: true,
             rating: true,
             active: true,
+            position: true,
         };
-        const options = { lean: true, sort: { rating: -1 } };
+        const options = { lean: true, sort: { position: 1 } };
 
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
