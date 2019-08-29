@@ -65,13 +65,14 @@ class Feed extends AbstractFeed {
         const projection = {
             'content.body.full': false,
         };
-        const options = { lean: true };
-        const fullQuery = { query, projection, options };
-        const meta = {};
 
         if (contentType !== 'mobile') {
             projection['content.body.mobile'] = false;
         }
+
+        const options = { lean: true };
+        const fullQuery = { query, projection, options };
+        const meta = {};
 
         await this._applyFeedTypeConditions(fullQuery, {
             type,
