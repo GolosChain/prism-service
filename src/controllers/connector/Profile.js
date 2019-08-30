@@ -9,29 +9,37 @@ class Profile extends AbstractFeed {
             throw { code: 400, message: 'Invalid user identification' };
         }
 
-        let query;
+        let queries;
 
         if (user) {
-            query = { $or: [{ [`usernames.${app}`]: user }, { userId: user }] };
+            queries = [{ [`usernames.${app}`]: user }, { userId: user }];
         } else if (requestedUserId) {
-            query = { userId: requestedUserId };
+            queries = [{ userId: requestedUserId }];
         } else {
-            query = { [`usernames.${app}`]: username };
+            queries = [{ [`usernames.${app}`]: username }];
         }
 
-        const modelObject = await Model.findOne(
-            query,
-            {
-                _id: false,
-                __v: false,
-                updatedAt: false,
-                'subscriptions.userIds': false,
-                'subscriptions.communityIds': false,
-                'subscribers.userIds': false,
-                'subscribers.communityIds': false,
-            },
-            { lean: true }
-        );
+        let modelObject;
+
+        for (const query of queries) {
+            modelObject = await Model.findOne(
+                query,
+                {
+                    _id: false,
+                    __v: false,
+                    updatedAt: false,
+                    'subscriptions.userIds': false,
+                    'subscriptions.communityIds': false,
+                    'subscribers.userIds': false,
+                    'subscribers.communityIds': false,
+                },
+                { lean: true }
+            );
+
+            if (modelObject) {
+                break;
+            }
+        }
 
         this._checkExists(modelObject);
 

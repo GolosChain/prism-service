@@ -16,7 +16,7 @@ class AbstractContent extends BasicController {
         }
 
         if (user) {
-            requestedUserId = await this._getUserByAnyName(user, app);
+            requestedUserId = await this._getUserIdByAnyName(user, app);
         }
 
         if (!requestedUserId) {
@@ -285,18 +285,18 @@ class AbstractContent extends BasicController {
         return profile.userId;
     }
 
-    async _getUserByAnyName(name, app) {
+    async _getUserIdByAnyName(name, app) {
         const profile = await ProfileModel.findOne(
-            { $or: [{ [`usernames.${app}`]: name }, { userId: name }] },
+            { [`usernames.${app}`]: name },
             { userId: true, _id: false },
             { lean: true }
         );
 
-        if (!profile) {
-            this._throwNotFound();
+        if (profile) {
+            return profile.userId;
         }
 
-        return profile.userId;
+        return name;
     }
 
     _throwNotFound() {
