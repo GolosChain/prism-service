@@ -194,6 +194,7 @@ class Leaders extends AbstractFeed {
                 approves: true,
                 isExecuted: true,
                 executedBlockTime: true,
+                data: true,
                 'changes.structureName': true,
                 'changes.values': true,
             },

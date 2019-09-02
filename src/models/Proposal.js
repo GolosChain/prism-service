@@ -42,6 +42,10 @@ module.exports = MongoDB.makeModel(
         executedBlockTime: {
             type: Date,
         },
+        // В объекте может быть задано либо data либо массив changes для setparams.
+        data: {
+            type: Object,
+        },
         changes: {
             type: [
                 {
@@ -55,7 +59,6 @@ module.exports = MongoDB.makeModel(
                     },
                 },
             ],
-            required: true,
         },
         approves: {
             type: [
