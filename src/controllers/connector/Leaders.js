@@ -63,6 +63,7 @@ class Leaders extends AbstractFeed {
                 const leader = profile.leader[0];
 
                 leaders.push({
+                    _id: leader._id,
                     userId: leader.userId,
                     username: profile.usernames[app],
                     communityId: leader.communityId,
@@ -70,7 +71,6 @@ class Leaders extends AbstractFeed {
                     url: leader.url,
                     rating: leader.rating,
                     stats: leader.stats,
-                    votes: leader.votes,
                     position: leader.position,
                 });
             }
@@ -88,6 +88,10 @@ class Leaders extends AbstractFeed {
 
         await this._populateUsers(leaders, app);
         await this._tryApplyVotesForModels(leaders, currentUserId);
+
+        for (const leader of leaders) {
+            delete leader._id;
+        }
 
         return {
             items: leaders,
@@ -114,17 +118,16 @@ class Leaders extends AbstractFeed {
 
     async _tryApplyVotesForModels(modelObjects, currentUserId) {
         for (const modelObject of modelObjects) {
-            if (!currentUserId) {
+            if (currentUserId) {
+                const voteCount = await LeaderModel.countDocuments({
+                    _id: modelObject._id,
+                    votes: currentUserId,
+                });
+
+                modelObject.hasVote = Boolean(voteCount);
+            } else {
                 modelObject.hasVote = false;
-                return;
             }
-
-            const voteCount = await LeaderModel.countDocuments({
-                _id: modelObject._id,
-                votes: currentUserId,
-            });
-
-            modelObject.hasVote = Boolean(voteCount);
         }
     }
 
