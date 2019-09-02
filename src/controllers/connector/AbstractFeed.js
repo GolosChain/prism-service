@@ -77,8 +77,11 @@ class AbstractFeed extends AbstractContent {
         for (const modelObject of modelObjects) {
             delete modelObject._id;
             delete modelObject.createdAt;
-            delete modelObject.votes.upVotes;
-            delete modelObject.votes.downVotes;
+
+            if (modelObject.votes) {
+                delete modelObject.votes.upVotes;
+                delete modelObject.votes.downVotes;
+            }
         }
 
         return {
