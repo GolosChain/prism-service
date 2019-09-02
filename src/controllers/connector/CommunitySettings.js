@@ -21,22 +21,26 @@ class CommunitySettings extends BasicController {
 
         const groupedByContracts = {};
 
-        for (const { contractName, structureName, actionName, data } of items) {
-            let structures = groupedByContracts[contractName];
+        for (const { contractName, actionName, structureName, data } of items) {
+            let actions = groupedByContracts[contractName];
 
-            if (!structures) {
-                structures = {};
-                groupedByContracts[contractName] = structures;
+            if (!actions) {
+                actions = {};
+                groupedByContracts[contractName] = actions;
             }
 
-            let struct = structures[structureName];
+            if (structureName) {
+                let structures = actions[actionName];
 
-            if (!struct) {
-                struct = {};
-                structures[structureName] = struct;
+                if (!structures) {
+                    structures = {};
+                    actions[actionName] = structures;
+                }
+
+                structures[structureName] = data;
+            } else {
+                actions[actionName] = data;
             }
-
-            struct[actionName] = data;
         }
 
         return {
