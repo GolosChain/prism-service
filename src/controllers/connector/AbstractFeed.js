@@ -27,8 +27,6 @@ class AbstractFeed extends AbstractContent {
         options.limit = limit;
         projection.__v = false;
         projection.updatedAt = false;
-        projection['votes.upVotes'] = false;
-        projection['votes.downVotes'] = false;
         projection['stats.wilson'] = false;
 
         switch (contentType) {
@@ -79,6 +77,11 @@ class AbstractFeed extends AbstractContent {
         for (const modelObject of modelObjects) {
             delete modelObject._id;
             delete modelObject.createdAt;
+
+            if (modelObject.votes) {
+                delete modelObject.votes.upVotes;
+                delete modelObject.votes.downVotes;
+            }
         }
 
         return {
