@@ -15,21 +15,32 @@ class CommunitySettings extends BasicController {
 
         const items = await Model.find(
             query,
-            { contractName: true, structureName: true, data: true },
+            { contractName: true, actionName: true, structureName: true, data: true },
             { lean: true }
         );
 
         const groupedByContracts = {};
 
-        for (const { contractName, structureName, data } of items) {
-            let structures = groupedByContracts[contractName];
+        for (const { contractName, actionName, structureName, data } of items) {
+            let actions = groupedByContracts[contractName];
 
-            if (!structures) {
-                structures = {};
-                groupedByContracts[contractName] = structures;
+            if (!actions) {
+                actions = {};
+                groupedByContracts[contractName] = actions;
             }
 
-            structures[structureName] = data;
+            if (structureName) {
+                let structures = actions[actionName];
+
+                if (!structures) {
+                    structures = {};
+                    actions[actionName] = structures;
+                }
+
+                structures[structureName] = data;
+            } else {
+                actions[actionName] = data;
+            }
         }
 
         return {

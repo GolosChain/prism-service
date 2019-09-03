@@ -7,12 +7,13 @@ class CommunitySettings {
         this._forkService = forkService;
     }
 
-    async handleSetParams(communityId, contractName, structures) {
+    async handleSetParams(communityId, contractName, actionName, structures) {
         for (const [structureName, data] of structures) {
             const current = await CommunitySettingsModel.findOne({
                 communityId,
                 contractName,
-                structureName,
+                actionName,
+                structureName: structureName || null,
             });
 
             if (current) {
