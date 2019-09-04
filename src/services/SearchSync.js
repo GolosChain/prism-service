@@ -176,7 +176,7 @@ class SearchSync extends BasicService {
         }
     }
 
-    async _getDocsToSync({ model, from = new Date(null), maxDocs = 200, sequenceKey }) {
+    async _getDocsToSync({ model, from = new Date(0), maxDocs = 200, sequenceKey }) {
         const query = {
             updatedAt: { $gte: from },
         };
@@ -223,14 +223,9 @@ class SearchSync extends BasicService {
             sequenceKey,
         });
 
-        const syncPromises = [];
         if (dataToSync.length > 0) {
-            for (const data of dataToSync) {
-                syncPromises.push(this._syncDoc(model, data));
-            }
+            await Promise.all(dataToSync.map(data => this._syncDoc(model, data)));
         }
-
-        await Promise.all(syncPromises);
 
         if (newSequenceKey) {
             await this._syncModel(model, from, newSequenceKey);
