@@ -1,4 +1,5 @@
 const core = require('gls-core-service');
+const { get } = require('lodash');
 const Logger = core.utils.Logger;
 const BasicController = core.controllers.Basic;
 const BigNum = core.types.BigNum;
@@ -188,17 +189,12 @@ class AbstractContent extends BasicController {
         if (!profile) {
             Logger.warn(`populateUser - unknown user - ${modelObject.userId}`);
             modelObject.avatarUrl = null;
-            modelObject.username = modelObject.userId;
+            modelObject.username = null;
             return;
         }
 
-        profile.personal = profile.personal || {};
-        profile.personal[app] = profile.personal[app] || {};
-        profile.usernames = profile.usernames || {};
-
-        modelObject.avatarUrl = profile.personal[app].avatarUrl || null;
-        modelObject.username =
-            profile.usernames[app] || profile.usernames['gls'] || modelObject.userId;
+        modelObject.avatarUrl = get(profile, ['personal', app, 'avatarUrl']) || null;
+        modelObject.username = (profile.usernames || {})[app] || null;
         modelObject.stats = { reputation: profile.stats.reputation };
 
         if (withSubscribers) {

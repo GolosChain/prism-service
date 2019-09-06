@@ -61,7 +61,7 @@ class Notify extends AbstractContent {
 
         return {
             userId: resolvedUserId,
-            username: profile.usernames[app] || profile.usernames['gls'] || resolvedUserId,
+            username: profile.usernames[app] || null,
             avatarUrl: profile.personal[app].avatarUrl || null,
         };
     }
