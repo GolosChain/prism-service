@@ -194,7 +194,7 @@ class AbstractContent extends BasicController {
         }
 
         modelObject.avatarUrl = get(profile, ['personal', app, 'avatarUrl']) || null;
-        modelObject.username = (profile.usernames || {})[app] || null;
+        modelObject.username = get(profile, ['usernames', app]) || null;
         modelObject.stats = { reputation: profile.stats.reputation };
 
         if (withSubscribers) {
