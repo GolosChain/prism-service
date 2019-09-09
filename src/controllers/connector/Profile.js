@@ -56,8 +56,7 @@ class Profile extends AbstractFeed {
         modelObject.personal = (modelObject.personal || {})[app] || {};
         modelObject.leaderIn = modelObject.leaderIn || [];
         modelObject.usernames = modelObject.usernames || {};
-        modelObject.username =
-            modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
+        modelObject.username = modelObject.usernames[app] || null;
         delete modelObject.usernames;
 
         modelObject.chargersRaw = modelObject.chargersRaw = {};
@@ -125,10 +124,7 @@ class Profile extends AbstractFeed {
         modelObject.personal = modelObject.personal || {};
         modelObject.personal.gls = modelObject.personal.gls || {};
         modelObject.personal.cyber = modelObject.personal.cyber || {};
-        modelObject.usernames = modelObject.usernames || {};
-
-        result.username =
-            modelObject.usernames[app] || modelObject.usernames['gls'] || result.userId;
+        result.username = (modelObject.usernames || {})[app] || null;
         delete modelObject.usernames;
 
         switch (app) {
@@ -253,8 +249,7 @@ class Profile extends AbstractFeed {
             };
         }
 
-        const names = model.usernames;
-        const username = names[app] || names['gls'] || userId;
+        const username = model.usernames[app] || null;
         const personal = model.personal[app] || model.personal[app];
         let avatarUrl = null;
 

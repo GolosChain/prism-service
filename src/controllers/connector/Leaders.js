@@ -65,7 +65,7 @@ class Leaders extends AbstractFeed {
                 leaders.push({
                     _id: leader._id,
                     userId: leader.userId,
-                    username: profile.usernames[app],
+                    username: profile.usernames[app] || null,
                     communityId: leader.communityId,
                     active: leader.active,
                     url: leader.url,
