@@ -73,6 +73,8 @@ class Prism extends BasicService {
      * @private
      */
     async _handleEvent({ type, data }) {
+        console.log('event', type);
+
         switch (type) {
             case BlockSubscribe.EVENT_TYPES.BLOCK:
                 await this._registerNewBlock(data);
