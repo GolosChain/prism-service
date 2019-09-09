@@ -203,6 +203,19 @@ class Main {
                 }
                 break;
 
+            case `${communityId}.publish->setrules`:
+                try {
+                    await this._communitySettings.handleSetParams(
+                        communityId,
+                        'publish',
+                        'setrules',
+                        [[null, actionArgs.params]]
+                    );
+                } catch (err) {
+                    Logger.error("Community Settings 'publish::setrules' processing failed", err);
+                }
+                break;
+
             default:
             // unknown action, do nothing
         }
