@@ -84,20 +84,24 @@ class GenesisContent {
         let metadata = {};
 
         if (json_metadata && json_metadata !== "{created_at: 'GENESIS'}") {
-            const { profile } = JSON.parse(json_metadata);
+            try {
+                const { profile } = JSON.parse(json_metadata);
 
-            if (profile) {
-                metadata = {
-                    name: profile.name,
-                    gender: profile.gender,
-                    email: profile.email,
-                    about: profile.about,
-                    location: profile.location,
-                    website: profile.website,
-                    avatarUrl: profile.profile_image,
-                    coverUrl: profile.cover_image,
-                    contacts: profile.social,
-                };
+                if (profile) {
+                    metadata = {
+                        name: profile.name,
+                        gender: profile.gender,
+                        email: profile.email,
+                        about: profile.about,
+                        location: profile.location,
+                        website: profile.website,
+                        avatarUrl: profile.profile_image,
+                        coverUrl: profile.cover_image,
+                        contacts: profile.social,
+                    };
+                }
+            } catch (err) {
+                Logger.error('Profile with invalid json_metadata:', err);
             }
         }
 
