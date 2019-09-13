@@ -129,12 +129,17 @@ class Leader extends Abstract {
     }
 
     async unvote({ voter, witness }, { communityId, events }) {
+        const update = {
+            $pull: { votes: voter },
+        };
+
+        if (events.length) {
+            update.$set = { rating: this._extractLeaderRating(events) };
+        }
+
         const previousModel = await LeaderModel.findOneAndUpdate(
             { communityId, userId: witness },
-            {
-                $pull: { votes: voter },
-                $set: { rating: this._extractLeaderRating(events) },
-            }
+            update
         );
 
         if (!previousModel) {
