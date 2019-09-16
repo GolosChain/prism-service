@@ -19,7 +19,7 @@ class CommunitySettings {
             if (current) {
                 await this._updateExisted({ current, data });
             } else {
-                await this._createNew({ communityId, contractName, structureName, data });
+                await this._createNew({ communityId, contractName, actionName, structureName, data });
             }
         }
     }
