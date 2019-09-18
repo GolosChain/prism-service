@@ -10,14 +10,15 @@ const LeaderModel = require('../../models/Leader');
 const ProfileModel = require('../../models/Profile');
 const ProposalModel = require('../../models/Proposal');
 
-const ACTIONS = {
-    SET_PARAMS: 'setparams',
-    SET_RESTORER: 'setrestorer',
-};
+const SET_PARAMS = 'setparams';
 
-const ALLOWED_ACTIONS = {
-    [ACTIONS.SET_PARAMS]: ['publish', 'ctrl', 'referral', 'emit', 'vesting'],
-    [ACTIONS.SET_RESTORER]: ['charge'],
+const ALLOWED_CONTRACTS = {
+    publish: [SET_PARAMS],
+    ctrl: [SET_PARAMS],
+    referral: [SET_PARAMS],
+    emit: [SET_PARAMS],
+    vesting: [SET_PARAMS],
+    charge: ['setrestorer'],
 };
 
 class Leader extends Abstract {
@@ -94,12 +95,19 @@ class Leader extends Abstract {
     }
 
     async vote({ voter, witness }, { communityId, events }) {
+        const update = {
+            $addToSet: { votes: voter },
+        };
+
+        if (events.length) {
+            update.$set = {
+                rating: this._extractLeaderRating(events),
+            };
+        }
+
         const previousModel = await LeaderModel.findOneAndUpdate(
             { communityId, userId: witness },
-            {
-                $addToSet: { votes: voter },
-                $set: { rating: this._extractLeaderRating(events) },
-            }
+            update
         );
 
         if (!previousModel) {
@@ -121,12 +129,17 @@ class Leader extends Abstract {
     }
 
     async unvote({ voter, witness }, { communityId, events }) {
+        const update = {
+            $pull: { votes: voter },
+        };
+
+        if (events.length) {
+            update.$set = { rating: this._extractLeaderRating(events) };
+        }
+
         const previousModel = await LeaderModel.findOneAndUpdate(
             { communityId, userId: witness },
-            {
-                $pull: { votes: voter },
-                $set: { rating: this._extractLeaderRating(events) },
-            }
+            update
         );
 
         if (!previousModel) {
@@ -220,9 +233,9 @@ class Leader extends Abstract {
         const action = trx.actions[0];
         const [communityId, type] = action.account.split('.');
 
-        const allowedTypes = ALLOWED_ACTIONS[action.name];
+        const allowedActions = ALLOWED_CONTRACTS[type];
 
-        if (!allowedTypes || !allowedTypes.includes(type)) {
+        if (!allowedActions || !allowedActions.includes(action.name)) {
             return;
         }
 
@@ -237,8 +250,8 @@ class Leader extends Abstract {
             blockTime,
             expiration,
             isExecuted: false,
-            changes: this._extractProposalChanges(data, action.name),
             approves: requested.map(({ actor, permission }) => ({ userId: actor, permission })),
+            ...this._extractProposalChanges(data, action.name),
         });
         const saved = await proposalModel.save();
 
@@ -352,19 +365,18 @@ class Leader extends Abstract {
     }
 
     _extractProposalChanges(data, actionName) {
-        if (actionName === ACTIONS.SET_PARAMS) {
-            return data.params.map(([structureName, values]) => ({
-                structureName,
-                values,
-            }));
+        if (actionName === SET_PARAMS) {
+            return {
+                changes: data.params.map(([structureName, values]) => ({
+                    structureName,
+                    values,
+                })),
+            };
         }
 
-        return [
-            {
-                structureName: actionName,
-                values: data,
-            },
-        ];
+        return {
+            data,
+        };
     }
 
     async _reorderLeaders({ communityId }) {

@@ -12,9 +12,12 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        structureName: {
+        actionName: {
             type: String,
             required: true,
+        },
+        structureName: {
+            type: String,
         },
         data: {
             type: Object,

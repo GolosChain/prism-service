@@ -192,11 +192,27 @@ class Main {
 
             case `${communityId}.charge->setrestorer`:
                 try {
-                    await this._communitySettings.handleSetParams(communityId, 'charge', [
-                        ['setrestorer', actionArgs.params],
-                    ]);
+                    await this._communitySettings.handleSetParams(
+                        communityId,
+                        'charge',
+                        'setrestorer',
+                        [[null, actionArgs.params]]
+                    );
                 } catch (err) {
                     Logger.error("Community Settings 'charge::setrestorer' processing failed", err);
+                }
+                break;
+
+            case `${communityId}.publish->setrules`:
+                try {
+                    await this._communitySettings.handleSetParams(
+                        communityId,
+                        'publish',
+                        'setrules',
+                        [[null, actionArgs.params]]
+                    );
+                } catch (err) {
+                    Logger.error("Community Settings 'publish::setrules' processing failed", err);
                 }
                 break;
 
@@ -211,6 +227,7 @@ class Main {
                 await this._communitySettings.handleSetParams(
                     communityId,
                     contractName,
+                    'setparams',
                     actionArgs.params
                 );
             }

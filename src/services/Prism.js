@@ -116,7 +116,7 @@ class Prism extends BasicService {
 
             this._emitHandled(block);
         } catch (error) {
-            Logger.error('Cant disperse block:', error);
+            Logger.error(`Cant disperse block, num: ${block.blockNum}, id: ${block.id}`, error);
             process.exit(1);
         }
     }
