@@ -384,6 +384,22 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                getUsernames: {
+                    handler: this._profile.getUsernames,
+                    scope: this._profile,
+                    inherits: ['appSpecify', 'onlyWhenPublicApiEnabled'],
+                    validation: {
+                        required: ['userIds', 'app'],
+                        properties: {
+                            userIds: {
+                                type: 'array',
+                                items: {
+                                    type: 'string',
+                                },
+                            },
+                        },
+                    },
+                },
                 resolveProfile: {
                     handler: this._profile.resolveProfile,
                     scope: this._profile,
