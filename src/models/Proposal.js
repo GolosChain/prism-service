@@ -6,21 +6,12 @@ module.exports = MongoDB.makeModel(
     {
         communityId: {
             type: String,
-            required: true,
         },
         userId: {
             type: String,
             required: true,
         },
         proposalId: {
-            type: String,
-            required: true,
-        },
-        code: {
-            type: String,
-            required: true,
-        },
-        action: {
             type: String,
             required: true,
         },
@@ -42,23 +33,45 @@ module.exports = MongoDB.makeModel(
         executedBlockTime: {
             type: Date,
         },
-        // В объекте может быть задано либо data либо массив changes для setparams.
-        data: {
-            type: Object,
+        type: {
+            type: String,
+            enum: ['NORMAL', 'CUSTOM'],
+            required: true,
         },
-        changes: {
-            type: [
-                {
-                    structureName: {
-                        type: String,
-                        required: true,
-                    },
-                    values: {
-                        type: Object,
-                        required: true,
-                    },
+        // Если type == 'SIMPLE' то присутствует объект action,
+        action: {
+            type: {
+                code: {
+                    type: String,
+                    required: true,
                 },
-            ],
+                action: {
+                    type: String,
+                    required: true,
+                },
+                // В объекте может быть задано либо data либо массив changes для setparams.
+                data: {
+                    type: Object,
+                },
+                changes: {
+                    type: [
+                        {
+                            structureName: {
+                                type: String,
+                                required: true,
+                            },
+                            values: {
+                                type: Object,
+                                required: true,
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+        // Если type == 'CUSTOM' то присутсвует объект trx
+        trx: {
+            type: Object,
         },
         approves: {
             type: [
@@ -84,9 +97,9 @@ module.exports = MongoDB.makeModel(
         index: [
             {
                 fields: {
-                    communityId: 1,
                     isExecuted: -1,
                     blockTime: -1,
+                    communityId: 1,
                 },
             },
             {
