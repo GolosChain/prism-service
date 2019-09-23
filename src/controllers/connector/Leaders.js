@@ -171,9 +171,7 @@ class Leaders extends AbstractFeed {
 
     async getProposals({ communityId, limit, sequenceKey, app }) {
         const query = {
-            communityId: {
-                $or: [{ $eq: communityId }, { $eq: null }],
-            },
+            $or: [{ communityId }, { communityId: { $eq: null } }],
         };
 
         if (sequenceKey) {
