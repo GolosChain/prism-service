@@ -205,7 +205,7 @@ class Leaders extends AbstractFeed {
         return items[0];
     }
 
-    async _getProposals({ query, limit }) {
+    async _getProposals({ query, limit, app }) {
         const items = await ProposalModel.find(
             query,
             {
