@@ -317,6 +317,22 @@ class Connector extends BasicConnector {
                         },
                     },
                 },
+                getProposal: {
+                    handler: this._leaders.getProposal,
+                    scope: this._leaders,
+                    inherits: ['appSpecify', 'onlyWhenPublicApiEnabled'],
+                    validation: {
+                        required: ['proposerId', 'proposalId'],
+                        properties: {
+                            proposerId: {
+                                type: 'string',
+                            },
+                            proposalId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
                 waitForBlock: {
                     handler: this._block.waitForBlock,
                     scope: this._block,

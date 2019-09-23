@@ -171,7 +171,9 @@ class Leaders extends AbstractFeed {
 
     async getProposals({ communityId, limit, sequenceKey, app }) {
         const query = {
-            communityId,
+            communityId: {
+                $or: [{ $eq: communityId }, { $eq: null }],
+            },
         };
 
         if (sequenceKey) {
@@ -182,21 +184,44 @@ class Leaders extends AbstractFeed {
             };
         }
 
+        return await this._getProposals({ query, limit, app });
+    }
+
+    async getProposal({ proposerId, proposalId, app }) {
+        const { items } = await this._getProposals({
+            query: {
+                userId: proposerId,
+                proposalId,
+            },
+            limit: 1,
+            app,
+        });
+
+        if (!items.length) {
+            throw {
+                code: 404,
+                message: 'Proposal not found',
+            };
+        }
+
+        return items[0];
+    }
+
+    async _getProposals({ query, limit }) {
         const items = await ProposalModel.find(
             query,
             {
                 userId: true,
                 proposalId: true,
-                code: true,
-                action: true,
                 blockTime: true,
                 expiration: true,
                 approves: true,
                 isExecuted: true,
                 executedBlockTime: true,
+                type: true,
+                action: true,
+                trx: true,
                 data: true,
-                'changes.structureName': true,
-                'changes.values': true,
             },
             {
                 lean: true,
