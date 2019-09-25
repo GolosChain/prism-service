@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
 const { Logger, GenesisProcessor } = core.utils;

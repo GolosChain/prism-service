@@ -1,6 +1,6 @@
 const elasticsearch = require('elasticsearch');
 const bodybuilder = require('bodybuilder');
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const BasicService = core.services.Basic;
 const env = require('../data/env');
 const SearchSyncModel = require('../models/SearchSync');
