@@ -1,7 +1,7 @@
 const { JsonRpc, Api } = require('cyberwayjs');
 const fetch = require('node-fetch');
 const { TextEncoder, TextDecoder } = require('text-encoding');
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const { cloneDeep } = require('lodash');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');

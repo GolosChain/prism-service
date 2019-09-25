@@ -1,1 +1,1 @@
-require('gls-core-service').utils.defaultStarter(require('./Main'));
+require('cyberway-core-service').utils.defaultStarter(require('./Main'));

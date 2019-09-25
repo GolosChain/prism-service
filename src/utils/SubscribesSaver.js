@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const { Logger, metrics, ParallelPool } = core.utils;
 const ProfileModel = require('../models/Profile');
 

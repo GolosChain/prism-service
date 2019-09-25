@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const BasicService = core.services.Basic;
 const Logger = core.utils.Logger;
 const ForkModel = require('../models/Fork');

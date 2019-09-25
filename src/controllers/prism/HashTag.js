@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const Logger = core.utils.Logger;
 const Content = core.utils.Content;
 const env = require('../../data/env');

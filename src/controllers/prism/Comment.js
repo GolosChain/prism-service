@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const Content = core.utils.Content;
 const Logger = core.utils.Logger;
 const BigNum = core.types.BigNum;

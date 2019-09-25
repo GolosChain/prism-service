@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const BigNum = core.types.BigNum;
 const BigNumUtils = BigNum.OriginalBigNumber();
 
