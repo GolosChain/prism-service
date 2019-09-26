@@ -52,6 +52,8 @@ services:
     ports:
       - $GLS_CONNECTOR_HOST:$GLS_CONNECTOR_PORT:$GLS_CONNECTOR_PORT
       - $GLS_METRICS_HOST:$GLS_METRICS_PORT:$GLS_METRICS_PORT
+    environment:
+      - NODE_OPTIONS=$GLS_PRISM_NODE_OPTIONS
     env_file:
       - .env
 
