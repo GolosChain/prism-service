@@ -328,7 +328,7 @@ class Leader extends Abstract {
         );
 
         if (!proposal) {
-            Logger.warn(`Proposal (${proposer}/${proposalId}) not found.`);
+            // Если предложения нет в базе, значит это он был отфильтрован при создании.
             return;
         }
 
