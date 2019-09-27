@@ -279,13 +279,11 @@ class Leader extends Abstract {
         return {
             communityId,
             type: PROPOSAL_TYPES.NORMAL,
-            actions: [
-                {
-                    code: action.account,
-                    action: action.name,
-                    ...this._extractProposalChanges(data, action.name),
-                },
-            ],
+            action: {
+                code: action.account,
+                action: action.name,
+                ...this._extractProposalChanges(data, action.name),
+            },
         };
     }
 
