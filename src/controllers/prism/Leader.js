@@ -21,7 +21,7 @@ const PROPOSAL_PREFIX = 'lead';
 const SET_PARAMS = 'setparams';
 
 const ALLOWED_CONTRACTS = {
-    publish: [SET_PARAMS],
+    publish: [SET_PARAMS, 'setrules'],
     ctrl: [SET_PARAMS],
     referral: [SET_PARAMS],
     emit: [SET_PARAMS],
