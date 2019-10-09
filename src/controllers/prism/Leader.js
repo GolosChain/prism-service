@@ -371,7 +371,7 @@ class Leader extends Abstract {
     async handleProposalExec({ proposer, proposal_name: proposalId, executer }, { blockTime }) {
         const prev = await ProposalModel.findOneAndUpdate(
             {
-                proposer,
+                userId: proposer,
                 proposalId,
             },
             {
@@ -400,6 +400,22 @@ class Leader extends Abstract {
                 },
             },
         });
+    }
+
+    async handleProposalCancel({ proposer, proposal_name: proposalId }) {
+        const prev = await ProposalModel.findOneAndRemove({
+            userId: proposer,
+            proposalId,
+        });
+
+        if (prev) {
+            await this.registerForkChanges({
+                type: 'remove',
+                Model: ProposalModel,
+                documentId: prev._id,
+                data: prev.toObject(),
+            });
+        }
     }
 
     _extractProposalChanges(data, actionName) {

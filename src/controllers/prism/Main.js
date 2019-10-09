@@ -190,6 +190,10 @@ class Main {
                 await this._leader.handleProposalExec(actionArgs, { blockTime });
                 break;
 
+            case 'cyber.msig->cancel':
+                await this._leader.handleProposalCancel(actionArgs, { blockTime });
+                break;
+
             case `${communityId}.charge->setrestorer`:
                 try {
                     await this._communitySettings.handleSetParams(
