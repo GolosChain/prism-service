@@ -175,7 +175,9 @@ class Leaders extends AbstractFeed {
             isExecuted: false,
         };
 
-        return await this._getProposals({ query, limit, skip: offset, app });
+        return {
+            items: await this._getProposals({ query, limit, skip: offset, app }),
+        };
     }
 
     async getProposal({ proposerId, proposalId, app }) {
