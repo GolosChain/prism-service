@@ -169,24 +169,19 @@ class Leaders extends AbstractFeed {
         await Promise.all(modelObjects.map(modelObject => this._populateUser(modelObject, app)));
     }
 
-    async getProposals({ communityId, limit, sequenceKey, app }) {
+    async getProposals({ communityId, limit, offset, app }) {
         const query = {
             $or: [{ communityId }, { communityId: { $eq: null } }],
+            isExecuted: false,
         };
 
-        if (sequenceKey) {
-            const lastId = this._unpackSequenceKey(sequenceKey);
-
-            query._id = {
-                $gt: lastId,
-            };
-        }
-
-        return await this._getProposals({ query, limit, app });
+        return {
+            items: await this._getProposals({ query, limit, skip: offset, app }),
+        };
     }
 
     async getProposal({ proposerId, proposalId, app }) {
-        const { items } = await this._getProposals({
+        const items = await this._getProposals({
             query: {
                 userId: proposerId,
                 proposalId,
@@ -205,7 +200,7 @@ class Leaders extends AbstractFeed {
         return items[0];
     }
 
-    async _getProposals({ query, limit, app }) {
+    async _getProposals({ query, skip, limit, app }) {
         const items = await ProposalModel.find(
             query,
             {
@@ -223,6 +218,7 @@ class Leaders extends AbstractFeed {
             },
             {
                 lean: true,
+                skip,
                 limit,
                 sort: {
                     isExecuted: -1,
@@ -239,12 +235,6 @@ class Leaders extends AbstractFeed {
             for (const { userId } of item.approves) {
                 users[userId] = true;
             }
-        }
-
-        let resultSequenceKey = null;
-
-        if (items.length === limit) {
-            resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
         }
 
         for (const userId of Object.keys(users)) {
@@ -271,10 +261,7 @@ class Leaders extends AbstractFeed {
             delete item.userId;
         }
 
-        return {
-            items,
-            sequenceKey: resultSequenceKey,
-        };
+        return items;
     }
 }
 

@@ -307,7 +307,7 @@ class Connector extends BasicConnector {
                 getProposals: {
                     handler: this._leaders.getProposals,
                     scope: this._leaders,
-                    inherits: ['feedPagination', 'appSpecify', 'onlyWhenPublicApiEnabled'],
+                    inherits: ['offsetLimit', 'appSpecify', 'onlyWhenPublicApiEnabled'],
                     validation: {
                         required: ['communityId'],
                         properties: {
@@ -501,6 +501,23 @@ class Connector extends BasicConnector {
                                 },
                                 sequenceKey: {
                                     type: ['string', 'null'],
+                                },
+                            },
+                        },
+                    },
+                    offsetLimit: {
+                        validation: {
+                            properties: {
+                                limit: {
+                                    type: 'number',
+                                    default: 10,
+                                    minValue: 1,
+                                    maxValue: env.GLS_MAX_FEED_LIMIT,
+                                },
+                                offset: {
+                                    type: 'number',
+                                    default: 0,
+                                    minValue: 0,
                                 },
                             },
                         },
