@@ -1,0 +1,117 @@
+---
+- hosts: all
+  become: yes
+  remote_user: deploy
+  any_errors_fatal: true
+
+  tasks:
+
+  - name: deploy_tag check
+    assert:
+      that:
+        - deploy_tag is defined
+        - deploy_tag != ""
+      fail_msg: "Define deploy_tag!"
+      success_msg: "deploy_tag is defined: {{ deploy_tag }}"
+    tags:
+      - fast
+
+  - name: Add key
+    apt_key:
+      url: "https://download.docker.com/linux/ubuntu/gpg"
+      state: present
+  
+  - name: Add repo
+    apt_repository:
+      repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+      state: present
+  
+  - name: Install Docker
+    apt:
+      name: docker-ce
+      state: present
+      update_cache: yes
+    ignore_errors: yes
+  
+  - name: Dependencies (for ansible and scripts)
+    apt:
+      name: ['python-pip', 'python-setuptools', 'jq']
+      state: latest
+      update_cache: yes
+    ignore_errors: yes
+  
+  - name: Install pip, docker
+    pip:
+      name: ['pip', 'docker']
+      state: latest
+    ignore_errors: yes
+  
+  - name: Install docker compose
+    shell: curl -L https://github.com/docker/compose/releases/download/1.24.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+
+  - name: Docker login
+    docker_login:
+      username: "{{ lookup('env','DHUBU') }}"
+      password: "{{ lookup('env','DHUBP') }}"
+    tags:
+      - fast
+
+  - name: Get docker image
+    docker_image:
+      name: "commun/prism-service:{{ deploy_tag | default('latest') }}"
+      state: present
+      force: yes
+    tags:
+      - fast
+
+  - name: Create env directory
+    file:
+      state: directory
+      path: /opt/prism-service
+      owner: deploy
+      group: deploy
+    tags:
+      - fast
+
+  - name: Decrypt and copy .env
+    copy:
+      src: "configs/.env.vault"
+      dest: "/opt/prism-service/.env"
+      owner: root
+      group: root
+      mode: 0600
+    tags:
+      - fast
+
+  - name: Stop old container
+    docker_container:
+      name: "prism-service"
+      state: stopped
+      stop_timeout: 60
+    ignore_errors: yes
+    tags:
+      - fast
+
+  - name: Start new container
+    docker_container:
+      name: "prism-service"
+      image: "commun/prism-service:{{ deploy_tag | default('latest') }}"
+      state: started
+      restart: yes
+      restart_policy: unless-stopped
+      network_mode: bridge
+      networks:
+        - name: cyberway_cyberway-net
+          links:
+            - cyberway_cyberway-net
+      ports:
+      - "9777:9777"
+      - "3000:3000"
+      detach: yes
+      log_driver: json-file
+      log_options:
+        max-file: "2"
+        max-size: "1024m"
+      env_file: "/opt/prism-service/.env"
+    tags:
+      - fast
