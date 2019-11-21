@@ -94,7 +94,7 @@ class AbstractContent extends Abstract {
     }
 
     _extractBodyRaw(content) {
-        if (content.bodymssg) {
+        if (typeof content.bodymssg === 'string') {
             return content.bodymssg;
         } else {
             return content.body;
