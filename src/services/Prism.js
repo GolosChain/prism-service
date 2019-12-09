@@ -47,7 +47,7 @@ class Prism extends BasicService {
         const lastBlockInfo = await this._subscriber.getLastBlockMetaData();
         Logger.info('Last block info:', lastBlockInfo);
 
-        if (lastBlockInfo.lastBlockNum !== 0) {
+        if (lastBlockInfo.lastBlockNum !== 0 && !env.GLS_DONT_REVERT_LAST_BLOCK) {
             await this._revertLastBlock();
         }
 
