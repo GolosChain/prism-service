@@ -180,6 +180,9 @@ class Comment extends AbstractFeed {
                 break;
 
             case 'replies':
+                query['contentId.userId'] = {
+                    $ne: requestedUserId,
+                };
                 query.$or = [
                     { 'parent.post.contentId.userId': requestedUserId },
                     { 'parent.comment.contentId.userId': requestedUserId },
