@@ -102,6 +102,9 @@ class Post extends AbstractContent {
                 },
                 time: blockTime,
             },
+            meta: {
+                time: blockTime,
+            },
         });
 
         await this.registerForkChanges({ type: 'create', Model: PostModel, documentId: model._id });
