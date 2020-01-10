@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const { Logger, metrics, ParallelPool, BulkSaver } = core.utils;
 const { NESTED_COMMENTS_MAX_INDEX_DEPTH } = require('../../data/constants');
 const GenesisLimitedCache = require('../../utils/GenesisLimitedCache');

@@ -169,37 +169,56 @@ class Leaders extends AbstractFeed {
         await Promise.all(modelObjects.map(modelObject => this._populateUser(modelObject, app)));
     }
 
-    async getProposals({ communityId, limit, sequenceKey, app }) {
+    async getProposals({ communityId, limit, offset, app }) {
         const query = {
-            communityId,
+            $or: [{ communityId }, { communityId: { $eq: null } }],
+            isExecuted: false,
         };
 
-        if (sequenceKey) {
-            const lastId = this._unpackSequenceKey(sequenceKey);
+        return {
+            items: await this._getProposals({ query, limit, skip: offset, app }),
+        };
+    }
 
-            query._id = {
-                $gt: lastId,
+    async getProposal({ proposerId, proposalId, app }) {
+        const items = await this._getProposals({
+            query: {
+                userId: proposerId,
+                proposalId,
+            },
+            limit: 1,
+            app,
+        });
+
+        if (!items.length) {
+            throw {
+                code: 404,
+                message: 'Proposal not found',
             };
         }
 
+        return items[0];
+    }
+
+    async _getProposals({ query, skip, limit, app }) {
         const items = await ProposalModel.find(
             query,
             {
                 userId: true,
                 proposalId: true,
-                code: true,
-                action: true,
                 blockTime: true,
                 expiration: true,
                 approves: true,
                 isExecuted: true,
                 executedBlockTime: true,
+                type: true,
+                action: true,
+                trx: true,
                 data: true,
-                'changes.structureName': true,
-                'changes.values': true,
             },
             {
                 lean: true,
+                skip,
                 limit,
                 sort: {
                     isExecuted: -1,
@@ -216,12 +235,6 @@ class Leaders extends AbstractFeed {
             for (const { userId } of item.approves) {
                 users[userId] = true;
             }
-        }
-
-        let resultSequenceKey = null;
-
-        if (items.length === limit) {
-            resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
         }
 
         for (const userId of Object.keys(users)) {
@@ -248,10 +261,7 @@ class Leaders extends AbstractFeed {
             delete item.userId;
         }
 
-        return {
-            items,
-            sequenceKey: resultSequenceKey,
-        };
+        return items;
     }
 }
 

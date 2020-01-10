@@ -108,6 +108,40 @@ class Profile extends AbstractFeed {
         modelObject.isSubscribed = Boolean(count);
     }
 
+    async getUsernames({ userIds, app }) {
+        if (!userIds.length) {
+            throw {
+                code: 400,
+                message: 'Empty params',
+            };
+        }
+
+        const users = await Model.find(
+            {
+                userId: {
+                    $in: userIds,
+                },
+            },
+            {
+                userId: true,
+                [`usernames.${app}`]: true,
+            },
+            {
+                lean: true,
+            }
+        );
+
+        const usernames = {};
+
+        for (const user of users) {
+            usernames[user.userId] = user.usernames[app];
+        }
+
+        return {
+            usernames,
+        };
+    }
+
     async resolveProfile({ username, app }) {
         const modelObject = await Model.findOne(
             { [`usernames.${app}`]: username },

@@ -1,7 +1,7 @@
 const { JsonRpc, Api } = require('cyberwayjs');
 const fetch = require('node-fetch');
 const { TextEncoder, TextDecoder } = require('text-encoding');
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const { cloneDeep } = require('lodash');
 const Logger = core.utils.Logger;
 const Abstract = require('./Abstract');
@@ -10,10 +10,18 @@ const LeaderModel = require('../../models/Leader');
 const ProfileModel = require('../../models/Profile');
 const ProposalModel = require('../../models/Proposal');
 
+const PROPOSAL_TYPES = {
+    NORMAL: 'NORMAL',
+    CUSTOM: 'CUSTOM',
+};
+
+// Фиксированный префикс нужен, чтобы можно было отличить обычные пропозалы от тех что созданы через форму.
+const PROPOSAL_PREFIX = 'lead';
+
 const SET_PARAMS = 'setparams';
 
 const ALLOWED_CONTRACTS = {
-    publish: [SET_PARAMS],
+    publish: [SET_PARAMS, 'setrules'],
     ctrl: [SET_PARAMS],
     referral: [SET_PARAMS],
     emit: [SET_PARAMS],
@@ -226,10 +234,37 @@ class Leader extends Abstract {
         { proposer, proposal_name: proposalId, requested, trx },
         { blockTime }
     ) {
-        if (trx.actions.length !== 1) {
-            return;
+        const expiration = new Date(trx.expiration + 'Z');
+        let proposalData = null;
+
+        if (trx.actions.length === 1) {
+            proposalData = await this._processSimpleProposal(trx);
         }
 
+        if (!proposalData && proposalId.startsWith(PROPOSAL_PREFIX)) {
+            proposalData = await this._processCustomProposal(trx);
+        }
+
+        if (proposalData) {
+            const model = await ProposalModel.create({
+                ...proposalData,
+                userId: proposer,
+                proposalId,
+                blockTime,
+                expiration,
+                isExecuted: false,
+                approves: requested.map(({ actor, permission }) => ({ userId: actor, permission })),
+            });
+
+            await this.registerForkChanges({
+                type: 'create',
+                Model: ProposalModel,
+                documentId: model._id,
+            });
+        }
+    }
+
+    async _processSimpleProposal(trx) {
         const action = trx.actions[0];
         const [communityId, type] = action.account.split('.');
 
@@ -239,27 +274,34 @@ class Leader extends Abstract {
             return;
         }
 
-        const expiration = new Date(trx.expiration + 'Z');
         const [{ data }] = await this._api.deserializeActions(trx.actions);
-        const proposalModel = new ProposalModel({
-            communityId,
-            userId: proposer,
-            proposalId,
-            code: action.account,
-            action: action.name,
-            blockTime,
-            expiration,
-            isExecuted: false,
-            approves: requested.map(({ actor, permission }) => ({ userId: actor, permission })),
-            ...this._extractProposalChanges(data, action.name),
-        });
-        const saved = await proposalModel.save();
 
-        await this.registerForkChanges({
-            type: 'create',
-            Model: ProposalModel,
-            documentId: saved._id,
-        });
+        return {
+            communityId,
+            type: PROPOSAL_TYPES.NORMAL,
+            action: {
+                code: action.account,
+                action: action.name,
+                ...this._extractProposalChanges(data, action.name),
+            },
+        };
+    }
+
+    async _processCustomProposal(trx) {
+        try {
+            const actions = await this._api.deserializeActions(trx.actions);
+
+            for (let i = 0; i < actions.length; i++) {
+                trx.actions[i].args = actions[i].data;
+            }
+        } catch (err) {
+            Logger.warn('Deserialize failed:', err.message);
+        }
+
+        return {
+            type: PROPOSAL_TYPES.CUSTOM,
+            trx,
+        };
     }
 
     /**
@@ -284,7 +326,7 @@ class Leader extends Abstract {
         );
 
         if (!proposal) {
-            Logger.warn(`Proposal (${proposer}/${proposalId}) not found.`);
+            // Если предложения нет в базе, значит это он был отфильтрован при создании.
             return;
         }
 
@@ -326,14 +368,10 @@ class Leader extends Abstract {
         });
     }
 
-    async handleProposalExec(
-        { proposer, proposal_name: proposalId, executer },
-        { communityId, blockTime }
-    ) {
+    async handleProposalExec({ proposer, proposal_name: proposalId, executer }, { blockTime }) {
         const prev = await ProposalModel.findOneAndUpdate(
             {
-                communityId,
-                proposer,
+                userId: proposer,
                 proposalId,
             },
             {
@@ -362,6 +400,22 @@ class Leader extends Abstract {
                 },
             },
         });
+    }
+
+    async handleProposalCancel({ proposer, proposal_name: proposalId }) {
+        const prev = await ProposalModel.findOneAndRemove({
+            userId: proposer,
+            proposalId,
+        });
+
+        if (prev) {
+            await this.registerForkChanges({
+                type: 'remove',
+                Model: ProposalModel,
+                documentId: prev._id,
+                data: prev.toObject(),
+            });
+        }
     }
 
     _extractProposalChanges(data, actionName) {

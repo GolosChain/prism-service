@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const { Logger, metrics } = core.utils;
 const Post = require('./Post');
 const Comment = require('./Comment');
@@ -188,6 +188,10 @@ class Main {
 
             case 'cyber.msig->exec':
                 await this._leader.handleProposalExec(actionArgs, { blockTime });
+                break;
+
+            case 'cyber.msig->cancel':
+                await this._leader.handleProposalCancel(actionArgs, { blockTime });
                 break;
 
             case `${communityId}.charge->setrestorer`:

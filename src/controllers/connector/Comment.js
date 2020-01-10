@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const Logger = core.utils.Logger;
 const AbstractFeed = require('./AbstractFeed');
 const CommentModel = require('../../models/Comment');
@@ -180,6 +180,9 @@ class Comment extends AbstractFeed {
                 break;
 
             case 'replies':
+                query['contentId.userId'] = {
+                    $ne: requestedUserId,
+                };
                 query.$or = [
                     { 'parent.post.contentId.userId': requestedUserId },
                     { 'parent.comment.contentId.userId': requestedUserId },

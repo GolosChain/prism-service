@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const BasicConnector = core.services.Connector;
 const env = require('../data/env');
 const Comment = require('../controllers/connector/Comment');
@@ -307,11 +307,27 @@ class Connector extends BasicConnector {
                 getProposals: {
                     handler: this._leaders.getProposals,
                     scope: this._leaders,
-                    inherits: ['feedPagination', 'appSpecify', 'onlyWhenPublicApiEnabled'],
+                    inherits: ['offsetLimit', 'appSpecify', 'onlyWhenPublicApiEnabled'],
                     validation: {
                         required: ['communityId'],
                         properties: {
                             communityId: {
+                                type: 'string',
+                            },
+                        },
+                    },
+                },
+                getProposal: {
+                    handler: this._leaders.getProposal,
+                    scope: this._leaders,
+                    inherits: ['appSpecify', 'onlyWhenPublicApiEnabled'],
+                    validation: {
+                        required: ['proposerId', 'proposalId'],
+                        properties: {
+                            proposerId: {
+                                type: 'string',
+                            },
+                            proposalId: {
                                 type: 'string',
                             },
                         },
@@ -380,6 +396,22 @@ class Connector extends BasicConnector {
                             type: {
                                 type: 'string',
                                 enum: ['like', 'dislike'],
+                            },
+                        },
+                    },
+                },
+                getUsernames: {
+                    handler: this._profile.getUsernames,
+                    scope: this._profile,
+                    inherits: ['appSpecify', 'onlyWhenPublicApiEnabled'],
+                    validation: {
+                        required: ['userIds', 'app'],
+                        properties: {
+                            userIds: {
+                                type: 'array',
+                                items: {
+                                    type: 'string',
+                                },
                             },
                         },
                     },
@@ -469,6 +501,23 @@ class Connector extends BasicConnector {
                                 },
                                 sequenceKey: {
                                     type: ['string', 'null'],
+                                },
+                            },
+                        },
+                    },
+                    offsetLimit: {
+                        validation: {
+                            properties: {
+                                limit: {
+                                    type: 'number',
+                                    default: 10,
+                                    minValue: 1,
+                                    maxValue: env.GLS_MAX_FEED_LIMIT,
+                                },
+                                offset: {
+                                    type: 'number',
+                                    default: 0,
+                                    minValue: 0,
                                 },
                             },
                         },
