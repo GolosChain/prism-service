@@ -144,6 +144,7 @@ class Feed extends AbstractFeed {
 
     _applyPopularSortingByTags({ options, sequenceKey }) {
         options.skip = Number(sequenceKey) || 0;
+        options.sort = { 'meta.time': -1 };
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {
