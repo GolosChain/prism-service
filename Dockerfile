@@ -1,6 +1,6 @@
 FROM node:10 as builder
 WORKDIR /usr/src/app
-COPY ./package*.json ./.npmrc ./
+COPY ./package*.json ./
 RUN npm install --only=production
 
 FROM node:10
