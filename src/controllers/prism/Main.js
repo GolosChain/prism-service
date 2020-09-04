@@ -1,5 +1,5 @@
-const core = require('gls-core-service');
-const Logger = core.utils.Logger;
+const core = require('cyberway-core-service');
+const { Logger, metrics } = core.utils;
 const Post = require('./Post');
 const Comment = require('./Comment');
 const Profile = require('./Profile');
@@ -7,6 +7,9 @@ const Vote = require('./Vote');
 const Subscribe = require('./Subscribe');
 const HashTag = require('./HashTag');
 const Leader = require('./Leader');
+const CommunitySettings = require('./CommunitySettings');
+
+const ACTION_PROCESSING_WARNING_LIMIT = 1000;
 
 // TODO Change after MVP
 const communityRegistry = [
@@ -14,6 +17,7 @@ const communityRegistry = [
     'gls.social',
     'gls.vesting',
     'gls.ctrl',
+    'gls.charge',
     'cyber',
     'cyber.domain',
     'cyber.token',
@@ -21,17 +25,20 @@ const communityRegistry = [
 ];
 
 class Main {
-    constructor({ connector }) {
-        this._post = new Post({ connector });
-        this._comment = new Comment({ connector });
-        this._profile = new Profile({ connector });
-        this._vote = new Vote({ connector });
-        this._subscribe = new Subscribe({ connector });
-        this._hashTag = new HashTag({ connector });
-        this._leader = new Leader({ connector });
+    constructor({ connector, forkService }) {
+        this._post = new Post({ connector, forkService });
+        this._comment = new Comment({ connector, forkService });
+        this._profile = new Profile({ connector, forkService });
+        this._vote = new Vote({ connector, forkService });
+        this._subscribe = new Subscribe({ connector, forkService });
+        this._hashTag = new HashTag({ connector, forkService });
+        this._leader = new Leader({ connector, forkService });
+        this._communitySettings = new CommunitySettings({ connector, forkService });
     }
 
     async disperse({ transactions, blockNum, blockTime }) {
+        const end = metrics.startTimer('block_dispersing_time');
+
         for (const transaction of transactions) {
             let previous;
 
@@ -40,10 +47,22 @@ class Main {
             }
 
             for (const action of transaction.actions) {
+                const start = Date.now();
                 await this._disperseAction(action, previous, { blockNum, blockTime });
+                const delta = Date.now() - start;
+
+                if (delta > ACTION_PROCESSING_WARNING_LIMIT) {
+                    Logger.warn(
+                        `Slow transaction action processing (>${ACTION_PROCESSING_WARNING_LIMIT}ms),`,
+                        `blockNum: ${blockNum}, trxId: ${transaction.id},`,
+                        `action: ${action.code}->${action.action}`
+                    );
+                }
                 previous = action;
             }
         }
+
+        end();
     }
 
     async _disperseAction(action, previous = { args: {} }, { blockTime }) {
@@ -59,10 +78,13 @@ class Main {
         const pathName = [action.code, action.action].join('->');
         const communityId = this._extractCommunityId(action);
         const actionArgs = action.args;
-        const previousArgs = previous.args;
         const events = action.events;
 
         switch (pathName) {
+            case `${communityId}.charge->use`:
+                await this._profile.handleChargeState(events);
+                break;
+
             case `cyber->newaccount`:
                 await this._profile.handleCreate(actionArgs, { blockTime });
                 break;
@@ -71,8 +93,8 @@ class Main {
                 await this._profile.handleUsername(actionArgs);
                 break;
 
-            case 'cyber.token->transfer':
-                await this._post.handlePayout(actionArgs, { communityId });
+            case `${communityId}.publish->paymssgrwrd`:
+                await this._post.handlePayout(actionArgs, { events });
                 break;
 
             case `${communityId}.publish->createmssg`:
@@ -98,10 +120,6 @@ class Main {
 
             case `${communityId}.social->updatemeta`:
                 await this._profile.handleMeta(actionArgs);
-                break;
-
-            case `${communityId}.social->changereput`:
-                await this._vote.handleReputation(actionArgs);
                 break;
 
             case `${communityId}.publish->upvote`:
@@ -152,12 +170,71 @@ class Main {
                 await this._post.handleRepost(actionArgs, { communityId, blockTime });
                 break;
 
+            case `${communityId}.publish->erasereblog`:
+                await this._post.handleRemoveRepost(actionArgs, { communityId, blockTime });
+                break;
+
+            case `${communityId}.vesting->open`:
+                await this._profile.handleVestingOpening(actionArgs);
+                break;
+
             case 'cyber.msig->propose':
-                await this._leader.handleNewProposal(actionArgs);
+                await this._leader.handleNewProposal(actionArgs, { blockTime });
+                break;
+
+            case 'cyber.msig->approve':
+                await this._leader.handleProposalApprove(actionArgs);
+                break;
+
+            case 'cyber.msig->exec':
+                await this._leader.handleProposalExec(actionArgs, { blockTime });
+                break;
+
+            case 'cyber.msig->cancel':
+                await this._leader.handleProposalCancel(actionArgs, { blockTime });
+                break;
+
+            case `${communityId}.charge->setrestorer`:
+                try {
+                    await this._communitySettings.handleSetParams(
+                        communityId,
+                        'charge',
+                        'setrestorer',
+                        [[null, actionArgs.params]]
+                    );
+                } catch (err) {
+                    Logger.error("Community Settings 'charge::setrestorer' processing failed", err);
+                }
+                break;
+
+            case `${communityId}.publish->setrules`:
+                try {
+                    await this._communitySettings.handleSetParams(
+                        communityId,
+                        'publish',
+                        'setrules',
+                        [[null, actionArgs.params]]
+                    );
+                } catch (err) {
+                    Logger.error("Community Settings 'publish::setrules' processing failed", err);
+                }
                 break;
 
             default:
             // unknown action, do nothing
+        }
+
+        if (action.action === 'setparams') {
+            const [communityId, contractName] = action.code.split('.');
+
+            if (contractName) {
+                await this._communitySettings.handleSetParams(
+                    communityId,
+                    contractName,
+                    'setparams',
+                    actionArgs.params
+                );
+            }
         }
     }
 

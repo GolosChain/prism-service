@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
@@ -17,8 +17,8 @@ module.exports = MongoDB.makeModel(
             default: '',
         },
         rating: {
-            type: Number,
-            default: 0,
+            type: String,
+            default: '0',
         },
         votes: {
             type: [String],
@@ -28,9 +28,22 @@ module.exports = MongoDB.makeModel(
             type: Boolean,
             default: true,
         },
+        position: {
+            type: Number,
+            default: null,
+        },
     },
     {
         index: [
+            {
+                // search for find leader aggregation
+                fields: {
+                    userId: 1,
+                },
+                options: {
+                    unique: true,
+                },
+            },
             {
                 // Search for change
                 fields: {
@@ -44,9 +57,8 @@ module.exports = MongoDB.makeModel(
             {
                 // Top
                 fields: {
-                    active: 1,
                     communityId: 1,
-                    rating: -1,
+                    position: 1,
                 },
             },
             {
@@ -60,5 +72,8 @@ module.exports = MongoDB.makeModel(
                 },
             },
         ],
+        schema: {
+            collation: { locale: 'en_US', numericOrdering: true },
+        },
     }
 );

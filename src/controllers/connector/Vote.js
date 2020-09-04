@@ -3,9 +3,18 @@ const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 
 class Vote extends AbstractFeed {
-    async getPostVotes({ requestedUserId, permlink, type, app, limit, sequenceKey }) {
+    async getPostVotes({
+        requestedUserId,
+        permlink,
+        type,
+        app,
+        limit,
+        sequenceKey,
+        currentUserId,
+    }) {
         return await this._getVotes(PostModel, {
             requestedUserId,
+            currentUserId,
             permlink,
             type,
             app,
@@ -14,9 +23,18 @@ class Vote extends AbstractFeed {
         });
     }
 
-    async getCommentVotes({ requestedUserId, permlink, type, app, limit, sequenceKey }) {
+    async getCommentVotes({
+        requestedUserId,
+        currentUserId,
+        permlink,
+        type,
+        app,
+        limit,
+        sequenceKey,
+    }) {
         return await this._getVotes(CommentModel, {
             requestedUserId,
+            currentUserId,
             permlink,
             type,
             app,
@@ -25,21 +43,26 @@ class Vote extends AbstractFeed {
         });
     }
 
-    async _getVotes(Model, { requestedUserId, username, permlink, limit, type, sequenceKey, app }) {
+    async _getVotes(
+        Model,
+        { requestedUserId, currentUserId, username, permlink, limit, type, sequenceKey, app }
+    ) {
         if (!requestedUserId && !username) {
             throw { code: 400, message: 'Invalid user identification' };
         }
 
         if (!requestedUserId) {
-            requestedUserId = this._getUserIdByName(username, app);
+            requestedUserId = this._getUserIdByUsername(username, app);
         }
 
         const query = {
-            contentId: {
-                userId: requestedUserId,
-                permlink,
-            },
+            'contentId.userId': requestedUserId,
+            'contentId.permlink': permlink,
         };
+
+        if (Model.modelName !== 'Comment') {
+            query['repost.isRepost'] = false;
+        }
 
         const targetType = this._getVotesTargetType(type);
         const targetPath = `votes.${targetType}`;
@@ -68,7 +91,7 @@ class Vote extends AbstractFeed {
 
         const items = modelObject.votes[targetType];
 
-        await this._populateVoters(items, app);
+        await this._populateVoters(items, app, currentUserId);
 
         return this._makeArrayPaginationResult(items, skip, limit);
     }
@@ -83,10 +106,16 @@ class Vote extends AbstractFeed {
         }
     }
 
-    async _populateVoters(votes, app) {
+    async _populateVoters(votes, app, userId) {
         await Promise.all(
             votes.map(async (vote, i) => {
-                await this._populateUser(vote, app);
+                if (userId) {
+                    await this._populateUserWithSubscribers(vote, app);
+                    vote.isSubscribed = vote.subscribers.userIds.includes(userId);
+                    delete vote.subscribers;
+                } else {
+                    await this._populateUser(vote, app);
+                }
                 votes[i] = vote;
             })
         );

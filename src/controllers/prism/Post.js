@@ -1,5 +1,6 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const Content = core.utils.Content;
+const BigNum = core.types.BigNum;
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 
@@ -17,7 +18,7 @@ class Post extends AbstractContent {
 
         const contentId = this._extractContentId(content);
 
-        await PostModel.create({
+        const model = await PostModel.create({
             communityId,
             contentId,
             content: await this._extractContentObject(content),
@@ -26,11 +27,14 @@ class Post extends AbstractContent {
             },
             payout: {
                 meta: {
-                    tokenProp: Number(content.tokenprop),
+                    tokenProp: new BigNum(content.tokenprop),
                     benefactorPercents: this._extractBenefactorPercents(content),
+                    curatorsPercent: new BigNum(content.curators_prcnt),
                 },
             },
         });
+
+        await this.registerForkChanges({ type: 'create', Model: PostModel, documentId: model._id });
         await this.updateUserPostsCount(contentId.userId, 1);
     }
 
@@ -39,9 +43,11 @@ class Post extends AbstractContent {
             return;
         }
 
-        await PostModel.updateOne(
+        const contentId = this._extractContentId(content);
+        const previousModel = await PostModel.findOneAndUpdate(
             {
-                contentId: this._extractContentId(content),
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
             },
             {
                 $set: {
@@ -49,6 +55,19 @@ class Post extends AbstractContent {
                 },
             }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: PostModel,
+                documentId: previousModel._id,
+                data: {
+                    $set: {
+                        content: previousModel.content.toObject(),
+                    },
+                },
+            });
+        }
     }
 
     async handleDelete(content) {
@@ -57,13 +76,22 @@ class Post extends AbstractContent {
         }
 
         const contentId = this._extractContentId(content);
+        const previousModel = await PostModel.findOneAndRemove({
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
+        });
 
-        await PostModel.deleteOne({ contentId });
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: PostModel,
+            documentId: previousModel._id,
+            data: previousModel.toObject(),
+        });
         await this.updateUserPostsCount(contentId.userId, -1);
     }
 
     async handleRepost({ rebloger: userId, ...content }, { communityId, blockTime }) {
-        await PostModel.create({
+        const model = await PostModel.create({
             communityId,
             contentId: this._extractContentId(content),
             repost: {
@@ -72,10 +100,34 @@ class Post extends AbstractContent {
                 body: {
                     raw: this._extractBodyRaw(content),
                 },
+                time: blockTime,
             },
             meta: {
                 time: blockTime,
             },
+        });
+
+        await this.registerForkChanges({ type: 'create', Model: PostModel, documentId: model._id });
+    }
+
+    async handleRemoveRepost({ rebloger: userId, ...content }, { communityId }) {
+        const contentId = this._extractContentId(content);
+        const previousModel = await PostModel.findOneAndRemove({
+            communityId,
+            'repost.userId': userId,
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
+        });
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: PostModel,
+            documentId: previousModel._id,
+            data: previousModel.toObject(),
         });
     }
 }

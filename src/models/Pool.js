@@ -1,5 +1,6 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const MongoDB = core.services.MongoDB;
+const MongoBigNum = core.types.MongoBigNum;
 
 module.exports = MongoDB.makeModel(
     'Pool',
@@ -13,14 +14,14 @@ module.exports = MongoDB.makeModel(
                 type: String,
             },
             value: {
-                type: Number,
+                type: MongoBigNum,
             },
         },
         rShares: {
-            type: Number,
+            type: MongoBigNum,
         },
         rSharesFn: {
-            type: Number,
+            type: MongoBigNum,
         },
     },
     {

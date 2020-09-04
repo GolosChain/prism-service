@@ -1,5 +1,7 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const MongoDB = core.services.MongoDB;
+const MongoBigNum = core.types.MongoBigNum;
+const BigNum = core.types.BigNum;
 
 module.exports = MongoDB.makeModel(
     'Comment',
@@ -92,7 +94,7 @@ module.exports = MongoDB.makeModel(
             },
             rShares: {
                 type: Number,
-                default: 0
+                default: 0,
             },
             hot: {
                 type: Number,
@@ -111,8 +113,8 @@ module.exports = MongoDB.makeModel(
             author: {
                 token: {
                     value: {
-                        type: Number,
-                        default: 0,
+                        type: MongoBigNum,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -121,8 +123,8 @@ module.exports = MongoDB.makeModel(
                 },
                 vesting: {
                     value: {
-                        type: Number,
-                        default: 0,
+                        type: MongoBigNum,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -131,10 +133,20 @@ module.exports = MongoDB.makeModel(
                 },
             },
             curator: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
                 vesting: {
                     value: {
-                        type: Number,
-                        default: 0,
+                        type: MongoBigNum,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -143,10 +155,42 @@ module.exports = MongoDB.makeModel(
                 },
             },
             benefactor: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
                 vesting: {
                     value: {
-                        type: Number,
-                        default: 0,
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            unclaimed: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+                vesting: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -156,39 +200,34 @@ module.exports = MongoDB.makeModel(
             },
             meta: {
                 rewardWeight: {
-                    type: Number,
-                    default: 10000,
+                    type: MongoBigNum,
+                    default: new BigNum(10000),
                 },
                 sharesFn: {
-                    type: Number,
-                    default: 0,
+                    type: MongoBigNum,
+                    default: new BigNum(0),
                 },
                 sumCuratorSw: {
-                    type: Number,
-                    default: 0,
+                    type: MongoBigNum,
+                    default: new BigNum(0),
                 },
                 benefactorPercents: {
-                    type: [Number],
-                    default: [0],
+                    type: [MongoBigNum],
+                    default: [new BigNum(0)],
                 },
                 tokenProp: {
-                    type: Number,
-                    default: 0,
+                    type: MongoBigNum,
+                    default: new BigNum(0),
+                },
+                curatorsPercent: {
+                    type: MongoBigNum,
+                    default: new BigNum(0),
                 },
             },
         },
         votes: {
             upVotes: {
-                type: [
-                    {
-                        userId: {
-                            type: String,
-                        },
-                        weight: {
-                            type: Number,
-                        },
-                    },
-                ],
+                type: Array,
                 default: [],
             },
             upCount: {
@@ -196,16 +235,7 @@ module.exports = MongoDB.makeModel(
                 default: 0,
             },
             downVotes: {
-                type: [
-                    {
-                        userId: {
-                            type: String,
-                        },
-                        weight: {
-                            type: Number,
-                        },
-                    },
-                ],
+                type: Array,
                 default: [],
             },
             downCount: {
@@ -217,6 +247,10 @@ module.exports = MongoDB.makeModel(
             time: {
                 type: Date,
             },
+        },
+        nestedLevel: {
+            type: Number,
+            default: 1,
         },
         ordering: {
             byTime: {
@@ -233,6 +267,29 @@ module.exports = MongoDB.makeModel(
                     'contentId.permlink': 1,
                 },
             },
+            // Replies
+            {
+                fields: {
+                    'parent.post.contentId.userId': 1,
+                    'parent.comment.contentId.userId': 1,
+                    'meta.time': 1,
+                },
+                options: {
+                    sparse: true,
+                    background: true,
+                },
+            },
+            {
+                fields: {
+                    'parent.comment.contentId.userId': 1,
+                    'parent.post.contentId.userId': 1,
+                    'meta.time': 1,
+                },
+                options: {
+                    sparse: true,
+                    background: true,
+                },
+            },
             // Post comments, sorted by time
             {
                 fields: {
@@ -241,7 +298,6 @@ module.exports = MongoDB.makeModel(
                     'ordering.byTime': 1,
                 },
                 options: {
-                    unique: true,
                     sparse: true,
                 },
             },

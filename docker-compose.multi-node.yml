@@ -1,0 +1,102 @@
+version: '2.1'
+services:
+  prism-mongo:
+    container_name: prism-mongo
+    image: mongo
+    restart: always
+    healthcheck:
+      test: mongo --eval 'db.getCollectionNames()'
+      interval: 10s
+      timeout: 2s
+      retries: 10
+    volumes:
+      - prism-mongodb-vol:/data/db
+    ports:
+      - 127.0.0.1:27017:27017
+    networks:
+      - services-tier
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.7.1
+    networks:
+      - services-tier
+    ports:
+      - 127.0.0.1:9200:9200
+    healthcheck:
+      test: curl http://127.0.0.1:9200/_cat/health
+    environment:
+      'discovery.type': 'single-node'
+      'bootstrap.memory_lock': 'true'
+      'ES_JAVA_OPTS': '-Xms512m -Xmx512m'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - prism-elastic-vol:/usr/share/elasticsearch/data
+
+  prism-node:
+    container_name: prism-node
+    restart: always
+    depends_on:
+      prism-mongo:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - services-tier
+    ports:
+      - $GLS_CONNECTOR_PRISM_HOST:$GLS_CONNECTOR_PRISM_PORT:$GLS_CONNECTOR_PRISM_PORT
+      - $GLS_METRICS_PRISM_HOST:$GLS_METRICS_PRISM_PORT:$GLS_METRICS_PRISM_PORT
+    environment:
+      - NODE_OPTIONS=$GLS_PRISM_NODE_OPTIONS
+      - GLS_ENABLE_BLOCK_HANDLE=true
+      - GLS_ENABLE_PUBLIC_API=false
+      - GLS_CONNECTOR_PORT=$GLS_CONNECTOR_PRISM_PORT
+    env_file:
+      - .env
+
+  prism-api-node:
+    container_name: prism-api-node
+    restart: always
+    depends_on:
+      prism-mongo:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - services-tier
+    ports:
+      - $GLS_CONNECTOR_HOST:$GLS_CONNECTOR_PORT:$GLS_CONNECTOR_PORT
+      - $GLS_METRICS_HOST:$GLS_METRICS_PORT:$GLS_METRICS_PORT
+    environment:
+      - GLS_ENABLE_BLOCK_HANDLE=false
+      - GLS_ENABLE_PUBLIC_API=true
+    env_file:
+      - .env
+
+  mongodb-exporter:
+    container_name: mongodb-exporter
+    image: cyberway/mongodb-exporter:v0.6.2
+    restart: always
+    depends_on:
+      prism-mongo:
+        condition: service_healthy
+    ports:
+      - 9216:9216
+    environment:
+      - MONGODB_URI=mongodb://prism-mongo:27017
+    networks:
+      - services-tier
+
+volumes:
+  prism-mongodb-vol:
+  prism-elastic-vol:
+
+networks:
+  services-tier:

@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const Logger = core.utils.Logger;
 const AbstractFeed = require('./AbstractFeed');
 const CommentModel = require('../../models/Comment');
@@ -40,7 +40,10 @@ class Comment extends AbstractFeed {
 
         await this._populate(modelObjects, currentUserId, type, app);
         this._removeEmptyParentsForAll(modelObjects);
-        await this._applyPayouts(modelObjects);
+
+        const communityId = modelObjects[0].communityId || (modelObjects[0].community || {}).id;
+
+        await this._applyPayouts(modelObjects, communityId);
 
         return this._makeFeedResult(modelObjects, { sortBy, limit });
     }
@@ -70,13 +73,13 @@ class Comment extends AbstractFeed {
         this._applySortingAndSequence(fullQuery, { sortBy, sequenceKey, limit, contentType });
         this._applyFeedTypeConditions(fullQuery, { type, requestedUserId, permlink });
 
-        return { type, fullQuery, currentUserId, sortBy, limit };
+        return { type, fullQuery, currentUserId, sortBy, limit, app };
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {
         super._applySortByTime({ query, options, sequenceKey, direction });
 
-        options.sort = { 'ordering.byTime': direction };
+        options.sort = { 'meta.time': direction };
     }
 
     async _populate(modelObjects, currentUserId, type, app) {
@@ -110,7 +113,7 @@ class Comment extends AbstractFeed {
         if (modelObject.parent.post) {
             id = modelObject.parent.post.contentId;
             post = await PostModel.findOne(
-                { contentId: id },
+                { 'contentId.userId': id.userId, 'contentId.permlink': id.permlink },
                 { 'content.title': true, communityId: true }
             );
         }
@@ -139,7 +142,7 @@ class Comment extends AbstractFeed {
     async _populateUserParentCommentMeta(modelObject) {
         const id = modelObject.parent.comment.contentId;
         const comment = await CommentModel.findOne(
-            { contentId: id },
+            { 'contentId.userId': id.userId, 'contentId.permlink': id.permlink },
             { 'content.body.preview': true, 'parent.contentId': true }
         );
 
@@ -177,6 +180,9 @@ class Comment extends AbstractFeed {
                 break;
 
             case 'replies':
+                query['contentId.userId'] = {
+                    $ne: requestedUserId,
+                };
                 query.$or = [
                     { 'parent.post.contentId.userId': requestedUserId },
                     { 'parent.comment.contentId.userId': requestedUserId },

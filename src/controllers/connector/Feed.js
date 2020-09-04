@@ -21,7 +21,10 @@ class Feed extends AbstractFeed {
             contentType,
             app,
             type,
+            tags,
+            sequenceKey,
         } = await this._prepareQuery(params);
+
         let modelObjects = await PostModel.find(...Object.values(fullQuery));
 
         if (!modelObjects || modelObjects.length === 0) {
@@ -31,9 +34,12 @@ class Feed extends AbstractFeed {
         modelObjects = this._finalizeSorting(modelObjects, sortBy, fullQuery);
 
         await this._populate({ modelObjects, currentUserId, contentType, app, type, fullQuery });
-        await this._applyPayouts(modelObjects);
 
-        return this._makeFeedResult(modelObjects, { sortBy, limit }, meta);
+        const communityId = modelObjects[0].communityId || modelObjects[0].community.id;
+
+        await this._applyPayouts(modelObjects, communityId);
+
+        return this._makeFeedResult(modelObjects, { sortBy, limit, tags, sequenceKey }, meta);
     }
 
     async _prepareQuery(params) {
@@ -51,17 +57,22 @@ class Feed extends AbstractFeed {
             app,
         } = this._normalizeParams(params);
 
+        if (sortBy === 'popular' && type !== 'community') {
+            throw { code: 452, message: 'Sort by popular implemented only for community feed.' };
+        }
+
         const query = {};
         const projection = {
             'content.body.full': false,
         };
-        const options = { lean: true };
-        const fullQuery = { query, projection, options };
-        const meta = {};
 
         if (contentType !== 'mobile') {
             projection['content.body.mobile'] = false;
         }
+
+        const options = { lean: true };
+        const fullQuery = { query, projection, options };
+        const meta = {};
 
         await this._applyFeedTypeConditions(fullQuery, {
             type,
@@ -71,16 +82,27 @@ class Feed extends AbstractFeed {
         });
         this._applySortingAndSequence(
             fullQuery,
-            { type, sortBy, timeframe, sequenceKey, limit, contentType },
+            { type, sortBy, timeframe, sequenceKey, limit, contentType, tags },
             meta
         );
 
-        return { fullQuery, currentUserId, sortBy, meta, limit, contentType, app, type };
+        return {
+            fullQuery,
+            currentUserId,
+            sortBy,
+            meta,
+            limit,
+            contentType,
+            app,
+            type,
+            tags,
+            sequenceKey,
+        };
     }
 
     _applySortingAndSequence(
         { query, projection, options },
-        { type, sortBy, timeframe, sequenceKey, limit, contentType },
+        { type, sortBy, timeframe, sequenceKey, limit, contentType, tags },
         meta
     ) {
         super._applySortingAndSequence(
@@ -90,19 +112,39 @@ class Feed extends AbstractFeed {
 
         switch (sortBy) {
             case 'popular':
-                const { ids, newSequenceKey } = this._postFeedCache.getIdsWithSequenceKey({
-                    communityId: query.communityId,
-                    sortBy,
-                    timeframe,
-                    sequenceKey,
-                    limit,
-                });
-
-                delete query.communityId;
-                meta.newSequenceKey = newSequenceKey;
-                query._id = { $in: ids };
+                if (Array.isArray(tags) && tags.length) {
+                    this._applyPopularSortingByTags({ options, sequenceKey });
+                } else {
+                    this._applyCachedPopularSorting({
+                        query,
+                        sortBy,
+                        timeframe,
+                        sequenceKey,
+                        limit,
+                        meta,
+                    });
+                }
                 break;
         }
+    }
+
+    _applyCachedPopularSorting({ query, sortBy, timeframe, sequenceKey, limit, meta }) {
+        const { ids, newSequenceKey } = this._postFeedCache.getIdsWithSequenceKey({
+            communityId: query.communityId,
+            sortBy,
+            timeframe,
+            sequenceKey,
+            limit,
+        });
+
+        delete query.communityId;
+        meta.newSequenceKey = newSequenceKey;
+        query._id = { $in: ids };
+    }
+
+    _applyPopularSortingByTags({ options, sequenceKey }) {
+        options.skip = Number(sequenceKey) || 0;
+        options.sort = { 'meta.time': -1 };
     }
 
     _applySortByTime({ query, options, sequenceKey, direction }) {
@@ -112,6 +154,11 @@ class Feed extends AbstractFeed {
     }
 
     async _populate({ modelObjects, currentUserId, contentType, app, type, fullQuery }) {
+        if (type === 'byUser' || type === 'subscriptions') {
+            await this._populateReposts(modelObjects, fullQuery.projection);
+            await this._populateRepostsAuthors(modelObjects, app);
+        }
+
         await this._tryApplyVotesForModels({ Model: PostModel, modelObjects, currentUserId });
         await this._populateAuthors(modelObjects, app);
         await this._populateCommunities(modelObjects);
@@ -119,10 +166,6 @@ class Feed extends AbstractFeed {
 
         if (contentType === 'mobile') {
             this._prepareMobile(modelObjects);
-        }
-
-        if (type === 'byUser' || type === 'subscriptions') {
-            await this._populateReposts(modelObjects, fullQuery.projection);
         }
     }
 
@@ -139,12 +182,6 @@ class Feed extends AbstractFeed {
             ...params,
             ...super._normalizeParams({ sortBy, ...params }),
         };
-
-        sortBy = params.sortBy;
-
-        if (sortBy === 'popular' && (type !== 'community' || tags)) {
-            throw { code: 400, message: `Invalid sorting for - ${type}` };
-        }
 
         if (tags && !Array.isArray(tags)) {
             throw { code: 400, message: 'Invalid tags param' };
@@ -164,16 +201,16 @@ class Feed extends AbstractFeed {
 
             case 'byUser':
                 query.$or = [
-                    { 'contentId.userId': requestedUserId },
+                    { 'contentId.userId': requestedUserId, 'repost.isRepost': false },
                     { 'repost.userId': requestedUserId },
                 ];
                 break;
 
             case 'community':
-                query['repost.isRepost'] = { $ne: true };
+                query['repost.isRepost'] = false;
                 projection.repost = false;
 
-                if (tags) {
+                if (Array.isArray(tags) && tags.length) {
                     query['content.tags'] = { $in: tags };
                 }
 
@@ -192,7 +229,10 @@ class Feed extends AbstractFeed {
             throw { code: 400, message: 'Bad user id' };
         }
 
-        query['communityId'] = { $in: model.subscriptions.communityIds };
+        query.$or = query.$or || [];
+
+        query.$or.push({ communityId: { $in: model.subscriptions.communityIds } });
+        query.$or.push({ 'contentId.userId': { $in: model.subscriptions.userIds } });
     }
 
     _prepareMobile(modelObjects) {
@@ -271,12 +311,20 @@ class Feed extends AbstractFeed {
         return false;
     }
 
-    _getSequenceKey(models, { sortBy, limit }, meta) {
+    _getSequenceKey(models, { sortBy, limit, tags, sequenceKey }, meta) {
         const origin = super._getSequenceKey(models, sortBy);
 
         switch (sortBy) {
             case 'popular':
-                return this._getCachedSequenceKey(models, limit, meta);
+                if (!Array.isArray(tags) || !tags.length) {
+                    return this._getCachedSequenceKey(models, limit, meta);
+                }
+
+                sequenceKey = Number(sequenceKey) || 0;
+
+                const arrayResult = this._makeArrayPaginationResult(models, sequenceKey, limit);
+
+                return arrayResult.sequenceKey;
 
             default:
                 return origin;
@@ -286,7 +334,12 @@ class Feed extends AbstractFeed {
     _finalizeSorting(modelObjects, sortBy, fullQuery) {
         switch (sortBy) {
             case 'popular':
-                return this._finalizeCachedSorting(modelObjects, fullQuery.query);
+                if (!fullQuery.query['content.tags']) {
+                    return this._finalizeCachedSorting(modelObjects, fullQuery.query);
+                }
+
+                return modelObjects;
+
             default:
                 return modelObjects;
         }

@@ -1,5 +1,5 @@
 const uuid = require('uuid/v4');
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const BasicService = core.services.Basic;
 const Logger = core.utils.Logger;
 const env = require('../data/env');
@@ -15,8 +15,7 @@ class AbstractFeedCache extends BasicService {
 
         this._controller = controller;
 
-        await this._actualize(true);
-        this.startLoop(env.GLS_FEED_CACHE_INTERVAL, env.GLS_FEED_CACHE_INTERVAL);
+        this.startLoop(0, env.GLS_FEED_CACHE_INTERVAL);
     }
 
     _getController() {
@@ -81,11 +80,18 @@ class AbstractFeedCache extends BasicService {
             return;
         }
 
+        const start = Date.now();
+        Logger.log('Start actualization feed cache:', this.constructor.name);
+
         this._inActualization = true;
 
         this._actualize().then(
             () => {
                 this._inActualization = false;
+                Logger.log(
+                    `Stop actualization feed cache: ${(Date.now() - start) / 1000}s,`,
+                    this.constructor.name
+                );
             },
             error => {
                 Logger.error(`Critical feed cache error - ${error.stack}`);
@@ -94,8 +100,10 @@ class AbstractFeedCache extends BasicService {
         );
     }
 
-    async _actualize(sync = false) {
+    async _actualize(sync = true) {
         for await (const variant of this._makeVariantsIterator()) {
+            Logger.log('Actualize feed for:', variant);
+
             if (sync) {
                 await this._tryActualizeBy(...variant);
             } else {
@@ -110,7 +118,7 @@ class AbstractFeedCache extends BasicService {
         try {
             await this._actualizeBy(...variant);
         } catch (error) {
-            Logger.error(`Cant actualize feed cache - ${error.stack}`);
+            Logger.error('Cant actualize feed cache:', error);
             process.exit(1);
         }
     }

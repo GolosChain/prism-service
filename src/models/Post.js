@@ -1,5 +1,7 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const MongoDB = core.services.MongoDB;
+const MongoBigNum = core.types.MongoBigNum;
+const BigNum = core.types.BigNum;
 
 module.exports = MongoDB.makeModel(
     'Post',
@@ -16,6 +18,9 @@ module.exports = MongoDB.makeModel(
                 raw: {
                     type: String,
                 },
+            },
+            time: {
+                type: Date,
             },
         },
         contentId: {
@@ -85,16 +90,7 @@ module.exports = MongoDB.makeModel(
         },
         votes: {
             upVotes: {
-                type: [
-                    {
-                        userId: {
-                            type: String,
-                        },
-                        weight: {
-                            type: Number,
-                        },
-                    },
-                ],
+                type: Array,
                 default: [],
             },
             upCount: {
@@ -102,16 +98,7 @@ module.exports = MongoDB.makeModel(
                 default: 0,
             },
             downVotes: {
-                type: [
-                    {
-                        userId: {
-                            type: String,
-                        },
-                        weight: {
-                            type: Number,
-                        },
-                    },
-                ],
+                type: Array,
                 default: [],
             },
             downCount: {
@@ -145,8 +132,8 @@ module.exports = MongoDB.makeModel(
             author: {
                 token: {
                     value: {
-                        type: Number,
-                        default: 0,
+                        type: MongoBigNum,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -155,8 +142,8 @@ module.exports = MongoDB.makeModel(
                 },
                 vesting: {
                     value: {
-                        type: Number,
-                        default: 0,
+                        type: MongoBigNum,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -165,10 +152,20 @@ module.exports = MongoDB.makeModel(
                 },
             },
             curator: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
                 vesting: {
                     value: {
-                        type: Number,
-                        default: 0,
+                        type: MongoBigNum,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -177,10 +174,42 @@ module.exports = MongoDB.makeModel(
                 },
             },
             benefactor: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
                 vesting: {
                     value: {
-                        type: Number,
-                        default: 0,
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+            },
+            unclaimed: {
+                token: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
+                    },
+                    name: {
+                        type: String,
+                        default: null,
+                    },
+                },
+                vesting: {
+                    value: {
+                        type: MongoBigNum,
+                        default: new BigNum(0),
                     },
                     name: {
                         type: String,
@@ -190,31 +219,35 @@ module.exports = MongoDB.makeModel(
             },
             meta: {
                 rewardWeight: {
-                    type: Number,
-                    default: 10000,
+                    type: MongoBigNum,
+                    default: new BigNum(10000),
                 },
                 sharesFn: {
-                    type: Number,
-                    default: 0,
+                    type: MongoBigNum,
+                    default: new BigNum(0),
                 },
                 sumCuratorSw: {
-                    type: Number,
-                    default: 0,
+                    type: MongoBigNum,
+                    default: new BigNum(0),
                 },
                 benefactorPercents: {
-                    type: [Number],
-                    default: [0],
+                    type: [MongoBigNum],
+                    default: [new BigNum(0)],
                 },
                 tokenProp: {
-                    type: Number,
-                    default: 0,
+                    type: MongoBigNum,
+                    default: new BigNum(0),
+                },
+                curatorsPercent: {
+                    type: MongoBigNum,
+                    default: new BigNum(0),
                 },
             },
         },
         meta: {
             time: {
                 type: Date,
-                default: new Date(),
+                required: true,
             },
         },
     },
@@ -223,11 +256,18 @@ module.exports = MongoDB.makeModel(
             // Default
             {
                 fields: {
-                    'repost.isRepost': 1,
                     'contentId.userId': 1,
                     'contentId.permlink': 1,
                 },
             },
+
+            // Repost search
+            {
+                fields: {
+                    'repost.isRepost': -1,
+                },
+            },
+
             // Community/Subscriptions feed
             // ...with sort by time
             {
@@ -236,6 +276,7 @@ module.exports = MongoDB.makeModel(
                     'meta.time': -1,
                 },
             },
+
             // By user feed
             // ...with sort by time
             {
@@ -250,25 +291,90 @@ module.exports = MongoDB.makeModel(
                     'meta.time': -1,
                 },
             },
-            // Shares feed
+
+            // Feed search
             {
                 fields: {
                     'repost.isRepost': 1,
-                    'stats.rShares': 1,
+                    _id: 1,
                 },
             },
-            // Actual feed
             {
                 fields: {
                     'repost.isRepost': 1,
-                    'stats.hot': 1,
+                    'content.tags': 1,
+                    communityId: 1,
                 },
             },
-            // Popular feed
+
+            // Shares feed cache
             {
                 fields: {
                     'repost.isRepost': 1,
-                    'stats.trending': 1,
+                    'stats.rShares': -1,
+                },
+            },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'stats.rShares': -1,
+                },
+            },
+
+            // Shares feed cache (with meta.time)
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'stats.rShares': -1,
+                    'meta.time': 1,
+                },
+            },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'stats.rShares': -1,
+                    'meta.time': 1,
+                },
+            },
+
+            // Actual feed cache
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'stats.hot': -1,
+                },
+            },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'stats.hot': -1,
+                },
+            },
+
+            // Popular feed cache
+            {
+                fields: {
+                    'repost.isRepost': 1,
+                    'stats.trending': -1,
+                },
+            },
+            {
+                fields: {
+                    communityId: 1,
+                    'repost.isRepost': 1,
+                    'stats.trending': -1,
+                },
+            },
+
+            // Post with votes
+            {
+                fields: {
+                    'contentId.userId': 1,
+                    'contentId.permlink': 1,
+                    'repost.isRepost': 1,
                 },
             },
         ],

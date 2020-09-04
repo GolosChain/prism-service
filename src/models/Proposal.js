@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
@@ -6,7 +6,6 @@ module.exports = MongoDB.makeModel(
     {
         communityId: {
             type: String,
-            required: true,
         },
         userId: {
             type: String,
@@ -16,28 +15,78 @@ module.exports = MongoDB.makeModel(
             type: String,
             required: true,
         },
-        code: {
-            type: String,
-            required: true,
-        },
-        action: {
-            type: String,
+        blockTime: {
+            type: Date,
             required: true,
         },
         expiration: {
             type: Date,
             required: true,
         },
-        changes: {
+        executer: {
+            type: String,
+        },
+        isExecuted: {
+            type: Boolean,
+            required: true,
+        },
+        executedBlockTime: {
+            type: Date,
+        },
+        type: {
+            type: String,
+            enum: ['NORMAL', 'CUSTOM'],
+            required: true,
+        },
+        // Если type == 'SIMPLE' то присутствует объект action,
+        action: {
+            type: {
+                code: {
+                    type: String,
+                    required: true,
+                },
+                action: {
+                    type: String,
+                    required: true,
+                },
+                // В объекте может быть задано либо data либо массив changes для setparams.
+                data: {
+                    type: Object,
+                },
+                changes: {
+                    type: [
+                        {
+                            structureName: {
+                                type: String,
+                                required: true,
+                            },
+                            values: {
+                                type: Object,
+                                required: true,
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+        // Если type == 'CUSTOM' то присутсвует объект trx
+        trx: {
+            type: Object,
+        },
+        approves: {
             type: [
                 {
-                    structureName: {
+                    userId: {
                         type: String,
                         required: true,
                     },
-                    values: {
-                        type: Object,
+                    permission: {
+                        type: String,
                         required: true,
+                    },
+                    isSigned: {
+                        type: Boolean,
+                        default: false,
                     },
                 },
             ],
@@ -48,7 +97,18 @@ module.exports = MongoDB.makeModel(
         index: [
             {
                 fields: {
+                    isExecuted: -1,
+                    blockTime: -1,
                     communityId: 1,
+                },
+            },
+            {
+                fields: {
+                    userId: 1,
+                    proposalId: 1,
+                },
+                options: {
+                    unique: true,
                 },
             },
         ],

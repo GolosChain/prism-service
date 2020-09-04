@@ -3,16 +3,28 @@ const PostModel = require('../../models/Post');
 const Abstract = require('./Abstract');
 
 class Popular extends Abstract {
-    async getFor(communityId, timeframe) {
-        const { query, projection, options } = this._getDefaultRequestOptions(communityId);
+    getFor(communityId, timeframe) {
+        return new Promise((resolve, reject) => {
+            const modelObjects = [];
 
-        query['repost.isRepost'] = { $ne: true };
+            const { query, projection, options } = this._getDefaultRequestOptions(communityId);
 
-        this._applyTimeCond(query, options, timeframe);
+            query['repost.isRepost'] = false;
 
-        const modelObjects = await PostModel.find(query, projection, options);
+            this._applyTimeCond(query, options, timeframe);
 
-        return this._makeResult(modelObjects);
+            PostModel.find(query, projection, options)
+                .stream()
+                .on('data', document => {
+                    modelObjects.push(document);
+                })
+                .on('end', () => {
+                    resolve(this._makeResult(modelObjects));
+                })
+                .on('error', error => {
+                    reject(error);
+                });
+        });
     }
 
     _applyTimeCond(query, options, timeframe) {
@@ -60,12 +72,12 @@ class Popular extends Abstract {
 
     _applySortByRShares(options) {
         options.sort = options.sort || {};
-        options.sort['payout.rShares'] = -1;
+        options.sort['stats.rShares'] = -1;
     }
 
     _applySortByWilson(options, type) {
         options.sort = options.sort || {};
-        options.sort[`stats.wilson.${type}`] = -1;
+        options.sort[`stats.${type}`] = -1;
     }
 }
 

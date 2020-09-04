@@ -1,33 +1,45 @@
+const escape = require('escape-string-regexp');
+
 const AbstractFeed = require('./AbstractFeed');
 const Model = require('../../models/Profile');
 
 class Profile extends AbstractFeed {
-    async getProfile({ currentUserId, requestedUserId, type, username, app }) {
-        if (!requestedUserId && !username) {
+    async getProfile({ currentUserId, requestedUserId, username, user, app }) {
+        if (!requestedUserId && !username && !user) {
             throw { code: 400, message: 'Invalid user identification' };
         }
 
-        let query;
+        let queries;
 
-        if (requestedUserId) {
-            query = { userId: requestedUserId };
+        if (user) {
+            queries = [{ [`usernames.${app}`]: user }, { userId: user }];
+        } else if (requestedUserId) {
+            queries = [{ userId: requestedUserId }];
         } else {
-            query = { [`usernames.${app}`]: username };
+            queries = [{ [`usernames.${app}`]: username }];
         }
 
-        const modelObject = await Model.findOne(
-            query,
-            {
-                _id: false,
-                __v: false,
-                updatedAt: false,
-                'subscriptions.userIds': false,
-                'subscriptions.communityIds': false,
-                'subscribers.userIds': false,
-                'subscribers.communityIds': false,
-            },
-            { lean: true }
-        );
+        let modelObject;
+
+        for (const query of queries) {
+            modelObject = await Model.findOne(
+                query,
+                {
+                    _id: false,
+                    __v: false,
+                    updatedAt: false,
+                    'subscriptions.userIds': false,
+                    'subscriptions.communityIds': false,
+                    'subscribers.userIds': false,
+                    'subscribers.communityIds': false,
+                },
+                { lean: true }
+            );
+
+            if (modelObject) {
+                break;
+            }
+        }
 
         this._checkExists(modelObject);
 
@@ -41,16 +53,46 @@ class Profile extends AbstractFeed {
         };
         modelObject.stats = modelObject.stats || { reputation: 0, postsCount: 0, commentsCount: 0 };
         modelObject.registration = modelObject.registration || { time: new Date(0) };
-        modelObject.personal = (modelObject.personal || {})[type] || {};
+        modelObject.personal = (modelObject.personal || {})[app] || {};
         modelObject.leaderIn = modelObject.leaderIn || [];
         modelObject.usernames = modelObject.usernames || {};
-        modelObject.username =
-            modelObject.usernames[app] || modelObject.usernames['gls'] || requestedUserId;
+        modelObject.username = modelObject.usernames[app] || null;
         delete modelObject.usernames;
+
+        modelObject.chargersRaw = modelObject.chargersRaw = {};
+        modelObject.chargers = this._calculateChargers(modelObject.chargersRaw);
+        delete modelObject.chargersRaw;
 
         await this._detectSubscription(modelObject, currentUserId, requestedUserId);
 
+        if (app !== 'gls') {
+            delete modelObject.isGolosVestingOpened;
+        }
+
         return modelObject;
+    }
+
+    async getChargers({ userId }) {
+        const profile = await Model.findOne(
+            { userId },
+            { chargersRaw: true, _id: false },
+            { lean: true }
+        );
+
+        this._checkExists(profile);
+
+        return this._calculateChargers(profile.chargersRaw || {});
+    }
+
+    _calculateChargers(chargers) {
+        const chargerValues = {};
+
+        for (const charger of Object.keys(chargers)) {
+            // todo: wait for core team and add formula
+            chargerValues[charger] = chargers[charger].value;
+        }
+
+        return chargerValues;
     }
 
     async _detectSubscription(modelObject, currentUserId, requestedUserId) {
@@ -66,10 +108,44 @@ class Profile extends AbstractFeed {
         modelObject.isSubscribed = Boolean(count);
     }
 
+    async getUsernames({ userIds, app }) {
+        if (!userIds.length) {
+            throw {
+                code: 400,
+                message: 'Empty params',
+            };
+        }
+
+        const users = await Model.find(
+            {
+                userId: {
+                    $in: userIds,
+                },
+            },
+            {
+                userId: true,
+                [`usernames.${app}`]: true,
+            },
+            {
+                lean: true,
+            }
+        );
+
+        const usernames = {};
+
+        for (const user of users) {
+            usernames[user.userId] = user.usernames[app];
+        }
+
+        return {
+            usernames,
+        };
+    }
+
     async resolveProfile({ username, app }) {
         const modelObject = await Model.findOne(
             { [`usernames.${app}`]: username },
-            { userId: true, usernames: true, personal: true },
+            { userId: true, usernames: true, personal: true, chargers: true },
             { lean: true }
         );
 
@@ -82,10 +158,7 @@ class Profile extends AbstractFeed {
         modelObject.personal = modelObject.personal || {};
         modelObject.personal.gls = modelObject.personal.gls || {};
         modelObject.personal.cyber = modelObject.personal.cyber || {};
-        modelObject.usernames = modelObject.usernames || {};
-
-        result.username =
-            modelObject.usernames[app] || modelObject.usernames['gls'] || result.userId;
+        result.username = (modelObject.usernames || {})[app] || null;
         delete modelObject.usernames;
 
         switch (app) {
@@ -210,8 +283,7 @@ class Profile extends AbstractFeed {
             };
         }
 
-        const names = model.usernames;
-        const username = names[app] || names['gls'] || userId;
+        const username = model.usernames[app] || null;
         const personal = model.personal[app] || model.personal[app];
         let avatarUrl = null;
 
@@ -229,25 +301,27 @@ class Profile extends AbstractFeed {
     async _populateSelfSubscribed(items, currentUserId, markAllAsSubscribed) {
         for (const item of items) {
             if (!currentUserId) {
-                item.hasSubscription = false;
+                item.isSubscribed = false;
                 continue;
             }
 
             if (markAllAsSubscribed) {
-                item.hasSubscription = true;
+                item.isSubscribed = true;
                 continue;
             }
 
             const count = await Model.countDocuments({
                 userId: currentUserId,
-                subscriptions: item.userId,
+                'subscriptions.userIds': item.userId,
             });
 
-            item.hasSubscription = Boolean(count);
+            item.isSubscribed = Boolean(count);
         }
     }
 
     async suggestNames({ text, app }) {
+        text = text.trim();
+
         if (text.length < 2 || text.includes('@')) {
             return [];
         }
@@ -255,7 +329,7 @@ class Profile extends AbstractFeed {
         const results = await Model.find(
             {
                 [`usernames.${app}`]: {
-                    $regex: `^${text}`,
+                    $regex: `^${escape(text.toLowerCase())}`,
                 },
             },
             {

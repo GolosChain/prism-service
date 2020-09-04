@@ -1,52 +1,74 @@
 const urlValidator = require('valid-url');
 const uuid = require('uuid');
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const Logger = core.utils.Logger;
+const BigNum = core.types.BigNum;
 const Abstract = require('./Abstract');
 const env = require('../../data/env');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
+const Payouts = require('../../utils/Payouts');
 
 class AbstractContent extends Abstract {
-    async handlePayout({ from, to, quantity, memo }) {
-        if (!this._isPayoutContract(from)) {
+    async handlePayout(content, { events }) {
+        const model = await this._getModel(content);
+
+        if (!model) {
             return;
         }
 
-        const payoutType = this._getPayoutType(to);
-        if (!payoutType) {
+        const event = events.find(event => event.event === 'postreward');
+
+        if (!event) {
             return;
         }
 
-        const { userId, permlink, contentType, rewardType } = this._parsePayoutMemo(
-            memo,
-            payoutType
-        );
+        const rewardTypes = [
+            'author_reward',
+            'curator_reward',
+            'benefactor_reward',
+            'unclaimed_reward',
+        ];
 
-        const Model = this._getPayoutModelClass(contentType);
-        if (!Model) {
-            return;
+        const payouts = {};
+
+        for (const rewardType of rewardTypes) {
+            const rewardTypeKey = Payouts.getRewardTypeKey(rewardType);
+
+            if (!rewardTypeKey) {
+                continue;
+            }
+
+            const { tokenName, tokenValue } = Payouts.extractTokenInfo(event.args[rewardType]);
+
+            if (!tokenName) {
+                continue;
+            }
+
+            payouts[`payout.${rewardTypeKey}.token`] = {
+                name: tokenName,
+                value: tokenValue,
+            };
         }
 
-        const rewardTypeKey = this._getRewardTypeKey(rewardType);
-        if (!rewardTypeKey) {
-            return;
-        }
-
-        const { tokenName, tokenValue } = this._extractTokenInfo(quantity);
-        if (!tokenName) {
-            return;
-        }
-
-        await this._setPayout(
-            { userId, permlink },
-            { rewardTypeKey, payoutType, tokenName, tokenValue }
-        );
+        await this._setPayouts(model, payouts);
     }
 
     async updateUserPostsCount(userId, increment) {
-        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.postsCount': increment } });
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            { userId },
+            { $inc: { 'stats.postsCount': increment } }
+        );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: ProfileModel,
+                documentId: previousModel._id,
+                data: { $inc: { 'stats.postsCount': -increment } },
+            });
+        }
     }
 
     extractContentObjectFromGenesis(genesisContent) {
@@ -72,7 +94,7 @@ class AbstractContent extends Abstract {
     }
 
     _extractBodyRaw(content) {
-        if (content.bodymssg) {
+        if (typeof content.bodymssg === 'string') {
             return content.bodymssg;
         } else {
             return content.body;
@@ -209,6 +231,28 @@ class AbstractContent extends Abstract {
         item.result = embedData;
     }
 
+    async _getModel(content, projection = {}) {
+        const contentId = this._extractContentId(content);
+        const query = {
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
+        };
+
+        const post = await PostModel.findOne(query, projection);
+
+        if (post) {
+            return post;
+        }
+
+        const comment = await CommentModel.findOne(query, projection);
+
+        if (comment) {
+            return comment;
+        }
+
+        return null;
+    }
+
     _extractContentId(content) {
         return this._extractContentIdFromId(content.message_id);
     }
@@ -227,8 +271,10 @@ class AbstractContent extends Abstract {
             return !id.author;
         }
 
+        const contentId = this._extractContentId(content);
         const postCount = await PostModel.countDocuments({
-            contentId: this._extractContentId(content),
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
         });
 
         return Boolean(postCount);
@@ -241,11 +287,13 @@ class AbstractContent extends Abstract {
             return Boolean(id.author);
         }
 
-        const postCount = await CommentModel.countDocuments({
-            contentId: this._extractContentId(content),
+        const contentId = this._extractContentId(content);
+        const commentsCount = await CommentModel.countDocuments({
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
         });
 
-        return Boolean(postCount);
+        return Boolean(commentsCount);
     }
 
     async _extractContentObject(rawContent) {
@@ -267,103 +315,39 @@ class AbstractContent extends Abstract {
         };
     }
 
-    _isPayoutContract(name) {
-        return name.split('.')[1] === 'publish';
-    }
-
-    _parsePayoutMemo(memo, payoutType) {
-        if (payoutType === 'vesting') {
-            const match = memo.match(/^\w+ \w+: (.+); (\w+) \w+ \w+ (\w+) .+:(.+)$/);
-
-            return {
-                userId: match[1],
-                permlink: match[4],
-                rewardType: match[2],
-                contentType: match[3],
-            };
-        } else {
-            const match = memo.match(/^\w+ \w+ (\w+) (.+):(.+)/);
-
-            return {
-                userId: match[2],
-                permlink: match[3],
-                rewardType: 'author',
-                contentType: match[1],
-            };
-        }
-    }
-
-    _getRewardTypeKey(rewardType) {
-        switch (rewardType) {
-            case 'author':
-                return 'author';
-
-            case 'curator':
-                return 'curator';
-
-            case 'benefeciary':
-                return 'benefactor';
-
-            default:
-                Logger.warn(`Payout - unknown reward type - ${rewardType}`);
-                return null;
-        }
-    }
-
-    _getPayoutModelClass(contentType) {
-        switch (contentType) {
-            case 'post':
-                return PostModel;
-
-            case 'comment':
-                return CommentModel;
-
-            default:
-                Logger.warn(`Payout - unknown content type - ${contentType}`);
-                return null;
-        }
-    }
-
-    _getPayoutType(target) {
-        if (target.split('.')[1] === 'vesting') {
-            return 'vesting';
-        } else {
-            return 'token';
-        }
-    }
-
-    _extractTokenInfo(quantity) {
-        let [tokenValue, tokenName] = quantity.split(' ');
-
-        tokenValue = Number(tokenValue);
-
-        if (!tokenName || Number.isNaN(tokenValue)) {
-            Logger.warn(`Payout - invalid quantity - ${quantity}`);
-            return { tokenName: null, tokenValue: null };
-        }
-
-        return { tokenName, tokenValue };
-    }
-
-    async _setPayout(contentId, { rewardTypeKey, payoutType, tokenName, tokenValue }) {
-        await PostModel.updateOne(
-            { contentId },
+    async _setPayouts(model, payouts) {
+        const Model = model.constructor;
+        const previousModel = await Model.findOneAndUpdate(
+            {
+                'contentId.userId': model.contentId.userId,
+                'contentId.permlink': model.contentId.permlink,
+            },
             {
                 $set: {
                     'payout.done': true,
-                    [`payout.${rewardTypeKey}.${payoutType}`]: {
-                        name: tokenName,
-                        value: tokenValue,
-                    },
+                    ...payouts,
                 },
             }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model,
+                documentId: previousModel._id,
+                data: {
+                    $set: {
+                        ...previousModel.toObject(),
+                    },
+                },
+            });
+        }
     }
 
     _extractBenefactorPercents(content) {
         const percents = content.beneficiaries || [];
 
-        return percents.map(value => value.weight);
+        return percents.map(value => new BigNum(value.weight));
     }
 }
 

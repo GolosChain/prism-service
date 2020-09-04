@@ -1,6 +1,9 @@
+const escape = require('escape-string-regexp');
+
 const AbstractFeed = require('./AbstractFeed');
 const LeaderModel = require('../../models/Leader');
 const ProposalModel = require('../../models/Proposal');
+const ProfileModel = require('../../models/Profile');
 
 class Leaders extends AbstractFeed {
     constructor({ leaderFeedCache }) {
@@ -9,13 +12,100 @@ class Leaders extends AbstractFeed {
         this._leaderFeedCache = leaderFeedCache;
     }
 
-    async getTop({ currentUserId, communityId, limit, sequenceKey, app }) {
+    async getTop({ query, ...params }) {
+        if (query) {
+            return await this._findLeaders({ query, ...params });
+        } else {
+            return await this._getTop(params);
+        }
+    }
+
+    async _findLeaders({ query, currentUserId, communityId, limit, app = 'gls', sequenceKey }) {
+        const filter = {
+            [`usernames.${app}`]: { $regex: `^${escape(query.trim().toLowerCase())}` },
+            leaderIn: communityId,
+        };
+
+        if (sequenceKey) {
+            filter._id = { $gt: sequenceKey };
+        }
+
+        const pipeline = [
+            {
+                $match: filter,
+            },
+            {
+                $project: {
+                    _id: true,
+                    userId: true,
+                    usernames: true,
+                },
+            },
+            {
+                $lookup: {
+                    from: 'leaders',
+                    localField: 'userId',
+                    foreignField: 'userId',
+                    as: 'leader',
+                },
+            },
+            {
+                $limit: limit,
+            },
+        ];
+
+        const profiles = await ProfileModel.aggregate(pipeline);
+
+        const leaders = [];
+
+        for (const profile of profiles) {
+            if (profile.leader.length > 0) {
+                const leader = profile.leader[0];
+
+                leaders.push({
+                    _id: leader._id,
+                    userId: leader.userId,
+                    username: profile.usernames[app] || null,
+                    communityId: leader.communityId,
+                    active: leader.active,
+                    url: leader.url,
+                    rating: leader.rating,
+                    stats: leader.stats,
+                    position: leader.position,
+                });
+            }
+        }
+
+        leaders.sort((a, b) => {
+            const diff = Number(b.rating) - Number(a.rating);
+
+            if (diff === 0) {
+                return a.userId.localeCompare(b.userId);
+            }
+
+            return diff;
+        });
+
+        await this._populateUsers(leaders, app);
+        await this._tryApplyVotesForModels(leaders, currentUserId);
+
+        for (const leader of leaders) {
+            delete leader._id;
+        }
+
+        return {
+            items: leaders,
+            sequenceKey: null,
+        };
+    }
+
+    async _getTop({ currentUserId, communityId, limit, sequenceKey, app }) {
         const queryData = { communityId, sequenceKey, limit };
         const { query, projection, options, meta } = this._prepareQuery(queryData);
 
         const modelObjects = await LeaderModel.find(query, projection, options);
 
-        if (!modelObjects) {
+        if (!modelObjects || modelObjects.length === 0) {
             return this._makeEmptyFeedResult();
         }
 
@@ -28,17 +118,16 @@ class Leaders extends AbstractFeed {
 
     async _tryApplyVotesForModels(modelObjects, currentUserId) {
         for (const modelObject of modelObjects) {
-            if (!currentUserId) {
+            if (currentUserId) {
+                const voteCount = await LeaderModel.countDocuments({
+                    _id: modelObject._id,
+                    votes: currentUserId,
+                });
+
+                modelObject.hasVote = Boolean(voteCount);
+            } else {
                 modelObject.hasVote = false;
-                return;
             }
-
-            const voteCount = await LeaderModel.countDocuments({
-                _id: modelObject._id,
-                votes: currentUserId,
-            });
-
-            modelObject.hasVote = Boolean(voteCount);
         }
     }
 
@@ -47,14 +136,19 @@ class Leaders extends AbstractFeed {
     }
 
     _prepareQuery({ communityId, sequenceKey, limit }) {
-        const query = {};
-        const projection = {
-            __v: false,
-            createdAt: false,
-            updatedAt: false,
-            votes: false,
+        const query = {
+            communityId,
         };
-        const options = { lean: true };
+        const projection = {
+            _id: true,
+            communityId: true,
+            userId: true,
+            url: true,
+            rating: true,
+            active: true,
+            position: true,
+        };
+        const options = { lean: true, sort: { position: 1 } };
 
         if (sequenceKey) {
             sequenceKey = this._unpackSequenceKey(sequenceKey);
@@ -72,71 +166,102 @@ class Leaders extends AbstractFeed {
     }
 
     async _populateUsers(modelObjects, app) {
-        const results = [];
-
-        for (const modelObject of modelObjects) {
-            results.push(this._populateUser(modelObject, app));
-        }
-
-        await Promise.all(results);
+        await Promise.all(modelObjects.map(modelObject => this._populateUser(modelObject, app)));
     }
 
-    async getProposals({ communityId, limit, sequenceKey, app }) {
+    async getProposals({ communityId, limit, offset, app }) {
         const query = {
-            communityId,
+            $or: [{ communityId }, { communityId: { $eq: null } }],
+            isExecuted: false,
         };
 
-        if (sequenceKey) {
-            const lastId = this._unpackSequenceKey(sequenceKey);
+        return {
+            items: await this._getProposals({ query, limit, skip: offset, app }),
+        };
+    }
 
-            query._id = {
-                $gt: lastId,
+    async getProposal({ proposerId, proposalId, app }) {
+        const items = await this._getProposals({
+            query: {
+                userId: proposerId,
+                proposalId,
+            },
+            limit: 1,
+            app,
+        });
+
+        if (!items.length) {
+            throw {
+                code: 404,
+                message: 'Proposal not found',
             };
         }
 
+        return items[0];
+    }
+
+    async _getProposals({ query, skip, limit, app }) {
         const items = await ProposalModel.find(
             query,
             {
-                userId: 1,
-                proposalId: 1,
-                code: 1,
-                action: 1,
-                expiration: 1,
-                'changes.structureName': 1,
-                'changes.values': 1,
+                userId: true,
+                proposalId: true,
+                blockTime: true,
+                expiration: true,
+                approves: true,
+                isExecuted: true,
+                executedBlockTime: true,
+                type: true,
+                action: true,
+                trx: true,
+                data: true,
             },
-            { lean: true, limit }
+            {
+                lean: true,
+                skip,
+                limit,
+                sort: {
+                    isExecuted: -1,
+                    blockTime: -1,
+                },
+            }
         );
 
-        const users = [];
+        const users = {};
 
         for (const item of items) {
-            const user = {
+            users[item.userId] = true;
+
+            for (const { userId } of item.approves) {
+                users[userId] = true;
+            }
+        }
+
+        for (const userId of Object.keys(users)) {
+            users[userId] = { userId };
+        }
+
+        await this._populateUsers(Array.from(Object.values(users)), app);
+
+        for (const item of items) {
+            item.author = {
                 userId: item.userId,
+                ...users[item.userId],
             };
 
-            users.push(user);
+            item.approves = item.approves.map(approve => ({
+                userId: approve.userId,
+                username: users[approve.userId].username,
+                avatarUrl: users[approve.userId].avatarUrl,
+                permission: approve.permission,
+                isSigned: approve.isSigned,
+            }));
 
-            item.author = user;
-        }
-
-        await this._populateUsers(users, app);
-
-        let resultSequenceKey = null;
-
-        if (items.length === limit) {
-            resultSequenceKey = this._packSequenceKey(items[items.length - 1]._id);
-        }
-
-        for (const item of items) {
             delete item._id;
             delete item.userId;
         }
 
-        return {
-            items,
-            sequenceKey: resultSequenceKey,
-        };
+        return items;
     }
 }
 

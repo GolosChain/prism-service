@@ -1,47 +1,60 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const BasicService = core.services.Basic;
 const BlockSubscribe = core.services.BlockSubscribe;
-const Logger = core.utils.Logger;
+const { Logger, GenesisProcessor } = core.utils;
+
 const env = require('../data/env');
 const MainPrismController = require('../controllers/prism/Main');
-const GenesisController = require('../controllers/prism/Genesis');
+const GenesisController = require('../controllers/prism/GenesisContent');
 const ServiceMetaModel = require('../models/ServiceMeta');
-const RevertTraceModel = require('../models/RevertTrace');
 
 class Prism extends BasicService {
-    setConnector(connector) {
-        this._connector = connector;
+    constructor(...args) {
+        super(...args);
 
         this.getEmitter().setMaxListeners(Infinity);
     }
 
+    setForkService(forkService) {
+        this._forkService = forkService;
+    }
+
+    setConnector(connector) {
+        this._connector = connector;
+    }
+
     async start() {
+        const meta = await this._getMeta();
+
+        if (!meta.isGenesisApplied && env.GLS_USE_GENESIS) {
+            await this._processGenesis();
+            await this._updateMeta({ isGenesisApplied: true });
+        }
+
         this._blockInProcessing = false;
-        this._genesisDataInProcessing = false;
         this._blockQueue = [];
         this._recentTransactions = new Set();
         this._currentBlockNum = 0;
-        this._mainPrismController = new MainPrismController({ connector: this._connector });
-        this._genesisController = new GenesisController();
+        this._mainPrismController = new MainPrismController({
+            connector: this._connector,
+            forkService: this._forkService,
+        });
 
-        const lastBlock = await this._getLastBlockNum();
-        const subscriber = new BlockSubscribe(lastBlock + 1);
+        this._subscriber = new BlockSubscribe({
+            handler: this._handleEvent.bind(this),
+        });
 
-        this._inGenesis = lastBlock === 0;
+        const lastBlockInfo = await this._subscriber.getLastBlockMetaData();
+        Logger.info('Last block info:', lastBlockInfo);
 
-        if (!env.GLS_USE_GENESIS) {
-            this._inGenesis = false;
+        if (lastBlockInfo.lastBlockNum !== 0 && !env.GLS_DONT_REVERT_LAST_BLOCK) {
+            await this._revertLastBlock();
         }
 
-        subscriber.eachBlock(this._registerNewBlock.bind(this));
-        subscriber.eachGenesisData(this._handleGenesisData.bind(this));
-        subscriber.on('fork', this._handleFork.bind(this));
-        subscriber.on('genesisDone', this._handleGenesisComplete.bind(this));
-
         try {
-            await subscriber.start();
+            await this._subscriber.start();
         } catch (error) {
-            Logger.error(`Cant start block subscriber - ${error.stack}`);
+            Logger.error('Cant start block subscriber:', error);
         }
     }
 
@@ -53,13 +66,35 @@ class Prism extends BasicService {
         return this._recentTransactions.has(id);
     }
 
+    /**
+     * Обработка событий из BlockSubscribe.
+     * @param {'BLOCK'|'FORK'|'IRREVERSIBLE_BLOCK'} type
+     * @param {Object} data
+     * @private
+     */
+    async _handleEvent({ type, data }) {
+        switch (type) {
+            case BlockSubscribe.EVENT_TYPES.BLOCK:
+                await this._registerNewBlock(data);
+                break;
+            case BlockSubscribe.EVENT_TYPES.IRREVERSIBLE_BLOCK:
+                await this._handleIrreversibleBlock(data);
+                break;
+            case BlockSubscribe.EVENT_TYPES.FORK:
+                Logger.warn(`Fork detected, new safe base on block num: ${data.baseBlockNum}`);
+                await this._handleFork(data.baseBlockNum);
+                break;
+            default:
+        }
+    }
+
     async _registerNewBlock(block) {
         this._blockQueue.push(block);
         await this._handleBlockQueue(block.blockNum);
     }
 
     async _handleBlockQueue() {
-        if (this._inGenesis || this._genesisDataInProcessing || this._blockInProcessing) {
+        if (this._blockInProcessing) {
             return;
         }
 
@@ -76,15 +111,12 @@ class Prism extends BasicService {
 
     async _handleBlock(block) {
         try {
-            const blockNum = block.blockNum;
-
-            await this._openNewRevertZone(blockNum);
-            await this._setLastBlockNum(blockNum);
+            await this._forkService.initBlock(block);
             await this._mainPrismController.disperse(block);
 
             this._emitHandled(block);
         } catch (error) {
-            Logger.error(`Cant disperse block - ${error.stack}`);
+            Logger.error(`Cant disperse block, num: ${block.blockNum}, id: ${block.id}`, error);
             process.exit(1);
         }
     }
@@ -116,55 +148,53 @@ class Prism extends BasicService {
         }
     }
 
-    async _handleFork() {
+    async _handleIrreversibleBlock(block) {
+        await this._forkService.registerIrreversibleBlock(block);
+    }
+
+    async _handleFork(baseBlockNum) {
         try {
-            // TODO Revert on fork
-            // TODO Mark start/stop revert state
-            // TODO Revert lastBlockNum
+            await this._forkService.revert(this._subscriber, baseBlockNum);
         } catch (error) {
-            Logger.error(`Critical error!`);
-            Logger.error(`Cant revert on fork - ${error.stack}`);
+            Logger.error('Critical error!');
+            Logger.error('Cant revert on fork:', error);
             process.exit(1);
         }
     }
 
-    async _handleGenesisData(type, data) {
-        if (!this._inGenesis) {
-            Logger.warn(`Genesis off, but data transfer.`);
-            return;
-        }
-
-        this._genesisDataInProcessing = true;
-
+    async _revertLastBlock() {
         try {
-            await this._genesisController.handle(type, data);
+            await this._forkService.revertLastBlock(this._subscriber);
         } catch (error) {
-            Logger.error(`Critical error!`);
-            Logger.error(`Cant handle genesis data - ${error.stack}`);
-            process.exit(1);
+            Logger.error('Cant revert last block, but continue:', error);
         }
-
-        this._genesisDataInProcessing = false;
     }
 
-    async _getLastBlockNum() {
-        const model = await ServiceMetaModel.findOne({}, { lastBlockNum: true });
-
-        return model.lastBlockNum;
+    async _getMeta() {
+        return await ServiceMetaModel.findOne(
+            {},
+            {},
+            {
+                lean: true,
+            }
+        );
     }
 
-    async _openNewRevertZone(blockNum) {
-        const model = new RevertTraceModel({ blockNum });
-
-        await model.save();
+    async _updateMeta(params) {
+        return await ServiceMetaModel.updateOne(
+            {},
+            {
+                $set: params,
+            }
+        );
     }
 
-    async _setLastBlockNum(blockNum) {
-        await ServiceMetaModel.updateOne({}, { $set: { lastBlockNum: blockNum } });
-    }
+    async _processGenesis() {
+        const genesisProcessor = new GenesisProcessor({
+            genesisController: new GenesisController(),
+        });
 
-    async _handleGenesisComplete() {
-        this._inGenesis = false;
+        await genesisProcessor.process();
     }
 }
 

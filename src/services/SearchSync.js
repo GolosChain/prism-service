@@ -1,15 +1,17 @@
 const elasticsearch = require('elasticsearch');
 const bodybuilder = require('bodybuilder');
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const BasicService = core.services.Basic;
 const env = require('../data/env');
-const SyncModel = require('../models/SearchSync');
+const SearchSyncModel = require('../models/SearchSync');
+const PostModel = require('../models/Post');
+const CommentModel = require('../models/Comment');
 
-class SyncService extends BasicService {
-    constructor(modelsToWatch, modelsMappers, ...args) {
+class SearchSync extends BasicService {
+    constructor(...args) {
         super(...args);
-        this.modelsToWatch = modelsToWatch;
-        this.modelsMappers = modelsMappers;
+        this.modelsToWatch = [PostModel, CommentModel];
+        this.modelsMappers = this._getModelsMappers();
         this.modelsInSync = new Map();
 
         this._esclient = new elasticsearch.Client({
@@ -61,6 +63,27 @@ class SyncService extends BasicService {
         for (const model of this.modelsToWatch) {
             await this._syncDeleted(model);
         }
+    }
+
+    _getModelsMappers() {
+        return {
+            Post: data => {
+                return {
+                    title: data.content.title,
+                    body: data.content.body,
+                    permlink: data.contentId.permlink,
+                    contentId: data.contentId,
+                };
+            },
+            Comment: data => {
+                return {
+                    title: data.content.title,
+                    body: data.content.body,
+                    permlink: data.contentId.permlink,
+                    contentId: data.contentId,
+                };
+            },
+        };
     }
 
     async _waitForElasticSearch(retryNum = 1, maxRetries = 10) {
@@ -210,35 +233,35 @@ class SyncService extends BasicService {
     }
 
     async _findOrCreateSyncModel(model) {
-        let modelSync = await SyncModel.findOne({ model: model.modelName });
+        let searchModel = await SearchSyncModel.findOne({ model: model.modelName });
 
-        if (!modelSync) {
-            modelSync = new SyncModel({
+        if (!searchModel) {
+            searchModel = new SearchSyncModel({
                 model: model.modelName,
             });
 
-            await modelSync.save();
+            await searchModel.save();
         }
-        return modelSync;
+        return searchModel;
     }
 
     async iteration() {
         for (const model of this.modelsToWatch) {
-            const syncModel = await this._findOrCreateSyncModel(model);
+            const searchModel = await this._findOrCreateSyncModel(model);
 
-            if (this.modelsInSync.get(syncModel)) {
+            if (this.modelsInSync.has(searchModel)) {
                 continue;
             }
 
-            this.modelsInSync.set(syncModel, true);
+            this.modelsInSync.set(searchModel, true);
 
-            await this._syncModel(model, syncModel.lastSynced);
+            await this._syncModel(model, searchModel.lastSynced);
 
-            syncModel.lastSynced = Date.now();
-            await syncModel.save();
-            this.modelsInSync.set(syncModel, false);
+            searchModel.lastSynced = Date.now();
+            await searchModel.save();
+            this.modelsInSync.set(searchModel, false);
         }
     }
 }
 
-module.exports = SyncService;
+module.exports = SearchSync;

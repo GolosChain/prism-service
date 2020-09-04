@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const Logger = core.utils.Logger;
 const Content = core.utils.Content;
 const env = require('../../data/env');
@@ -27,7 +27,14 @@ class HashTag extends AbstractContent {
         const newTags = await this._extractTags(content);
 
         model.content.tags = newTags;
+
         await model.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: HashTagModel,
+            documentId: model._id,
+            data: { $set: { 'content.tags': [] } },
+        });
 
         await this._incrementTagsScore(newTags, communityId);
     }
@@ -47,7 +54,14 @@ class HashTag extends AbstractContent {
         const recentTags = model.content.tags;
 
         model.content.tags = newTags;
+
         await model.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: HashTagModel,
+            documentId: model._id,
+            data: { $set: { 'content.tags': recentTags.toObject() } },
+        });
 
         await this._decrementTagsScore(recentTags, communityId);
         await this._incrementTagsScore(newTags, communityId);
@@ -86,12 +100,18 @@ class HashTag extends AbstractContent {
     }
 
     _extractTagsFromBlockChain(content) {
-        return content.tags.map(tagObject => tagObject.tag);
+        return content.tags;
     }
 
     async _tryGetModel(content, projection) {
         const contentId = this._extractContentId(content);
-        const model = await PostModel.findOne({ contentId }, projection);
+        const model = await PostModel.findOne(
+            {
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
+            },
+            projection
+        );
 
         if (!model) {
             Logger.warn(`Unknown post - ${JSON.stringify(contentId)}`);
@@ -118,11 +138,24 @@ class HashTag extends AbstractContent {
                 countIncrement = -1;
             }
 
-            await HashTagModel.updateOne(
+            const previousModel = await HashTagModel.findOneAndUpdate(
                 { communityId, name },
                 { $inc: { count: countIncrement } },
                 { upsert: true }
             );
+
+            if (!previousModel) {
+                continue;
+            }
+
+            await this.registerForkChanges({
+                type: 'update',
+                Model: HashTagModel,
+                documentId: previousModel._id,
+                data: {
+                    $inc: { count: -countIncrement },
+                },
+            });
         }
     }
 }

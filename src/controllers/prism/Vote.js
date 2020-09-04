@@ -1,8 +1,8 @@
-const core = require('gls-core-service');
+const lodash = require('lodash');
+const core = require('cyberway-core-service');
 const Logger = core.utils.Logger;
+const BigNum = core.types.BigNum;
 const AbstractContent = require('./AbstractContent');
-const PostModel = require('../../models/Post');
-const CommentModel = require('../../models/Comment');
 const ProfileModel = require('../../models/Profile');
 const WilsonScoring = require('../../utils/WilsonScoring');
 const PoolModel = require('../../models/Pool');
@@ -15,11 +15,11 @@ class Vote extends AbstractContent {
             return;
         }
 
-        this._includeUpVote(model, { userId: content.voter, weight: content.weight });
-        this._excludeDownVote(model, content.voter);
-        await this._updatePayout(model, communityId, events);
+        const votesManager = this._makeVotesManager(model, content, events);
 
-        await model.save();
+        await votesManager('up', 'add');
+        await votesManager('down', 'remove');
+        await this._updatePayout(model, communityId, events);
     }
 
     async handleDownVote(content, { communityId, events }) {
@@ -29,11 +29,11 @@ class Vote extends AbstractContent {
             return;
         }
 
-        this._includeDownVote(model, { userId: content.voter, weight: content.weight });
-        this._excludeUpVote(model, content.voter);
-        await this._updatePayout(model, communityId, events);
+        const votesManager = this._makeVotesManager(model, content);
 
-        await model.save();
+        await votesManager('up', 'remove');
+        await votesManager('down', 'add');
+        await this._updatePayout(model, communityId, events);
     }
 
     async handleUnVote(content, { communityId, events }) {
@@ -43,125 +43,170 @@ class Vote extends AbstractContent {
             return;
         }
 
-        this._excludeUpVote(model, content.voter);
-        this._excludeDownVote(model, content.voter);
+        const votesManager = this._makeVotesManager(model, content);
+
+        await votesManager('up', 'remove');
+        await votesManager('down', 'remove');
         await this._updatePayout(model, communityId, events);
-
-        await model.save();
     }
 
-    _includeUpVote(model, vote) {
-        const pack = model.votes.upVotes || [];
-
-        if (!pack.find(item => item.userId === item.userId)) {
-            pack.push(vote);
-            model.markModified('votes.upVotes');
-            model.votes.upCount++;
-        }
+    async _getModel(content) {
+        return await super._getModel(content, {
+            votes: true,
+            payout: true,
+            meta: true,
+            stats: true,
+        });
     }
 
-    _includeDownVote(model, vote) {
-        const pack = model.votes.downVotes || [];
-
-        if (!pack.find(item => item.userId === vote.userId)) {
-            pack.push(vote);
-            model.markModified('votes.downVotes');
-            model.votes.downCount++;
-        }
-    }
-
-    _excludeUpVote(model, userId) {
-        const pack = model.votes.upVotes || [];
-
-        const index = pack.findIndex(item => item.userId === userId);
-        if (index !== -1) {
-            pack.splice(index, 1);
-            model.markModified('votes.upVotes');
-            model.votes.upCount--;
-        }
-    }
-
-    _excludeDownVote(model, userId) {
-        const pack = model.votes.downVotes || [];
-
-        const index = pack.findIndex(item => item.userId === userId);
-        if (index !== -1) {
-            pack.splice(index, 1);
-            model.markModified('votes.downVotes');
-            model.votes.downCount--;
-        }
-    }
-
-    async handleReputation({ voter, author, rshares: rShares }) {
-        await this._updateProfileReputation(voter, author, rShares);
-    }
-
-    async _updateProfileReputation(voter, author, rShares) {
-        const modelVoter = await ProfileModel.findOne(
+    async _tryUpdateProfileReputation({ voter, author, rshares: rShares }) {
+        const voterModelObject = await ProfileModel.findOne(
             { userId: voter },
-            {
-                'stats.reputation': true,
-            },
+            { 'stats.reputation': true },
             { lean: true }
         );
 
-        if (!modelVoter) {
+        if (!voterModelObject) {
             Logger.warn(`Unknown voter - ${voter}`);
             return;
         }
 
-        if (modelVoter.stats.reputation < 0) {
+        if (voterModelObject.stats.reputation < 0) {
             return;
         }
 
-        const modelAuthor = await ProfileModel.findOne(
+        const authorModel = await ProfileModel.findOne(
             { userId: author },
-            {
-                'stats.reputation': true,
-            }
+            { 'stats.reputation': true }
         );
 
-        if (!modelAuthor) {
+        if (!authorModel) {
             Logger.warn(`Unknown voter - ${author}`);
             return;
         }
 
-        if (rShares < 0 && modelVoter.stats.reputation <= modelAuthor.stats.reputation) {
+        if (rShares < 0 && voterModelObject.stats.reputation <= authorModel.stats.reputation) {
             return;
         }
 
-        modelAuthor.stats.reputation += Number(rShares);
-        await modelAuthor.save();
+        await this._updateProfileReputation(authorModel, rShares);
     }
 
-    async _getModel(content) {
-        const contentId = this._extractContentId(content);
-        const query = { contentId };
-        const projection = { votes: true, payout: true, meta: true, stats: true };
-        const post = await PostModel.findOne(query, projection);
+    async _updateProfileReputation(model, rShares) {
+        const previousReputation = model.stats.reputation;
 
-        if (post) {
-            return post;
+        model.stats.reputation += Number(rShares);
+
+        await model.save();
+        await this.registerForkChanges({
+            type: 'update',
+            Model: ProfileModel,
+            documentId: model._id,
+            data: {
+                $set: { 'stats.reputation': previousReputation },
+            },
+        });
+    }
+
+    _makeVotesManager(model, content, events) {
+        const vote = this._extractVote(content, events);
+
+        return async (type, action) => {
+            await this._manageVotes({ model, vote, type, action });
+        };
+    }
+
+    async _manageVotes({ model, vote, type, action, events }) {
+        const [addAction, removeAction, increment] = this._getArrayEntityCommands(action);
+        const Model = model.constructor;
+        const votesArrayPath = `votes.${type}Votes`;
+        const votesCountPath = `votes.${type}Count`;
+        let updateVoteObject = vote;
+
+        if (addAction === '$pull') {
+            updateVoteObject = { userId: vote.userId };
         }
 
-        const comment = await CommentModel.findOne(query, projection);
+        const previousModel = await Model.findOneAndUpdate(
+            { _id: model._id },
+            { [addAction]: { [votesArrayPath]: updateVoteObject } }
+        );
 
-        if (comment) {
-            return comment;
+        if (!previousModel) {
+            return;
         }
 
-        return null;
+        const previousVotes = lodash.get(previousModel, votesArrayPath);
+        const inPreviousVotes = previousVotes.some(recentVote => recentVote.userId === vote.userId);
+
+        if (
+            (addAction === '$addToSet' && inPreviousVotes) ||
+            (addAction === '$pull' && !inPreviousVotes)
+        ) {
+            return;
+        }
+
+        await Model.updateOne({ _id: model._id }, { $inc: { [votesCountPath]: increment } });
+
+        let removeVoteObject = vote;
+
+        if (removeAction === '$pull') {
+            removeVoteObject = { userId: vote.userId };
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model,
+            documentId: previousVotes._id,
+            data: {
+                [removeAction]: { [votesArrayPath]: removeVoteObject },
+                $inc: { [votesCountPath]: -increment },
+            },
+        });
+    }
+
+    _extractVote(content, events = []) {
+        const vote = { userId: content.voter, weight: content.weight };
+
+        const votestate = events.find(({ event }) => event === 'votestate');
+
+        if (votestate) {
+            vote.curatorsw = votestate.args.curatorsw;
+        }
+
+        return vote;
     }
 
     async _updatePayout(model, communityId, events) {
-        const { postState, poolState } = this._getPayoutEventsData(events);
+        const { voteState, postState, poolState } = this._getEventsData(events);
 
+        if (!voteState) {
+            Logger.warn('Undefined VoteState event!');
+            return;
+        }
+
+        await this._tryUpdateProfileReputation(voteState);
         await this._actualizePoolState(poolState, communityId);
-        this._addPayoutScoring(model, postState);
-        this._addPayoutMeta(model, postState);
+
+        const previousScoringQuery = this._addPayoutScoring(model, postState);
+        const previousMetaQuery = this._addPayoutMeta(model, postState);
+
+        await model.save();
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: model.constructor,
+            documentId: model._id,
+            data: {
+                $set: {
+                    ...previousScoringQuery,
+                    ...previousMetaQuery,
+                },
+            },
+        });
     }
 
-    _getPayoutEventsData(events) {
+    _getEventsData(events) {
         let postState;
         let poolState;
         let voteState;
@@ -187,38 +232,74 @@ class Vote extends AbstractContent {
     async _actualizePoolState(poolState, communityId) {
         const fundsValueRaw = poolState.funds;
         const [value, name] = fundsValueRaw.split(' ');
-
-        await PoolModel.updateOne(
+        let previousModel = await PoolModel.findOneAndUpdate(
             { communityId },
             {
                 $set: {
-                    funds: {
-                        name: name,
-                        value: Number(value),
-                    },
-                    rShares: Number(poolState.rshares),
-                    rSharesFn: Number(poolState.rsharesfn),
+                    'funds.name': name,
+                    'funds.value': new BigNum(value),
+                    rShares: new BigNum(poolState.rshares),
+                    rSharesFn: new BigNum(poolState.rsharesfn),
+                },
+            }
+        );
+
+        if (!previousModel) {
+            previousModel = await PoolModel.create({
+                communityId,
+                funds: {
+                    name: name,
+                    value: new BigNum(value),
+                },
+                rShares: new BigNum(poolState.rshares),
+                rSharesFn: new BigNum(poolState.rsharesfn),
+            });
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: PoolModel,
+            documentId: previousModel._id,
+            data: {
+                $set: {
+                    'funds.name': previousModel.name,
+                    'funds.value': previousModel.value,
+                    rShares: previousModel.rShares,
+                    rSharesFn: previousModel.rSharesFn,
                 },
             },
-            { upsert: true }
-        );
+        });
     }
 
     _addPayoutScoring(model, postState) {
         const rShares = Number(postState.netshares);
 
         model.stats = model.stats || {};
+
+        const previousQuery = {
+            ['stats.rShares']: model.stats.rShares,
+            ['stats.hot']: model.stats.hot,
+            ['stats.trending']: model.stats.trending,
+        };
+
         model.stats.rShares = rShares;
         model.stats.hot = WilsonScoring.calcHot(rShares, model.meta.time);
         model.stats.trending = WilsonScoring.calcTrending(rShares, model.meta.time);
+
+        return previousQuery;
     }
 
     _addPayoutMeta(model, postState) {
         const meta = model.payout.meta;
+        const previousQuery = {
+            ['payout.meta.sharesFn']: meta.sharesFn,
+            ['payout.meta.sumCuratorSw']: meta.sumCuratorSw,
+        };
 
-        meta.rewardWeight = 0;
-        meta.sharesFn = Number(postState.sharesfn);
-        meta.sumCuratorSw = Number(postState.sumcuratorsw);
+        meta.sharesFn = new BigNum(postState.sharesfn);
+        meta.sumCuratorSw = new BigNum(postState.sumcuratorsw);
+
+        return previousQuery;
     }
 }
 

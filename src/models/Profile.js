@@ -1,4 +1,4 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const MongoDB = core.services.MongoDB;
 
 module.exports = MongoDB.makeModel(
@@ -13,6 +13,52 @@ module.exports = MongoDB.makeModel(
             type: Object,
             default: {},
         },
+        isGenesisUser: {
+            type: Boolean,
+            default: false,
+        },
+        chargersRaw: {
+            votes: {
+                value: {
+                    type: Number,
+                    default: 100,
+                },
+                lastUpdated: {
+                    type: Date,
+                    default: Date.now(),
+                },
+            },
+            posts: {
+                value: {
+                    type: Number,
+                    default: 100,
+                },
+                lastUpdated: {
+                    type: Date,
+                    default: Date.now(),
+                },
+            },
+            comments: {
+                value: {
+                    type: Number,
+                    default: 100,
+                },
+                lastUpdated: {
+                    type: Date,
+                    default: Date.now(),
+                },
+            },
+            postbw: {
+                value: {
+                    type: Number,
+                    default: 100,
+                },
+                lastUpdated: {
+                    type: Date,
+                    default: Date.now(),
+                },
+            },
+        },
         personal: {
             cyber: {
                 avatarUrl: {
@@ -25,7 +71,13 @@ module.exports = MongoDB.makeModel(
                     type: String,
                 },
                 contacts: {
+                    vkontakte: {
+                        type: String,
+                    },
                     facebook: {
+                        type: String,
+                    },
+                    instagram: {
                         type: String,
                     },
                     telegram: {
@@ -46,6 +98,9 @@ module.exports = MongoDB.makeModel(
                 gender: {
                     type: String,
                 },
+                email: {
+                    type: String,
+                },
                 about: {
                     type: String,
                 },
@@ -61,8 +116,25 @@ module.exports = MongoDB.makeModel(
                 coverUrl: {
                     type: String,
                 },
-                social: {
-                    type: String,
+                contacts: {
+                    vkontakte: {
+                        type: String,
+                    },
+                    facebook: {
+                        type: String,
+                    },
+                    instagram: {
+                        type: String,
+                    },
+                    telegram: {
+                        type: String,
+                    },
+                    whatsApp: {
+                        type: String,
+                    },
+                    weChat: {
+                        type: String,
+                    },
                 },
             },
         },
@@ -124,6 +196,10 @@ module.exports = MongoDB.makeModel(
         leaderIn: {
             type: [String],
             default: [],
+        },
+        isGolosVestingOpened: {
+            type: Boolean,
+            default: false,
         },
     },
     {

@@ -1,6 +1,8 @@
-const core = require('gls-core-service');
+const core = require('cyberway-core-service');
 const Content = core.utils.Content;
 const Logger = core.utils.Logger;
+const BigNum = core.types.BigNum;
+const { NESTED_COMMENTS_MAX_INDEX_DEPTH } = require('../../data/constants');
 const AbstractContent = require('./AbstractContent');
 const PostModel = require('../../models/Post');
 const CommentModel = require('../../models/Comment');
@@ -27,8 +29,9 @@ class Comment extends AbstractContent {
             },
             payout: {
                 meta: {
-                    tokenProp: Number(content.tokenprop),
+                    tokenProp: new BigNum(content.tokenprop),
                     benefactorPercents: this._extractBenefactorPercents(content),
+                    curatorsPercent: new BigNum(content.curators_prcnt),
                 },
             },
         });
@@ -36,6 +39,11 @@ class Comment extends AbstractContent {
         await this.applyParentByContent(model, content);
         await this.applyOrdering(model);
         await model.save();
+        await this.registerForkChanges({
+            type: 'create',
+            Model: CommentModel,
+            documentId: model._id,
+        });
         await this.updatePostCommentsCount(model, 1);
         await this.updateUserCommentsCount(model.contentId.userId, 1);
     }
@@ -45,9 +53,11 @@ class Comment extends AbstractContent {
             return;
         }
 
-        await CommentModel.updateOne(
+        const contentId = this._extractContentId(content);
+        const previousModel = await CommentModel.findOneAndUpdate(
             {
-                contentId: this._extractContentId(content),
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
             },
             {
                 $set: {
@@ -55,6 +65,21 @@ class Comment extends AbstractContent {
                 },
             }
         );
+
+        if (!previousModel) {
+            return;
+        }
+
+        await this.registerForkChanges({
+            type: 'update',
+            Model: CommentModel,
+            documentId: previousModel._id,
+            data: {
+                $set: {
+                    content: previousModel.content.toObject(),
+                },
+            },
+        });
     }
 
     async handleDelete(content) {
@@ -62,8 +87,10 @@ class Comment extends AbstractContent {
             return;
         }
 
+        const contentId = this._extractContentId(content);
         const model = await CommentModel.findOne({
-            contentId: this._extractContentId(content),
+            'contentId.userId': contentId.userId,
+            'contentId.permlink': contentId.permlink,
         });
 
         if (!model) {
@@ -72,18 +99,51 @@ class Comment extends AbstractContent {
 
         await this.updatePostCommentsCount(model, -1);
         await this.updateUserPostsCount(model.contentId.userId, -1);
-        await model.remove();
+
+        const removed = await model.remove();
+
+        await this.registerForkChanges({
+            type: 'remove',
+            Model: CommentModel,
+            documentId: removed._id,
+            data: removed.toObject(),
+        });
     }
 
     async updatePostCommentsCount(model, increment) {
-        await PostModel.updateOne(
-            { contentId: model.parent.post.contentId },
+        const contentId = model.parent.post.contentId;
+        const previousModel = await PostModel.findOneAndUpdate(
+            {
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
+            },
             { $inc: { 'stats.commentsCount': increment } }
         );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: PostModel,
+                documentId: previousModel._id,
+                data: { $inc: { 'stats.commentsCount': -increment } },
+            });
+        }
     }
 
     async updateUserCommentsCount(userId, increment) {
-        await ProfileModel.updateOne({ userId }, { $inc: { 'stats.commentsCount': increment } });
+        const previousModel = await ProfileModel.findOneAndUpdate(
+            { userId },
+            { $inc: { 'stats.commentsCount': increment } }
+        );
+
+        if (previousModel) {
+            await this.registerForkChanges({
+                type: 'update',
+                Model: ProfileModel,
+                documentId: previousModel._id,
+                data: { $inc: { 'stats.commentsCount': -increment } },
+            });
+        }
     }
 
     async applyParentById(model, contentId) {
@@ -92,14 +152,16 @@ class Comment extends AbstractContent {
         if (post) {
             model.parent.post.contentId = contentId;
             model.parent.comment.contentId = null;
+            model.nestedLevel = 1;
             return;
         }
 
         const comment = await this._getParentComment(contentId);
 
-        if (comment) {
+        if (comment && comment.parent) {
             model.parent.post.contentId = comment.parent.post.contentId;
             model.parent.comment.contentId = contentId;
+            model.nestedLevel = comment.nestedLevel + 1;
         }
     }
 
@@ -117,8 +179,12 @@ class Comment extends AbstractContent {
 
         const parentCommentId = model.parent.comment.contentId;
         const parentComment = await CommentModel.findOne(
-            { contentId: parentCommentId },
-            { 'ordering.byTime': true }
+            {
+                'contentId.userId': parentCommentId.userId,
+                'contentId.permlink': parentCommentId.permlink,
+            },
+            { 'ordering.byTime': true, nestedLevel: true },
+            { lean: true }
         );
 
         if (!parentComment) {
@@ -126,15 +192,39 @@ class Comment extends AbstractContent {
             return;
         }
 
-        model.ordering.byTime = `${parentComment.ordering.byTime}-${Date.now()}`;
+        let indexBase = parentComment.ordering.byTime;
+
+        // Если уровень вложенности превышает максимум, то удаляем из индекса ключ родителя
+        // и на его место ставим индес текущего комментария.
+        if (parentComment.nestedLevel >= NESTED_COMMENTS_MAX_INDEX_DEPTH) {
+            indexBase = indexBase
+                .split('-')
+                .slice(0, NESTED_COMMENTS_MAX_INDEX_DEPTH - 1)
+                .join('-');
+        }
+
+        model.ordering.byTime = `${indexBase}-${Date.now()}`;
     }
 
     async _getParentPost(contentId) {
-        return await PostModel.findOne({ contentId }, { contentId: true });
+        return await PostModel.findOne(
+            {
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
+            },
+            { contentId: true }
+        );
     }
 
     async _getParentComment(contentId) {
-        return await CommentModel.findOne({ contentId }, { contentId: true, parent: true });
+        return await CommentModel.findOne(
+            {
+                'contentId.userId': contentId.userId,
+                'contentId.permlink': contentId.permlink,
+            },
+            { contentId: true, parent: true, nestedLevel: true },
+            { lean: true }
+        );
     }
 }
 
