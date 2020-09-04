@@ -176,10 +176,23 @@ class SearchSync extends BasicService {
         }
     }
 
-    async _getDocsToSync(model, from = new Date(null)) {
-        return await await model.find({
+    async _getDocsToSync({ model, from = new Date(0), maxDocs = 200, sequenceKey }) {
+        const query = {
             updatedAt: { $gte: from },
-        });
+        };
+        if (sequenceKey) {
+            query._id = { $gt: sequenceKey };
+        }
+        const docs = await model.find(query).limit(maxDocs);
+        const result = {
+            docs,
+        };
+
+        if (docs.length === maxDocs) {
+            result.sequenceKey = docs[docs.length - 1]._id;
+        }
+
+        return result;
     }
 
     async _getAllIndexes(model, offset = 0) {
@@ -203,13 +216,19 @@ class SearchSync extends BasicService {
         return allDocs;
     }
 
-    async _syncModel(model, from) {
-        const dataToSync = await this._getDocsToSync(model, from);
+    async _syncModel(model, from, sequenceKey) {
+        const { docs: dataToSync, sequenceKey: newSequenceKey } = await this._getDocsToSync({
+            model,
+            from,
+            sequenceKey,
+        });
 
         if (dataToSync.length > 0) {
-            for (const data of dataToSync) {
-                await this._syncDoc(model, data);
-            }
+            await Promise.all(dataToSync.map(data => this._syncDoc(model, data)));
+        }
+
+        if (newSequenceKey) {
+            await this._syncModel(model, from, newSequenceKey);
         }
     }
 
