@@ -148,7 +148,7 @@ class GenesisContent {
         } = data;
 
         const meta = {
-            time: new Date(created + 'Z'),
+            time: new Date(created ? created : new Date('1970-01-01T00:00:00.000') + 'Z'),
         };
 
         const contentId = {
