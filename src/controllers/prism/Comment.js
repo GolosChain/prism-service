@@ -158,7 +158,7 @@ class Comment extends AbstractContent {
 
         const comment = await this._getParentComment(contentId);
 
-        if (comment) {
+        if (comment && comment.parent) {
             model.parent.post.contentId = comment.parent.post.contentId;
             model.parent.comment.contentId = contentId;
             model.nestedLevel = comment.nestedLevel + 1;
